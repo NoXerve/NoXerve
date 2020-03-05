@@ -1,6 +1,7 @@
 **/service_files
 node_modules/
 .DS_Store
+out/
 *.pem
 *.sqlite3
 eula.txt
