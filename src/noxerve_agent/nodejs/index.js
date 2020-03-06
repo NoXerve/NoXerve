@@ -11,7 +11,7 @@
  * @module NoXerveAgent
  */
 
-let Errors = require('./errors');
+const Errors = require('./errors');
 let Worker = require('./worker');
 let Service = require('./service');
 let Node = require('./node');
@@ -43,7 +43,7 @@ function NoXerveAgent(settings) {
   /**
    * @memberof module:NoXerveAgent
    * @type {object}
-   * @see module:Service
+   * @see module:NoXerveAgent
    * @description API intended to provide functions for the role of service.
    */
   this.Service = new Service();
@@ -59,33 +59,49 @@ function NoXerveAgent(settings) {
 };
 
 /**
- * @callback module:NoXerveAgent~callback_of_create_passive_interface
+ * @callback module:NoXerveAgent~callback_of_create_interface
  * @param {int} interface_id
  * @param {error} error
 */
 /**
  * @memberof module:NoXerveAgent
  * @param {string} interface_type - 'TCP', 'Websocket', etc
- * @param {object} passive_interface_settings - port, crypto, etc
- * @param {callback_of_create_passive_interface} callback
+ * @param {object} interface_settings - port, crypto, etc
+ * @param {module:NoXerveAgent~callback_of_create_interface} callback
  */
-NoXerveAgent.prototype.createPassiveInterface = function(interface_type, passive_interface_settings, callback) {
+NoXerveAgent.prototype.createInterface = function(interface_type, interface_settings, callback) {
   // This opreation handled by Node module.
-  this._Node.createPassiveInterface(interface_type, passive_interface_settings, callback);
+  this._Node.createInterface(interface_type, interface_settings, callback);
 }
 
 /**
- * @callback module:NoXerveAgent~callback_of_destroy_passive_interface
+ * @callback module:NoXerveAgent~callback_of_destroy_interface
  * @param {error} error
 */
 /**
  * @memberof module:NoXerveAgent
  * @param {int} interface_id
- * @param {function} callback
+ * @param {module:NoXerveAgent~callback_of_destroy_interface} callback
  */
-NoXerveAgent.prototype.destroyPassiveInterface = function(interface_id, callback) {
+NoXerveAgent.prototype.destroyInterface = function(interface_id, callback) {
   // This opreation handled by Node module.
-  this._Node.destroyPassiveInterface(interface_id, callback);
+  this._Node.destroyInterface(interface_id, callback);
+}
+
+/**
+ * @callback module:NoXerveAgent~callback_of_close
+ * @param {error} error
+*/
+/**
+ * @memberof module:NoXerveAgent
+ * @param {module:NoXerveAgent~callback_of_close} callback
+ * @description Gracefully close NoXerveAgent.
+ */
+NoXerveAgent.prototype.close = function(interface_id, callback) {
+  // Close tunnels first
+  this._Node.close(()=> {
+
+  });
 }
 
 module.exports =  NoXerveAgent;

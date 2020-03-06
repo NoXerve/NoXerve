@@ -1,3 +1,7 @@
 {
-  "library-version": "0.0.0"
+  "library_version": "0.0.0",
+  "dependencies": [
+    "ws",
+    "uuid"
+  ]
 }

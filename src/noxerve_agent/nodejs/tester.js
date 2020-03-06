@@ -7,9 +7,11 @@
 
 let NoXerveAgent = new (require('./index'))({});
 
-NoXerveAgent.createPassiveInterface('WebSocket', {}, (err, id)=> {
-  console.log(id);
-  NoXerveAgent.destroyPassiveInterface(id, (err)=> {
+NoXerveAgent.createInterface('WebSocket', {host: '0.0.0.0', port: 1223}, (err, id)=> {
+  console.log(err, id);
+  NoXerveAgent.destroyInterface(id, (err)=> {
+    console.log(123);
+
     console.log(err);
   });
 });
