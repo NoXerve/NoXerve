@@ -7,22 +7,25 @@
 
  /**
   * @module Node
+  * @module Node
   */
 
+
 /**
- * @class
- * @constructor
+ * @constructor module:Node
  * @param {object} settings
  * @description NoXerve Node Object
  */
-module.exports = function Node(settings) {
+function Node(settings) {
 
 }
 
 /**
- * @memberof module:Node
+ * @method module:Node#createPassiveInterface
  */
 
 Node.prototype.createPassiveInterface = function() {
 
 }
+
+module.exports = Node;
