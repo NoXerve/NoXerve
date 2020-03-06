@@ -11,7 +11,7 @@
  * @module Worker
  */
 
-require('./errors');
+let Errors = require('../errors');
 
 /**
  * @constructor module:Worker
@@ -34,11 +34,11 @@ function Worker(settings) {
 
 /**
  * @callback module:Worker~callback_of_import_resource_list
- * @param {error} Error
+ * @param {error} error
  */
 /**
  * @memberof module:Worker
- * @param {list} resource_list
+ * @param {array} resource_list
  * @param {module:Worker~callback_of_import_resource_list} callback
  * @description Connect to NoXerveAgent Worker Network
  */
@@ -48,8 +48,8 @@ Worker.prototype.importResourceList = function(resource_list, callback) {
 
 /**
  * @callback module:Worker~callback_of_connect
- * @param {number} responseCode
- * @param {string} responseMessage
+ * @param {}
+ * @param {}
  */
 /**
  * @memberof module:Worker
@@ -69,8 +69,8 @@ Worker.prototype.addConnections = function(remote_passive_interfaces, callback) 
 
 /**
  * @callback module:Worker~callback_of_on
- * @param {number} responseCode
- * @param {string} responseMessage
+ * @param {error} error
+ * @param {}
  */
 /**
  * @memberof module:Worker

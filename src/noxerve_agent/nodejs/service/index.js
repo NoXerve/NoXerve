@@ -11,7 +11,7 @@
  * @module Service
  */
 
-require('./errors');
+require('../errors');
 
 /**
  * @constructor module:Service
@@ -30,8 +30,8 @@ function Service(settings) {
 
 /**
  * @callback module:Service~callback_of_on
- * @param {integer} ActivityId
- * @param {error} Error - Only exists with "error" event.
+ * @param {integer} activity_id
+ * @param {error} error - Only exists with "error" event.
  */
 /**
  * @memberof module:Service
@@ -39,13 +39,13 @@ function Service(settings) {
  * @param {module:Service~callback_of_on} callback
  * @description Service events. Each corresponded with an edvidual activity.
  */
-NoXerveAgent.prototype.Service.on = function(event_name, callback) {
+Service.prototype.on = function(event_name, callback) {
 
 }
 
 /**
  * @callback module:Service~callback_of_redirect
- * @param {error} Error
+ * @param {error} error
  */
 /**
  * @memberof module:Service
@@ -54,6 +54,8 @@ NoXerveAgent.prototype.Service.on = function(event_name, callback) {
  * @param {module:Service~callback_of_redirect} callback
  * @description Redirect activity for load balancing.
  */
-NoXerveAgent.prototype.Service.redirect = function(activity_id, worker_id, callback) {
+Service.prototype.redirect = function(activity_id, worker_id, callback) {
 
 }
+
+module.exports = Service;
