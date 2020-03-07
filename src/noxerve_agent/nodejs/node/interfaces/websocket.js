@@ -5,6 +5,8 @@
  * @copyright 2019-2020 NOOXY. All Rights Reserved.
  */
 
+'use strict';
+
 /**
  * @module WebsocketInterface
  */
@@ -17,13 +19,20 @@ const Errors = require('../../errors');
  * @param {object} settings
  * @description Interface interface of WebSocket
  */
-function Interface(settings) {
+function Interface(settings, new_tunnel) {
   /**
    * @memberof Interface
    * @type {object}
    * @private
    */
   this._settings = settings;
+
+  /**
+   * @memberof Interface
+   * @type {function}
+   * @private
+   */
+  this._new_tunnel_function = new_tunnel;
 
   /**
    * @memberof Interface
@@ -48,11 +57,10 @@ function Interface(settings) {
    * @description Dictionary of event listeners.
    */
   this._event_listeners = {
-    'connect': (tunnel)=> {
+    'error': (error) => {
 
     }
   };
-
   /**
    * @memberof Interface
    * @type {object}
@@ -63,69 +71,97 @@ function Interface(settings) {
 }
 
 /**
- * @callback module:Interface~callback_of_start
+ * @callback Interface~callback_of_start
  * @param {error} error
 /**
- * @memberof module:Interface
- * @param {module:Service~callback_of_start} callback
+ * @memberof Interface
+ * @param {Interface~callback_of_start} callback
  * @description Start running interface.
  */
 Interface.prototype.start = function(callback) {
   // Catch error.
   try {
-    if(this._started || this._closed) {
+    if (this._started || this._closed) {
       // [Flag] Uncatogorized Error.
       callback(true);
-    }
-    else {
-      this._server = new WebSocket.Server({port: this._settings.port, host: this._settings.host});
+    } else {
+      this._server = new WebSocket.Server({
+        port: this._settings.port,
+        host: this._settings.host
+      });
       this._server.on('connection', (ws, req) => {
+        // Call new_tunnel() function aquired from constructor(injected by node module).
+        this._new_tunnel_function(
+          // Wrapped send fucntion.
+          (data, callback) => {
+            ws.send(data, callback);
+          },
+          // Wrapped close fucntion.
+          () => {
+            ws.close();
+          },
+          // Get emitter and get the rest of jobs done.
+          (error, tunnel_emitter) => {
+            if (error) {
+              // Emitter error event.
+              this._event_listeners['error'](error);
+            } else {
+              ws.on('message', (message) => {
+                tunnel_emitter('data', message);
+              });
 
+              ws.on('error', (error) => {
+                tunnel_emitter('error', error);
+              });
+
+              ws.on('close', () => {
+                tunnel_emitter('close');
+              });
+              tunnel_emitter('ready');
+            }
+          });
       });
       this._started = true;
       callback(false);
     }
-  }
-  catch(error) {
+  } catch (error) {
     callback(error);
   }
 }
 
 /**
- * @callback module:Interface~callback_of_destroy
+ * @callback Interface~callback_of_destroy
  * @param {error} error
 /**
- * @memberof module:Interface
- * @param {module:Service~callback_of_destroy} callback
+ * @memberof Interface
+ * @param {Interface~callback_of_destroy} callback
  * @description Destroy interface.
  */
 Interface.prototype.destroy = function(callback) {
   // Catch error.
   try {
     // Close WebSocket Server.
-    this._server.close((error)=> {
-      if(error) {
+    this._server.close((error) => {
+      if (error) {
         callback(error);
-      }
-      else {
+      } else {
         this._closed = true;
         callback(false);
       }
     });
-  }
-  catch(error) {
+  } catch (error) {
     callback(error);
   }
 }
 
 /**
- * @callback module:Interface~callback_of_on
+ * @callback Interface~callback_of_on
  * @param {error} error
  * @description This callback might have additional arguments.
 /**
- * @memberof module:Interface
+ * @memberof Interface
  * @param {string} event_name
- * @param {module:Service~callback_of_on} callback
+ * @param {Interface~callback_of_on} callback
  * @description Register event listener.
  */
 Interface.prototype.on = function(event_name, callback) {
@@ -137,15 +173,85 @@ Interface.prototype.on = function(event_name, callback) {
  * @param {object} settings
  * @description Initiative interface of WebSocket
  */
-function Connector(settings) {
+function Connector(settings, new_tunnel) {
   /**
-   * @memberof Interface
+   * @memberof Connector
    * @type {object}
    * @private
    */
   this._settings = settings;
+
+  /**
+   * @memberof Connector
+   * @type {function}
+   * @private
+   */
+  this._new_tunnel_function = new_tunnel;
 }
 
+/**
+ * @callback Connector~callback_of_connect
+ * @param {error} error
+ * @description
+/**
+ * @memberof Connector
+ * @param {object} connect_settings
+ * @param {Connector~callback_of_connect} callback
+ * @description Register event listener.
+ */
+Connector.prototype.connect = function(connect_settings, callback) {
+  // Catch error.
+  try {
+    // Create a WebSocket client whatsoever.
+    let ws = new WebSocket('ws://' + connect_settings.host + ':' + connect_settings.port);
+    callback(false);
+
+    // Call new_tunnel() function aquired from constructor(injected by node module).
+    this._new_tunnel_function(
+      // Wrapped send fucntion.
+      (data, callback) => {
+        ws.send(data, callback);
+      },
+      // Wrapped close fucntion.
+      () => {
+        ws.close();
+      },
+      // Get emitter and get the rest of jobs done.
+      (error, tunnel_emitter) => {
+        if (error) {
+          // Emitter error event.
+          callback(error);
+        } else {
+          ws.on('open', () => {
+            tunnel_emitter('ready');
+            // ws.send(123);
+          });
+
+          ws.on('message', (message) => {
+            tunnel_emitter('data', message);
+          });
+
+          ws.on('error', (error) => {
+            tunnel_emitter('error', error);
+          });
+
+          ws.on('close', () => {
+            tunnel_emitter('close');
+          });
+          callback(error);
+        }
+      }
+    );
+  } catch (error) {
+    callback(error);
+  }
+}
+
+/**
+ * @constructor
+ * @param {object} settings
+ * @description Initiative interface of WebSocket
+ */
 
 module.exports = {
   /**
@@ -182,5 +288,20 @@ module.exports = {
   interface_required_settings: {
     host: 'IP address. Or other alternative addressing.',
     port: 'Port number.'
+  },
+
+  /**
+   * @memberof module:WebsocketInterface
+   * @type {object}
+   */
+  connector_required_settings: {},
+
+  /**
+   * @memberof module:WebsocketInterface
+   * @type {object}
+   */
+  connector_connect_required_settings: {
+    host: 'Remote IP address. Or other alternative addressing.',
+    port: 'Remote port number.'
   }
 }

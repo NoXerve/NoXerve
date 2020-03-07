@@ -26,5 +26,19 @@ module.exports = {
       this.name = 'ERR_NOXERVEAGENT_NODE_INTERFACE_NOT_EXISTS';
       this.message = message;
     }
+  },
+  'ERR_NOXERVEAGENT_NODE_CONNECTOR_NOT_AVALIABLE': class ERR_NOXERVEAGENT_NODE_CONNECTOR_NOT_AVALIABLE extends Error {
+    constructor(message, ...params) {
+      // Pass remaining arguments (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_NODE_CONNECTOR_NOT_AVALIABLE);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_NODE_CONNECTOR_NOT_AVALIABLE';
+      this.message = message;
+    }
   }
 };

@@ -18,7 +18,6 @@ let Errors = require('../errors');
  * @param {object} settings
  * @description NoXerve Agent Worker Object
  */
-
 function Worker(settings) {
   /**
    * @memberof module:Worker
