@@ -95,22 +95,44 @@ function Tunnel(settings) {
   }
 }
 
-// [Flag] Unfinished annotaion.
+/**
+ * @memberof module:Tunnel
+ * @param {string} keyword
+ * @param {object} value
+ * @description Set specifiec value from keyword.
+ */
 Tunnel.prototype.setValue = function(keyword, value) {
   this._values[keyword] = value;
 }
 
-// [Flag] Unfinished annotaion.
+/**
+ * @memberof module:Tunnel
+ * @param {string} keyword
+ * @description Remove specifiec value from keyword.
+ */
 Tunnel.prototype.removeValue = function(keyword) {
   delete this._values[keyword];
 }
 
-// [Flag] Unfinished annotaion.
+/**
+ * @memberof module:Tunnel
+ * @param {string} keyword
+ * @returns {object} anything
+ * @description Return specifiec value from keyword.
+ */
 Tunnel.prototype.returnValue = function(keyword) {
   return this._values[keyword];
 }
 
-// [Flag] Unfinished annotaion.
+/**
+ * @callback module:Tunnel~callback_of_get_emitter
+ * @param {error} error
+ * @param {object} emitter
+/**
+ * @memberof module:Tunnel
+ * @param {module:Tunnel~callback_of_get_emitter} callback
+ * @description Get emitter method. Designed for interface module to emit events.
+ */
 Tunnel.prototype.getEmitter = function(callback) {
   if(this._emitter_distributed) {
     // [Flag] Uncatogorized error.
@@ -122,17 +144,40 @@ Tunnel.prototype.getEmitter = function(callback) {
   }
 }
 
-// [Flag] Unfinished annotaion.
+/**
+ * @callback module:Tunnel~callback_of_on
+ * @description Parameters are depended on event type.
+/**
+ * @memberof module:Tunnel
+ * @param {string} event_name
+ * @param {module:Tunnel~callback_of_on} callback
+ * @description On method. Designed for listening events.
+ */
 Tunnel.prototype.on = function(event_name, callback) {
   this._event_listeners[event_name] = callback;
 }
 
-// [Flag] Unfinished annotaion.
+/**
+ * @callback module:Tunnel~callback_of_send
+ * @param {error} error
+/**
+ * @memberof module:Tunnel
+ * @param {blob} data
+ * @param {module:Tunnel~callback_of_send} callback
+ * @description Send data. Blob data.
+ */
 Tunnel.prototype.send = function(blob, callback) {
   this._send_function(blob, callback);
 }
 
-// [Flag] Unfinished annotaion.
+/**
+ * @callback module:Tunnel~callback_of_close
+ * @param {error} error
+/**
+ * @memberof module:Tunnel
+ * @param {module:Tunnel~callback_of_close} callback
+ * @description Close tunnel.
+ */
 Tunnel.prototype.close = function(callback) {
   this._close_function(callback);
 }
