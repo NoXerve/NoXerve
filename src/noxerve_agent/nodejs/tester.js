@@ -29,7 +29,7 @@ Node.on('tunnel-create', (tunnel)=> {
 })
 Node.createInterface('WebSocket', {host: '0.0.0.0', port: 1224}, (err, id)=> {
   if(err) console.log(err);
-  Node.createTunnel('WebSocket', {host: '0.0.0.0', port: 1224}, (err)=> {
+  Node.createTunnel('WebSocket', {host: '0.0.0.0'}, (err)=> {
     if(err) console.log(err);
 
   })
