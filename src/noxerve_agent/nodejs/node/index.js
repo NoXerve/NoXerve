@@ -5,12 +5,12 @@
  * @copyright 2019-2020 NOOXY. All Rights Reserved.
  */
 
- 'use strict';
+'use strict';
 
- /**
-  * @module Node
-  * @namespace Node
-  */
+/**
+ * @module Node
+ * @namespace Node
+ */
 
 const UUID = require('uuid');
 const Errors = require('../errors');
@@ -22,8 +22,8 @@ const AvaliableInterfacesPath = require("path").join(__dirname, "./interfaces");
 let AvaliableInterfaces = {};
 
 // Load avaliable interfaces auto-dynamicly.
-require("fs").readdirSync(AvaliableInterfacesPath).forEach((file_name)=> {
-  let interface_ = require(AvaliableInterfacesPath+"/" + file_name);
+require("fs").readdirSync(AvaliableInterfacesPath).forEach((file_name) => {
+  let interface_ = require(AvaliableInterfacesPath + "/" + file_name);
 
   // Mapping interface's name from specified module.
   AvaliableInterfaces[interface_.interface_name] = interface_;
@@ -31,7 +31,7 @@ require("fs").readdirSync(AvaliableInterfacesPath).forEach((file_name)=> {
   // Also mapping interface's name from its aliases.
   // The weird name "interface_" is simply caused by javascript's reserved
   // keyword.
-  if(interface_.interface_name_aliases) interface_.interface_name_aliases.forEach((alias_interface_name)=> {
+  if (interface_.interface_name_aliases) interface_.interface_name_aliases.forEach((alias_interface_name) => {
     AvaliableInterfaces[alias_interface_name] = interface_;
   });
 });
@@ -79,11 +79,11 @@ function Node(settings) {
    * @description Dictionary of event listeners.
    */
   this._event_listeners = {
-    'tunnel-create': (tunnel)=> {
+    'tunnel-create': (tunnel) => {
 
     },
 
-    'error': ()=> {
+    'error': () => {
 
     }
   };
@@ -113,17 +113,15 @@ Node.prototype._newTunnel = function(interface_name, from_interface, from_connec
     tunnel.setValue('from_connector', from_connector);
 
     // Get tunnel emitter and pass to interface or connector.
-    tunnel.getEmitter((error, emitter)=> {
-      if(error) {
+    tunnel.getEmitter((error, emitter) => {
+      if (error) {
         callback(error);
-      }
-      else {
+      } else {
         this._event_listeners['tunnel-create'](tunnel);
         callback(error, emitter);
       }
     });
-  }
-  catch(error) {
+  } catch (error) {
     callback(error);
   }
 }
@@ -141,11 +139,10 @@ Node.prototype._newTunnel = function(interface_name, from_interface, from_connec
  * @private
  */
 Node.prototype._checkInterfaceExists = function(interface_name, callback) {
-  if(this._active_interfaces[interface_name]) {
+  if (this._active_interfaces[interface_name]) {
     callback(false);
-  }
-  else {
-    callback(new Errors.ERR_NOXERVEAGENT_NODE_INTERFACE_NOT_EXISTS('The interface with interface id "'+interface_id+'" does not exist.'));
+  } else {
+    callback(new Errors.ERR_NOXERVEAGENT_NODE_INTERFACE_NOT_EXISTS('The interface with interface id "' + interface_id + '" does not exist.'));
   }
 }
 
@@ -161,24 +158,20 @@ Node.prototype._checkInterfaceExists = function(interface_name, callback) {
  * nothing.
  */
 Node.prototype._checkConnectorAvaliable = function(interface_name, callback) {
-  if(this._active_interface_connectors[interface_name]) {
+  if (this._active_interface_connectors[interface_name]) {
     callback(false);
-  }
-  else if(AvaliableInterfaces[interface_name]) {
+  } else if (AvaliableInterfaces[interface_name]) {
     // Create connector instance of the interface.
-    let connector = new AvaliableInterfaces[interface_name].Connector({}, (send, close, callback)=> {
-      this._newTunnel(AvaliableInterfaces[interface_name].interface_name, false, true, send, close, callback);
-    });
+    let connector = new AvaliableInterfaces[interface_name].Connector({});
     this._active_interface_connectors[interface_name] = connector;
 
     // Also mapping interface's name from its aliases.
-    AvaliableInterfaces[interface_name].interface_name_aliases.forEach((alias_interface_name)=> {
+    AvaliableInterfaces[interface_name].interface_name_aliases.forEach((alias_interface_name) => {
       this._active_interface_connectors[alias_interface_name] = connector;
     });
     callback(false);
-  }
-  else {
-    callback(new Errors.ERR_NOXERVEAGENT_NODE_CONNECTOR_NOT_AVALIABLE('The connector of interface "'+interface_name+'" does not avaliable on this platfrom.'));
+  } else {
+    callback(new Errors.ERR_NOXERVEAGENT_NODE_CONNECTOR_NOT_AVALIABLE('The connector of interface "' + interface_name + '" does not avaliable on this platfrom.'));
   }
 }
 
@@ -201,14 +194,14 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
     let pass = true;
     let interface_settings_keys = Object.keys(interface_settings);
     let interface_required_settings = AvaliableInterfaces[interface_name].interface_required_settings;
-    Object.keys(interface_required_settings).forEach((setting_name)=> {
-      if(!interface_settings_keys.includes(setting_name)) {
-        throw new Errors.ERR_NOXERVEAGENT_NODE_INTERFACE_CREATE('Missing settings argument "'+setting_name+'". '+interface_required_settings[setting_name]);
+    Object.keys(interface_required_settings).forEach((setting_name) => {
+      if (!interface_settings_keys.includes(setting_name)) {
+        throw new Errors.ERR_NOXERVEAGENT_NODE_INTERFACE_CREATE('Missing settings argument "' + setting_name + '". ' + interface_required_settings[setting_name]);
       }
     });
 
     // Create a new interface instance from avaliable interfaces list.
-    let interface_instance = new AvaliableInterfaces[interface_name].Interface(interface_settings, (send, close, callback)=> {
+    let interface_instance = new AvaliableInterfaces[interface_name].Interface(interface_settings, (send, close, callback) => {
       // Fill in proper interface information for interface itself.
       // AvaliableInterfaces[interface_name].interface_name provide a "standard"
       // interface name.
@@ -216,18 +209,16 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
     });
 
     // Start interface
-    interface_instance.start((error)=> {
-      if(error) {
+    interface_instance.start((error) => {
+      if (error) {
         callback(error);
-      }
-      else {
+      } else {
         // Append interface and fires callback with no error.
         this._active_interfaces.push(interface_instance);
         callback(false, this._active_interfaces.length - 1);
       }
     });
-  }
-  catch(error) {
+  } catch (error) {
     callback(error);
   }
 }
@@ -245,17 +236,15 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
 Node.prototype.destroyInterface = function(interface_id, callback) {
   // Catch error.
   try {
-    this._checkInterfaceExists(interface_id, (error)=> {
-      if(error) {
+    this._checkInterfaceExists(interface_id, (error) => {
+      if (error) {
         callback(error);
-      }
-      else {
+      } else {
         // Gracefully destroy interface.
-        this._active_interfaces[interface_id].destroy((error)=> {
-          if(error) {
+        this._active_interfaces[interface_id].destroy((error) => {
+          if (error) {
             callback(error);
-          }
-          else {
+          } else {
             // Set this interface slot null. Cancel referation for garbage collection.
             this._active_interfaces[interface_id] = null;
             callback(error);
@@ -263,8 +252,7 @@ Node.prototype.destroyInterface = function(interface_id, callback) {
         });
       }
     });
-  }
-  catch(error) {
+  } catch (error) {
     callback(error);
   }
 }
@@ -283,21 +271,42 @@ Node.prototype.destroyInterface = function(interface_id, callback) {
 Node.prototype.createTunnel = function(interface_name, interface_connect_settings, callback) {
   // Catch error.
   try {
-    this._checkConnectorAvaliable(interface_name, (error)=> {
+    this._checkConnectorAvaliable(interface_name, (error) => {
       // Check connector settings match the requirement of interface module.
       let pass = true;
       let interface_connect_settings_keys = Object.keys(interface_connect_settings);
       let interface_connector_connect_required_settings = AvaliableInterfaces[interface_name].connector_connect_required_settings;
-      Object.keys(interface_connector_connect_required_settings).forEach((setting_name)=> {
-        if(!interface_connect_settings_keys.includes(setting_name)) {
-          throw new Errors.ERR_NOXERVEAGENT_NODE_CONNECTOR_CREATE('Missing settings argument "'+setting_name+'". '+interface_connector_connect_required_settings[setting_name]);
+      Object.keys(interface_connector_connect_required_settings).forEach((setting_name) => {
+        if (!interface_connect_settings_keys.includes(setting_name)) {
+          throw new Errors.ERR_NOXERVEAGENT_NODE_CONNECTOR_CREATE('Missing settings argument "' + setting_name + '". ' + interface_connector_connect_required_settings[setting_name]);
         }
       });
 
-      this._active_interface_connectors[interface_name].connect(interface_connect_settings, callback);
+      this._active_interface_connectors[interface_name].connect(interface_connect_settings,
+        // Note that this function behave just like this._newTunnel function but with the "connector" taste.
+        // instead of interface.
+        (send, close, emitter_initializer_from_connector) => {
+        // Create a new tunnel object with proper setting.
+        let tunnel = new Tunnel({
+          close: close,
+          send: send
+        });
+        tunnel.setValue('interface_name', AvaliableInterfaces[interface_name].interface_name);
+        tunnel.setValue('from_interface', false);
+        tunnel.setValue('from_connector', true);
+
+        // Get tunnel emitter and pass to interface or connector.
+        tunnel.getEmitter((error, emitter) => {
+          if (error) {
+            callback(error);
+          } else {
+            callback(false, tunnel);
+            emitter_initializer_from_connector(emitter);
+          }
+        });
+      });
     });
-  }
-  catch(error) {
+  } catch (error) {
     callback(error);
   }
 }
@@ -327,9 +336,6 @@ Node.prototype.on = function(event_name, callback) {
  */
 Node.prototype.close = function(interface_id, callback) {
   // Catch error.
-  try {
-  }
-  catch(error) {
-  }
+  try {} catch (error) {}
 }
 module.exports = Node;

@@ -9,7 +9,6 @@
 console.log('[Tester] Start testing...');
 
 let Tests = [
-  'node_test',
   'node_connector_send_test',
   'node_interface_send_test'
 ];
@@ -18,7 +17,7 @@ let finish = (test_name) => {
   let index = Tests.indexOf(test_name);
   if (index !== -1) Tests.splice(index, 1);
   if(!Tests.length) {
-    console.log('[Tester] Test finished. Passed all tests.');
+    console.log('[Tester] Test finished. Executed all tests. Validate your test from printed result.');
   }
 };
 
@@ -28,7 +27,9 @@ let Node = new(require('./node'))();
 // **** Node Module Test Start ****
 
 console.log('[Node module] Preparing test...');
-Node.on('tunnel-create', (tunnel) => {
+
+// Test created tunnel either from "createTunnel" function or "create-tunnel" event.
+let tunnel_test = (tunnel) => {
   if(tunnel.returnValue('from_connector')) console.log('[Node module] Tunnel created from connector.');
   if(tunnel.returnValue('from_interface')) console.log('[Node module] Tunnel created from interface.');
   tunnel.on('ready', () => {
@@ -55,7 +56,8 @@ Node.on('tunnel-create', (tunnel) => {
     console.log('[Node module] Tunnel error.', error);
   });
 
-})
+};
+Node.on('tunnel-create', tunnel_test)
 console.log('[Node module] Create interface.');
 Node.createInterface('WebSocket', {
   host: '0.0.0.0',
@@ -66,9 +68,11 @@ Node.createInterface('WebSocket', {
   Node.createTunnel('WebSocket', {
     host: '0.0.0.0',
     port: 1234
-  }, (err) => {
-    if (err) console.log('[Node module] Create tunnel error.', err);
-    finish('node_test');
+  }, (err, tunnel) => {
+    if (err) console.log('[Node module] Create tunnel error.', err)
+    else {
+      tunnel_test(tunnel);
+    }
   })
 })
 

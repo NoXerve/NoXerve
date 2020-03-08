@@ -178,20 +178,13 @@ Interface.prototype.on = function(event_name, callback) {
  * @param {object} settings
  * @description Initiative interface of Websocket
  */
-function Connector(settings, new_tunnel) {
+function Connector(settings) {
   /**
    * @memberof Connector
    * @type {object}
    * @private
    */
   this._settings = settings;
-
-  /**
-   * @memberof Connector
-   * @type {function}
-   * @private
-   */
-  this._new_tunnel_function = new_tunnel;
 }
 
 /**
@@ -204,15 +197,14 @@ function Connector(settings, new_tunnel) {
  * @param {Connector~callback_of_connect} callback
  * @description Register event listener.
  */
-Connector.prototype.connect = function(connect_settings, callback) {
-  // Catch error.
-  try {
+Connector.prototype.connect = function(connect_settings, new_tunnel_callback) {
+  // // Catch error.
+  // try {
     // Create a Websocket client whatsoever.
     let ws = new Websocket('ws://' + connect_settings.host + ':' + connect_settings.port);
-    callback(false);
 
-    // Call new_tunnel() function aquired from constructor(injected by node module).
-    this._new_tunnel_function(
+    // Call new_tunnel() function aquired from the function caller.
+    new_tunnel_callback(
       // Wrapped send fucntion.
       (data, callback) => {
         ws.send(data, callback);
@@ -222,34 +214,27 @@ Connector.prototype.connect = function(connect_settings, callback) {
         ws.close();
       },
       // Get emitter and get the rest of jobs done.
-      (error, tunnel_emitter) => {
-        if (error) {
-          // Emitter error event.
-          callback(error);
-        } else {
-          ws.on('open', () => {
-            tunnel_emitter('ready');
-            // ws.send(123);
-          });
+      (tunnel_emitter) => {
+        ws.on('open', () => {
+          tunnel_emitter('ready');
+        });
 
-          ws.on('message', (message) => {
-            tunnel_emitter('data', message);
-          });
+        ws.on('message', (message) => {
+          tunnel_emitter('data', message);
+        });
 
-          ws.on('error', (error) => {
-            tunnel_emitter('error', error);
-          });
+        ws.on('error', (error) => {
+          tunnel_emitter('error', error);
+        });
 
-          ws.on('close', () => {
-            tunnel_emitter('close');
-          });
-          callback(error);
-        }
+        ws.on('close', () => {
+          tunnel_emitter('close');
+        });
       }
     );
-  } catch (error) {
-    callback(error);
-  }
+  // } catch (error) {
+  //   callback(error);
+  // }
 }
 
 /**
