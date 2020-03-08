@@ -262,7 +262,7 @@ module.exports = {
 
   /**
    * @memberof module:WebsocketInterface
-   * @type {Initiative}
+   * @type {Connector}
    */
   Connector: Connector,
 
