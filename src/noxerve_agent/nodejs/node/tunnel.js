@@ -91,7 +91,10 @@ function Tunnel(settings) {
    * @description Dictionary of event listeners.
    */
   this._emitter = (event_name, ...param)=> {
-    this._event_listeners[event_name].apply(null, param);
+    if(this._event_listeners[event_name]) {
+      this._event_listeners[event_name].apply(null, param);
+      
+    }
   }
 }
 
