@@ -17,7 +17,7 @@ const Errors = require('../../errors');
 /**
  * @constructor
  * @param {object} settings
- * @description Interface interface of WebSocket
+ * @description Passive interface of WebSocket
  */
 function Interface(settings, new_tunnel) {
   /**
