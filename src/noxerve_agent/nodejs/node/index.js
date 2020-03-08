@@ -9,6 +9,7 @@
 
  /**
   * @module Node
+  * @namespace Node
   */
 
 const UUID = require('uuid');
@@ -38,7 +39,7 @@ require("fs").readdirSync(AvaliableInterfacesPath).forEach((file_name)=> {
 /**
  * @constructor module:Node
  * @param {object} settings
- * @description NoXerve Node Object
+ * @description NoXerve Node Object. Module that abstractly provide node of a network object.
  */
 function Node(settings) {
   /**
@@ -91,6 +92,7 @@ function Node(settings) {
 /**
  * @callback module:Node~callback_of_new_tunnel
  * @param {error} error
+ */
 /**
  * @memberof module:Node
  * @param {module:Node~callback_of_new_tunnel} callback
@@ -129,6 +131,7 @@ Node.prototype._newTunnel = function(interface_name, from_interface, from_connec
 /**
  * @callback module:Node~callback_of_check_interface_exists
  * @param {error} error
+ */
 /**
  * @memberof module:Node
  * @param {string} interface_name
@@ -149,13 +152,13 @@ Node.prototype._checkInterfaceExists = function(interface_name, callback) {
 /**
  * @callback module:Node~callback_of_check_connector_avaliable
  * @param {error} error
+ */
 /**
  * @memberof module:Node
  * @param {string} interface_name
  * @param {module:Node~callback_of_check_connector_avaliable} callback
  * @description Check connector exist or not. If exists then return
  * nothing.
- * @private
  */
 Node.prototype._checkConnectorAvaliable = function(interface_name, callback) {
   if(this._active_interface_connectors[interface_name]) {
@@ -183,6 +186,7 @@ Node.prototype._checkConnectorAvaliable = function(interface_name, callback) {
  * @callback module:Node~callback_of_create_interface
  * @param {integer} interface_id
  * @param {error} error
+ */
 /**
  * @memberof module:Node
  * @param {string} interface_name - "websocket", "tcp" or "websocket_secure".
@@ -231,6 +235,7 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
 /**
  * @callback module:Node~callback_of_destroy_interface
  * @param {error} error
+ */
 /**
  * @memberof module:Node
  * @param {string} interface_id - Which you've obtained from "createInterface".
@@ -267,6 +272,7 @@ Node.prototype.destroyInterface = function(interface_id, callback) {
 /**
  * @callback module:Node~callback_of_create_tunnel
  * @param {error} error
+ */
 /**
  * @memberof module:Node
  * @param {string} interface_name,
@@ -299,7 +305,7 @@ Node.prototype.createTunnel = function(interface_name, interface_connect_setting
 /**
  * @callback module:Node~callback_of_on
  * @description callback parameter based on event's type.
- *
+ */
 /**
  * @memberof module:Node
  * @param {string} event_name
@@ -313,6 +319,7 @@ Node.prototype.on = function(event_name, callback) {
 /**
  * @callback module:Node~callback_of_close
  * @param {error} error
+ */
 /**
  * @memberof module:Node
  * @param {module:Node~callback_of_close} callback

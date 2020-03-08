@@ -16,7 +16,7 @@ require('../errors');
 /**
  * @constructor module:Tunnel
  * @param {string} tunnel_id
- * @description NoXerve Agent Node Tunnel Object
+ * @description NoXerve Agent Node Tunnel Object. Submodule of interface module. Provide prototype of tunnel object.
  */
 function Tunnel(settings) {
   /**
@@ -93,7 +93,7 @@ function Tunnel(settings) {
   this._emitter = (event_name, ...param)=> {
     if(this._event_listeners[event_name]) {
       this._event_listeners[event_name].apply(null, param);
-      
+
     }
   }
 }
@@ -131,6 +131,7 @@ Tunnel.prototype.returnValue = function(keyword) {
  * @callback module:Tunnel~callback_of_get_emitter
  * @param {error} error
  * @param {object} emitter
+ */
 /**
  * @memberof module:Tunnel
  * @param {module:Tunnel~callback_of_get_emitter} callback
@@ -150,6 +151,7 @@ Tunnel.prototype.getEmitter = function(callback) {
 /**
  * @callback module:Tunnel~callback_of_on
  * @description Parameters are depended on event type.
+ */
 /**
  * @memberof module:Tunnel
  * @param {string} event_name
@@ -163,6 +165,7 @@ Tunnel.prototype.on = function(event_name, callback) {
 /**
  * @callback module:Tunnel~callback_of_send
  * @param {error} error
+ */
 /**
  * @memberof module:Tunnel
  * @param {blob} data
@@ -176,6 +179,7 @@ Tunnel.prototype.send = function(blob, callback) {
 /**
  * @callback module:Tunnel~callback_of_close
  * @param {error} error
+ */
 /**
  * @memberof module:Tunnel
  * @param {module:Tunnel~callback_of_close} callback

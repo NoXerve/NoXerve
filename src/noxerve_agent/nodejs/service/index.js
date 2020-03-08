@@ -16,7 +16,7 @@ require('../errors');
 /**
  * @constructor module:Service
  * @param {object} settings
- * @description NoXerve Agent Service Object
+ * @description NoXerve Agent Service Object. This module is a submodule hooked on NoXerveAgent object.
  */
 
 function Service(settings) {

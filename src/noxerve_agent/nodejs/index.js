@@ -43,7 +43,7 @@ function NoXerveAgent(settings) {
   /**
    * @memberof module:NoXerveAgent
    * @type {object}
-   * @see module:NoXerveAgent
+   * @see module:Service
    * @description API intended to provide functions for the role of service.
    */
   this.Service = new Service();

@@ -16,7 +16,7 @@ let Errors = require('../errors');
 /**
  * @constructor module:Worker
  * @param {object} settings
- * @description NoXerve Agent Worker Object
+ * @description NoXerve Agent Worker Object. This module is a submodule hooked on NoXerveAgent object.
  */
 function Worker(settings) {
   /**

@@ -9,6 +9,8 @@
 
 /**
  * @module WebsocketInterface
+ * @description Websocket submodule of interface module.
+ * @memberof Node
  */
 
 const WebSocket = require('ws');
@@ -73,6 +75,7 @@ function Interface(settings, new_tunnel) {
 /**
  * @callback Interface~callback_of_start
  * @param {error} error
+ */
 /**
  * @memberof Interface
  * @param {Interface~callback_of_start} callback
@@ -132,6 +135,7 @@ Interface.prototype.start = function(callback) {
 /**
  * @callback Interface~callback_of_destroy
  * @param {error} error
+ */
 /**
  * @memberof Interface
  * @param {Interface~callback_of_destroy} callback
@@ -158,6 +162,7 @@ Interface.prototype.destroy = function(callback) {
  * @callback Interface~callback_of_on
  * @param {error} error
  * @description This callback might have additional arguments.
+ */
 /**
  * @memberof Interface
  * @param {string} event_name
@@ -192,7 +197,7 @@ function Connector(settings, new_tunnel) {
 /**
  * @callback Connector~callback_of_connect
  * @param {error} error
- * @description
+ */
 /**
  * @memberof Connector
  * @param {object} connect_settings
