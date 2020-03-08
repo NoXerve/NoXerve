@@ -31,7 +31,7 @@ require("fs").readdirSync(AvaliableInterfacesPath).forEach((file_name)=> {
   // Also mapping interface's name from its aliases.
   // The weird name "interface_" is simply caused by javascript's reserved
   // keyword.
-  interface_.interface_name_aliases.forEach((alias_interface_name)=> {
+  if(interface_.interface_name_aliases) interface_.interface_name_aliases.forEach((alias_interface_name)=> {
     AvaliableInterfaces[alias_interface_name] = interface_;
   });
 });

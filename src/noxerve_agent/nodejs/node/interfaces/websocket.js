@@ -13,13 +13,13 @@
  * @memberof Node
  */
 
-const WebSocket = require('ws');
+const Websocket = require('ws');
 const Errors = require('../../errors');
 
 /**
  * @constructor
  * @param {object} settings
- * @description Passive interface of WebSocket
+ * @description Passive interface of Websocket
  */
 function Interface(settings, new_tunnel) {
   /**
@@ -67,7 +67,7 @@ function Interface(settings, new_tunnel) {
    * @memberof Interface
    * @type {object}
    * @private
-   * @description WebSocket server instance.
+   * @description Websocket server instance.
    */
   this._server;
 }
@@ -88,7 +88,7 @@ Interface.prototype.start = function(callback) {
       // [Flag] Uncatogorized Error.
       callback(true);
     } else {
-      this._server = new WebSocket.Server({
+      this._server = new Websocket.Server({
         port: this._settings.port,
         host: this._settings.host
       });
@@ -144,7 +144,7 @@ Interface.prototype.start = function(callback) {
 Interface.prototype.destroy = function(callback) {
   // Catch error.
   try {
-    // Close WebSocket Server.
+    // Close Websocket Server.
     this._server.close((error) => {
       if (error) {
         callback(error);
@@ -176,7 +176,7 @@ Interface.prototype.on = function(event_name, callback) {
 /**
  * @constructor
  * @param {object} settings
- * @description Initiative interface of WebSocket
+ * @description Initiative interface of Websocket
  */
 function Connector(settings, new_tunnel) {
   /**
@@ -207,8 +207,8 @@ function Connector(settings, new_tunnel) {
 Connector.prototype.connect = function(connect_settings, callback) {
   // Catch error.
   try {
-    // Create a WebSocket client whatsoever.
-    let ws = new WebSocket('ws://' + connect_settings.host + ':' + connect_settings.port);
+    // Create a Websocket client whatsoever.
+    let ws = new Websocket('ws://' + connect_settings.host + ':' + connect_settings.port);
     callback(false);
 
     // Call new_tunnel() function aquired from constructor(injected by node module).
@@ -255,7 +255,7 @@ Connector.prototype.connect = function(connect_settings, callback) {
 /**
  * @constructor
  * @param {object} settings
- * @description Initiative interface of WebSocket
+ * @description Initiative interface of Websocket
  */
 
 module.exports = {
@@ -283,7 +283,8 @@ module.exports = {
    */
   interface_name_aliases: [
     'ws',
-    'WebSocket'
+    'WebSocket',
+    'Websocket'
   ],
 
   /**
