@@ -87,13 +87,13 @@ function NoXerveAgent(settings) {
 */
 /**
  * @memberof module:NoXerveAgent
- * @param {string} interface_type - 'TCP', 'Websocket', etc
+ * @param {string} interface_name - 'TCP', 'Websocket', etc
  * @param {object} interface_settings - port, crypto, etc
  * @param {module:NoXerveAgent~callback_of_create_interface} callback
  */
-NoXerveAgent.prototype.createInterface = function(interface_type, interface_settings, callback) {
+NoXerveAgent.prototype.createInterface = function(interface_name, interface_settings, callback) {
   // This opreation handled by Node module.
-  this._node_module.createInterface(interface_type, interface_settings, callback);
+  this._node_module.createInterface(interface_name, interface_settings, callback);
 }
 
 /**

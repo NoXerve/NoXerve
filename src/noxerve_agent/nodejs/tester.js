@@ -23,6 +23,16 @@ let finish = (test_name) => {
 
 let NoXerveAgent = new(require('./index'))({});
 let Node = new(require('./node'))();
+let Protocol = new(require('./protocol'))({
+  modules: {
+
+  },
+  node_module: Node
+});
+
+console.log('[Node module] NoXerveAgent Object: ', NoXerveAgent);
+console.log('[Node module] Node Object: ', Node);
+console.log('[Node module] Protocol Object: ', Protocol);
 
 // **** Node Module Test Start ****
 
@@ -77,5 +87,3 @@ Node.createInterface('WebSocket', {
 })
 
 // **** Node Module Test End ****
-
-console.log(NoXerveAgent);

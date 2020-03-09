@@ -11,7 +11,7 @@
  * @module Protocol
  */
 
-const Errors = require('../errors');
+const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
 
 /**
@@ -70,17 +70,46 @@ ActivityProtocol.prototype._shuffleList = function(array) {
 ActivityProtocol.prototype.start = function() {
 
   // Create activity from activity module.
-  this._activity_module.on('create-activity', (interface_connect_settings_list) => {
+  this._activity_module.on('create-activity', (interface_connect_settings_list, callback) => {
+
+    // Shuffle for clientwise loadbalancing.
     let shuffled_interface_connect_settings_list = this._shuffleList(interface_connect_settings_list);
-    for(const index in shuffled_interface_connect_settings_list) {
-      const interface_connect_settings = shuffled_interface_connect_settings_list[index];
+
+    // Proceed tunnel creations loop.
+    let index = 0;
+    let loop = ()=> {
+      const interface_name = shuffled_interface_connect_settings_list[index].interface_name;
+      const interface_connect_settings = shuffled_interface_connect_settings_list[interface_name].interface_connect_settings;
 
       const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, tunnel)=> {
+        if(open_handshanke_error) {
+          // Next loop.
+          if(index < shuffled_interface_connect_settings_list.length) {
+            index++;
+            loop();
+          }
 
+          // No more next loop. Exit.
+          else {
+            // [Flag] Uncatogorized error.
+            callback(true);
+          }
+        }
+        else {
+          try {
+            callback(tunnel);
+            return false;
+          }
+          catch(error) {
+            callback(error);
+            return false;
+          }
+        }
       };
 
-      _open_handshake_function(interface_connect_settings, acknowledge_synchronization);
-    }
+      _open_handshake_function(interface_name, interface_connect_settings, acknowledge_synchronization);
+    };
+    loop();
   });
 }
 
@@ -109,4 +138,8 @@ ActivityProtocol.prototype.acknowledge = function(acknowledge_information, tunne
 }
 
 
-module.exports = ActivityProtocol;
+module.exports = {
+  protocol_name: 'activity',
+  related_module_name: 'activity',
+  module: ActivityProtocol
+};
