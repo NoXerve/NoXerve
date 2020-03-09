@@ -77,3 +77,5 @@ Node.createInterface('WebSocket', {
 })
 
 // **** Node Module Test End ****
+
+console.log(NoXerveAgent);

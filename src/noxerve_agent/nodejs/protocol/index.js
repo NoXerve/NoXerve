@@ -5,13 +5,25 @@
  * @copyright 2019-2020 NOOXY. All Rights Reserved.
  */
 
- 'use strict';
+'use strict';
 
- /**
-  * @module Protocol
-  */
+/**
+ * @module Protocol
+ */
 
 const Errors = require('../errors');
+
+// Initial supported protocols detail.
+const SupportedProtocolsPath = require("path").join(__dirname, "./protocols");
+let SupportedProtocols = {};
+
+// Load avaliable protocols auto-dynamicly.
+require("fs").readdirSync(SupportedProtocolsPath).forEach((file_name) => {
+  let protocol = require(SupportedProtocolsPath + "/" + file_name);
+
+  // Mapping protocol's name from specified module.
+  AvaliableInterfaces[protocol.protocol_name] = protocol;
+});
 
 /**
  * @constructor module:Protocol
@@ -40,12 +52,59 @@ function Protocol(settings) {
    * @type {object}
    * @private
    */
-  this._node_modules = settings.node_module;
+  this._node_module = settings.node_module;
+
+}
+
+/**
+ * Handshake routine:
+ * open_handshake(initiative)
+ * => synchronize(passive)
+ * => acknowledge_synchronization(initiative finished)
+ * => acknowledge(passive finished)
+ */
+
+// [Flag] Unfinished annotation.
+Protocol.prototype._openHandshake = function() {
+
 }
 
 // [Flag] Unfinished annotation.
 Protocol.prototype.start = function() {
-  
+  // Handle tunnel create event from node module.
+  // Specificlly speaking, use handshake to identify which module does tunnel belong to.
+  this._node_module.on('tunnel-create', (tunnel) => {
+    // Check is passive. Since following patterns are designed only for the role of passive.
+    if(tunnel.returnValue('from_connector')) {
+      tunnel.close()
+    }
+    else {
+      // Use stage variable to identify current handshake progress.
+      // Avoiding proccess executed wrongly.
+      // stage 0 => waiting to synchronize
+      // stage 1 => waiting to acknowledge
+
+      let stage = 0;
+
+      let ready_state = false;
+      tunnel.on('ready', () => {
+        let ready_state = true;
+      });
+      tunnel.on('data', () => {
+
+      });
+      tunnel.on('error', () => {
+        if(ready_state) {
+
+        }
+        else {
+          // Happened error even not ready all. Abort opreation without any further actions.
+          tunnel.close();
+        }
+      });
+    }
+  });
+
 }
 
 // [Flag] Unfinished annotation.

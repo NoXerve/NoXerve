@@ -36,17 +36,19 @@ function NoXerveAgent(settings) {
    * @memberof module:NoXerveAgent
    * @type {object}
    * @see module:Worker
+   * @private
    * @description API intended to provide functions for the role of worker.
    */
-  this.Worker = new Worker();
+  this._worker_module = new Worker();
 
   /**
    * @memberof module:NoXerveAgent
    * @type {object}
    * @see module:Service
+   * @private
    * @description API intended to provide functions for the role of service.
    */
-  this.Service = new Service();
+  this._service_module = new Service();
 
   /**
    * @memberof module:NoXerveAgent
@@ -55,7 +57,27 @@ function NoXerveAgent(settings) {
    * @private
    * @description Module for tunneling.
    */
-  this._Node = new Node();
+  this._node_module = new Node();
+
+  /**
+   * @memberof module:NoXerveAgent
+   * @type {object}
+   * @see module:Worker
+   * @description API intended to provide functions for the role of worker.
+   */
+  this.Worker = {
+
+  };
+
+  /**
+   * @memberof module:NoXerveAgent
+   * @type {object}
+   * @see module:Service
+   * @description API intended to provide functions for the role of service.
+   */
+  this.Service = {
+
+  };
 };
 
 /**
@@ -71,7 +93,7 @@ function NoXerveAgent(settings) {
  */
 NoXerveAgent.prototype.createInterface = function(interface_type, interface_settings, callback) {
   // This opreation handled by Node module.
-  this._Node.createInterface(interface_type, interface_settings, callback);
+  this._node_module.createInterface(interface_type, interface_settings, callback);
 }
 
 /**
@@ -85,7 +107,7 @@ NoXerveAgent.prototype.createInterface = function(interface_type, interface_sett
  */
 NoXerveAgent.prototype.destroyInterface = function(interface_id, callback) {
   // This opreation handled by Node module.
-  this._Node.destroyInterface(interface_id, callback);
+  this._node_module.destroyInterface(interface_id, callback);
 }
 
 /**
@@ -99,7 +121,7 @@ NoXerveAgent.prototype.destroyInterface = function(interface_id, callback) {
  */
 NoXerveAgent.prototype.close = function(interface_id, callback) {
   // Close tunnels first
-  this._Node.close(()=> {
+  this._node_module.close(()=> {
 
   });
 }
