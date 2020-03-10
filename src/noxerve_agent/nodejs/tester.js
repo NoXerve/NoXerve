@@ -45,11 +45,15 @@ let tunnel_test = (tunnel) => {
   tunnel.on('ready', () => {
     if(tunnel.returnValue('from_connector')) {
       console.log('[Node module] Tunnel created from connector. Ready.');
-      tunnel.send('Sent from connector.');
+      tunnel.send('Sent from connector.', (error)=> {
+        console.log('[Node module] "Sent from interface." sent.');
+      });
     }
     if(tunnel.returnValue('from_interface')) {
       console.log('[Node module] Tunnel created from interface. Ready.');
-      tunnel.send('Sent from interface.');
+      tunnel.send('Sent from interface.', (error)=> {
+        console.log('[Node module] "Sent from interface." sent.');
+      });
     }
   });
   tunnel.on('data', (data) => {

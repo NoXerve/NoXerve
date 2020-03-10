@@ -81,7 +81,7 @@ ActivityProtocol.prototype.start = function() {
       const interface_name = shuffled_interface_connect_settings_list[index].interface_name;
       const interface_connect_settings = shuffled_interface_connect_settings_list[interface_name].interface_connect_settings;
 
-      const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, tunnel)=> {
+      const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information)=> {
         if(open_handshanke_error) {
           // Next loop.
           if(index < shuffled_interface_connect_settings_list.length) {
@@ -107,7 +107,11 @@ ActivityProtocol.prototype.start = function() {
         }
       };
 
-      _open_handshake_function(interface_name, interface_connect_settings, acknowledge_synchronization);
+      const finish_handshake = (error, tunnel)=> {
+
+      }
+
+      _open_handshake_function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
     };
     loop();
   });
