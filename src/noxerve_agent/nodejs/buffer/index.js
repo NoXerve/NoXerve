@@ -14,6 +14,10 @@
  */
 
 module.exports = {
+  from: (...args) => {
+    return Buffer.from.apply(null, args);
+  },
+
   alloc: (...args) => {
     return Buffer.alloc.apply(null, args);
   },

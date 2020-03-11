@@ -8,7 +8,7 @@
 'use strict';
 
 /**
- * @module Protocol
+ * @module ActivityProtocol
  */
 
 const Errors = require('../../../errors');
@@ -22,24 +22,24 @@ const Buf = require('../../../buffer');
 
 function ActivityProtocol(settings) {
   /**
-   * @memberof module:Protocol
+   * @memberof module:ActivityProtocol
    * @type {object}
    * @private
    */
   this._settings = settings;
 
   /**
-   * @memberof module:Protocol
+   * @memberof module:ActivityProtocol
    * @type {object}
    * @private
    */
   this._activity_module = settings.related_module;
 
   /**
-   * @memberof module:Protocol
+   * @memberof module:ActivityProtocol
    * @type {object}
    * @private
-   * @description
+   * @description Open a handshake.
    */
   this._open_handshake_function = settings.open_handshake;
 }
@@ -75,40 +75,67 @@ ActivityProtocol.prototype.start = function() {
     // Shuffle for clientwise loadbalancing.
     let shuffled_interface_connect_settings_list = this._shuffleList(interface_connect_settings_list);
 
+    // Get activity_id from synchronize_acknowledgement_information;
+    let activity_id;
+
+    // Synchronize information for handshake
+    // Format:
+    // service-activity byte
+    // 0x01
+    let synchronize_information = Buf.from([1]);;
+
     // Proceed tunnel creations loop.
     let index = 0;
     let loop = ()=> {
       const interface_name = shuffled_interface_connect_settings_list[index].interface_name;
       const interface_connect_settings = shuffled_interface_connect_settings_list[interface_name].interface_connect_settings;
 
+      // Loop loop() with condition.
+      const next_loop = ()=> {
+        if(index < shuffled_interface_connect_settings_list.length) {
+          index++;
+          loop();
+        }
+        // No more next loop. Exit.
+        else {
+          // [Flag] Uncatogorized error.
+          callback(true);
+        }
+      };
+
       const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information)=> {
         if(open_handshanke_error) {
-          // Next loop.
-          if(index < shuffled_interface_connect_settings_list.length) {
-            index++;
-            loop();
-          }
+          // Unable to open handshake. Next loop.
+          next_loop();
 
-          // No more next loop. Exit.
-          else {
-            // [Flag] Uncatogorized error.
-            callback(true);
-          }
+          // Return acknowledge_information(not acknowledge).
+          return false;
         }
         else {
+          // Handshake opened. Check if synchronize_acknowledgement_information valid.
           try {
-            callback(tunnel);
-            return false;
+            let acknowledge_information;
+            //
+            return acknowledge_information;
           }
           catch(error) {
-            callback(error);
+            // Unable to open handshake. Next loop.
+            next_loop();
+
+            // Return acknowledge_information(not acknowledge).
             return false;
           }
         }
       };
 
       const finish_handshake = (error, tunnel)=> {
-
+        if(error) {
+          // Unable to open handshake. Next loop.
+          next_loop();
+        }
+        else {
+          callback(error, tunnel);
+        }
       }
 
       _open_handshake_function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake);

@@ -29,6 +29,9 @@ let Protocol = new(require('./protocol'))({
   },
   node_module: Node
 });
+let Utils = require('./utils');
+
+console.log('[Crypto] random8bytes ', Utils.random8bytes());
 
 console.log('[Node module] NoXerveAgent Object: ', NoXerveAgent);
 console.log('[Node module] Node Object: ', Node);
