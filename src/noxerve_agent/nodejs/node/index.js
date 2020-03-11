@@ -39,7 +39,7 @@ require("fs").readdirSync(AvaliableInterfacesPath).forEach((file_name) => {
 /**
  * @constructor module:Node
  * @param {object} settings
- * @description NoXerve Node Object. Module that abstractly provide node object of a network.
+ * @description NoXerve Agent Node Object. Module that abstractly provide node object of a network.
  */
 function Node(settings) {
   /**

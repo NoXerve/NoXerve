@@ -19,7 +19,7 @@ const Utils = require('../../../utils');
 /**
  * @constructor module:ServiceProtocol
  * @param {object} settings
- * @description NoXerve ServiceProtocol Object. Protocols of service module.
+ * @description NoXerve Agent ServiceProtocol Object. Protocols of service module.
  */
 
 function ServiceProtocol(settings) {

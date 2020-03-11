@@ -17,7 +17,7 @@ const Buf = require('../../../buffer');
 /**
  * @constructor module:ActivityProtocol
  * @param {object} settings
- * @description NoXerve ActivityProtocol Object. Protocols of activity module.
+ * @description NoXerve Agent ActivityProtocol Object. Protocols of activity module.
  */
 
 function ActivityProtocol(settings) {

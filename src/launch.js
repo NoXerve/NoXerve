@@ -7,12 +7,5 @@
 
 'use strict';
 
-const NoXerveAgent = require('./noxerve_agent/node');
-
-let noxerve_agent = new NoXerveAgent({});
-
-noxerve_agent.createPassiveInterface();
-console.log(noxerve_agent.Worker);
-console.log(noxerve_agent);
-
-noxerve_agent.Worker.addConnections();
+const NoXerveAgent = require('./noxerve_agent');
+const NoXerveFramework = require('./noserve_framework');

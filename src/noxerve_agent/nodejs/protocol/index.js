@@ -28,7 +28,7 @@ require("fs").readdirSync(SupportedProtocolsPath).forEach((file_name) => {
 /**
  * @constructor module:Protocol
  * @param {object} settings
- * @description NoXerve Protocol Object. Protocols module focus only on format.
+ * @description NoXerve Agent Protocol Object. Protocols module focus only on format.
  * Please do not put too much logic in protocols..
  */
 

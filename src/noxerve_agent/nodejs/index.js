@@ -15,7 +15,7 @@ const Errors = require('./errors');
 let Worker = require('./worker');
 let Service = require('./service');
 let Node = require('./node');
-
+let SecuredNode = require('./secured_node');
 
 
 /**

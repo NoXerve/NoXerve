@@ -8,14 +8,14 @@
  'use strict';
 
  /**
-  * @module Protocol
+  * @module Activity
   */
 
 
   const Errors = require('../../../errors');
 
   /**
-   * @constructor module:ActivityProtocol
+   * @constructor module:Activity
    * @param {object} settings
-   * @description NoXerve ActivityProtocol Object. Protocols of activity module.
+   * @description NoXerve Agent Activity Object.
    */
