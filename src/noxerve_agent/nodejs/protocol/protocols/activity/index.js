@@ -13,6 +13,8 @@
 
 const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
+const activity_of_service_handler = require('./activity_of_service_handler');
+
 
 /**
  * @constructor module:ActivityProtocol
@@ -142,25 +144,7 @@ ActivityProtocol.prototype.start = function() {
         }
         else {
           create_activity_callback(false, (error, activity_of_service)=> {
-            if(error) tunnel.close();
-            else {
-              // Start communication with service.
-              activity_of_service.on('', ()=> {
-                tunnel.send();
-              });
-
-              tunnel.on('data', ()=> {
-                activity_of_service.emit();
-              });
-
-              tunnel.on('error', (error)=> {
-                activity_of_service.emit();
-              });
-
-              tunnel.on('close', ()=> {
-                activity_of_service.emit();
-              });
-            }
+            activity_of_service_handler(error, activity_of_service, tunnel);
           });
         }
       }

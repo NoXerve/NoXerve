@@ -14,6 +14,7 @@
 const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
+const service_of_activity_handler = require('./service_of_activity_handler');
 
 
 /**
@@ -77,25 +78,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
     onAcknowledge((acknowledge_information, tunnel)=> {
       if(acknowledge_information[0] === 0x01) {
         this._service_module.emit('activity-connect', (error, service_of_activity)=> {
-          if(error) tunnel.close();
-          else {
-            // Start communication with service.
-            service_of_activity.on('', ()=> {
-              tunnel.send();
-            });
-
-            tunnel.on('data', ()=> {
-              activity_of_service.emit();
-            });
-
-            tunnel.on('error', (error)=> {
-              activity_of_service.emit();
-            });
-
-            tunnel.on('close', ()=> {
-              activity_of_service.emit();
-            });
-          }
+          service_of_activity_handler(error, service_of_activity, tunnel);
         });
       }
       else {
