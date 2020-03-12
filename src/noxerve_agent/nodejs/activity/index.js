@@ -53,12 +53,13 @@ Activity.prototype.createActivity = function(interface_connect_settings_list, ca
         let activity_of_service = new ActivityOfService();
 
         // Setup service api.
-        activity_of_service_handler(activity_of_service);
+        activity_of_service_handler(false, activity_of_service);
 
         // Finish up withour problem.
         callback(false, activity_of_service);
       }
       catch(error) {
+        activity_of_service_handler(true);
         callback(error);
       }
     }

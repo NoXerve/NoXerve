@@ -177,7 +177,6 @@ function Protocol(settings) {
 // [Flag] Unfinished annotation.
 Protocol.prototype.start = function() {
   for (const module_name in this._protocol_modules) {
-    console.log(this._protocol_modules[module_name]);
     this._protocol_modules[module_name].start();
   }
   // Handle tunnel create event from node module.

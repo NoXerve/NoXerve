@@ -18,18 +18,20 @@ let finish = (test_name) => {
   if (index !== -1) Tests.splice(index, 1);
   if(!Tests.length) {
     console.log('[Tester] Test finished. Executed all tests. Validate your test from printed result.');
+    process.exit();
   }
 };
 
 let NoXerveAgent = new(require('./index'))({});
 let Node = new(require('./node'))();
 let Activity = new(require('./activity'))();
+let Service = new(require('./service'))();
 let Protocol = new(require('./protocol'))({
   modules: {
     activity: Activity,
-    service: new function() {}
+    service: Service
   },
-  node_module: Node
+  node_module: new(require('./node'))()
 });
 let Utils = require('./utils');
 
@@ -71,6 +73,14 @@ let tunnel_test = (tunnel) => {
       finish('node_connector_send_test');
     }
   });
+  tunnel.on('close', () => {
+    if(tunnel.returnValue('from_connector')) {
+      console.log('[Node module] Tunnel created from connector closed.');
+    }
+    if(tunnel.returnValue('from_interface')) {
+      console.log('[Node module] Tunnel created from interface closed.');
+    }
+  });
   tunnel.on('error', (error) => {
     console.log('[Node module] Tunnel error.', error);
   });
@@ -100,8 +110,16 @@ Node.createInterface('WebSocket', {
   Protocol.start();
   // **** Protocol Module Test End ****
 
+
+  // **** Service Module Test****
+  Service.on('connect', (service_of_activity)=> {
+    console.log('[Service module] Activity created.');
+  });
+  // **** Service Module Test End****
+
   // **** Activity Module Test ****
 
+  console.log('[Activity module] Activity create test.');
   Activity.createActivity([{
     interface_name: 'WebSocket',
     interface_connect_settings: {
@@ -109,6 +127,12 @@ Node.createInterface('WebSocket', {
       port: 1234
     }
   }], (error, activity_of_service)=> {
-    console.log(error);
+    if(error) console.log(error);
+    else {
+      console.log('[Activity module] Activity created.');
+    }
   });
+
+  // **** Activity Module Test End****
+
 })

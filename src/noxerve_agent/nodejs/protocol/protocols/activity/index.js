@@ -106,7 +106,6 @@ ActivityProtocol.prototype.start = function() {
       const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information)=> {
         if(open_handshanke_error) {
           // Unable to open handshake. Next loop.
-          console.log(open_handshanke_error);
           next_loop();
 
           // Return acknowledge_information(not acknowledge).
@@ -142,23 +141,26 @@ ActivityProtocol.prototype.start = function() {
           next_loop();
         }
         else {
-          create_activity_callback(false, (activity_of_service)=> {
-            // Start communication with service.
-            activity_of_service.on('', ()=> {
-              tunnel.send();
-            });
+          create_activity_callback(false, (error, activity_of_service)=> {
+            if(error) tunnel.close();
+            else {
+              // Start communication with service.
+              activity_of_service.on('', ()=> {
+                tunnel.send();
+              });
 
-            tunnel.on('data', ()=> {
-              activity_of_service.emit();
-            });
+              tunnel.on('data', ()=> {
+                activity_of_service.emit();
+              });
 
-            tunnel.on('error', (error)=> {
-              activity_of_service.emit();
-            });
+              tunnel.on('error', (error)=> {
+                activity_of_service.emit();
+              });
 
-            tunnel.on('close', ()=> {
-              activity_of_service.emit();
-            });
+              tunnel.on('close', ()=> {
+                activity_of_service.emit();
+              });
+            }
           });
         }
       }

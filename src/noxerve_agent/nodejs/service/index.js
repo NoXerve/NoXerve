@@ -11,7 +11,8 @@
  * @module Service
  */
 
-require('../errors');
+ const Errors = require('../errors');
+ const ServiceOfActivity = require('./service_of_activity');
 
 /**
  * @constructor module:Service
@@ -26,6 +27,25 @@ function Service(settings) {
    * @private
    */
   this._settings = settings;
+
+  /**
+   * @memberof module:Service
+   * @type {object}
+   * @private
+   */
+  this._event_listeners = {
+    // Internal private default events.
+    'activity-connect': (callback)=> {
+      try {
+        const service_of_activity = new ServiceOfActivity();
+        this._event_listeners.connect(service_of_activity);
+        callback(false, service_of_activity);
+      }
+      catch(error) {
+        callback(error);
+      }
+    }
+  };
 };
 
 /**
@@ -39,8 +59,8 @@ function Service(settings) {
  * @param {module:Service~callback_of_on} callback
  * @description Service events. Each corresponded with an edvidual activity.
  */
-Service.prototype.on = function(event_name, callback) {
-
+Service.prototype.on = function(event_name, listener) {
+  this._event_listeners[event_name] = listener;
 }
 
 /**
@@ -69,8 +89,8 @@ Service.prototype.define = function(function_name, callback) {
 
 // [Flag] Unfinished annotation.
 // activity_id is 8 bytes binary in base64 format.
-Service.prototype.emit = function(activity_id, callback) {
-
+Service.prototype.emit = function(event_name, ...params) {
+  this._event_listeners[event_name].apply(null, params);
 }
 
 module.exports = Service;

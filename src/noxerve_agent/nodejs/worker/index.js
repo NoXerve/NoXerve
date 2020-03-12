@@ -57,7 +57,6 @@ Worker.prototype.importResourceList = function(resource_list, callback) {
  * @description Connect to NoXerveAgent Worker Network
  */
 Worker.prototype.addConnections = function(remote_passive_interfaces, callback) {
-  console.log(this);
   if (this.Worker._resources_list_imported !== true) {
     // abort opearation if resource_list is not prepared
     callback(true);

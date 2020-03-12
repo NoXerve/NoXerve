@@ -205,11 +205,11 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
     });
 
     // Create a new interface instance from avaliable interfaces list.
-    let interface_instance = new AvaliableInterfaces[interface_name].Interface(interface_settings, (send, close, callback) => {
+    let interface_instance = new AvaliableInterfaces[interface_name].Interface(interface_settings, (send, close, new_tunnel_callback) => {
       // Fill in proper interface information for interface itself.
       // AvaliableInterfaces[interface_name].interface_name provide a "standard"
       // interface name.
-      this._newTunnel(AvaliableInterfaces[interface_name].interface_name, true, false, send, close, callback);
+      this._newTunnel(AvaliableInterfaces[interface_name].interface_name, true, false, send, close, new_tunnel_callback);
     });
 
     // Start interface
@@ -225,6 +225,7 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
       }
     });
   } catch (error) {
+    console.log(error);
     if(called_callback) throw error;
     else callback(error);
   }
