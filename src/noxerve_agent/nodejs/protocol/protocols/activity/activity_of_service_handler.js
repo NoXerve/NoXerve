@@ -7,16 +7,16 @@
 
  'use strict';
 
-module.exports = (error, activity_of_service, tunnel)=> {
-
+const activity_of_service_handler = (error, activity_of_service, tunnel)=> {
   if(error) tunnel.close();
   else {
     // Start communication with service.
-    activity_of_service.on('', ()=> {
+    activity_of_service.on('call-service-function', (function_name, nsdt_function_argument, callback)=> {
       tunnel.send();
     });
 
-    tunnel.on('data', ()=> {
+    tunnel.on('data', (blob)=> {
+      //
       activity_of_service.emit();
     });
 
@@ -28,4 +28,5 @@ module.exports = (error, activity_of_service, tunnel)=> {
       activity_of_service.emit();
     });
   }
-};
+}
+module.exports = activity_of_service_handler;

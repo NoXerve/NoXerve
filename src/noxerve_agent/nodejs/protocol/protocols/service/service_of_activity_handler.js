@@ -1,4 +1,13 @@
-(error, service_of_activity, tunnel)=> {
+/**
+ * @file NoXerveAgent service protocol service_of_activity_handler file. [service_of_activity_handler.js]
+ * @author NOOXY <thenooxy@gmail.com>
+ * @author noowyee <magneticchen@gmail.com>
+ * @copyright 2019-2020 NOOXY. All Rights Reserved.
+ */
+
+ 'use strict';
+
+const service_of_activity_handler = (error, service_of_activity, tunnel)=> {
   if(error) tunnel.close();
   else {
     // Start communication with service.
@@ -19,3 +28,5 @@
     });
   }
 }
+
+module.exports = service_of_activity_handler;

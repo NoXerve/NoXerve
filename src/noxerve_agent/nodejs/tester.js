@@ -10,20 +10,24 @@ console.log('[Tester] Start testing...');
 
 let Tests = [
   'node_connector_send_test',
-  'node_interface_send_test'
+  'node_interface_send_test',
+  'activity_test',
+  'service_test'
 ];
 
 let finish = (test_name) => {
   let index = Tests.indexOf(test_name);
   if (index !== -1) Tests.splice(index, 1);
-  if(!Tests.length) {
+  if (!Tests.length) {
     console.log('[Tester] Test finished. Executed all tests. Validate your test from printed result.');
     process.exit();
   }
 };
 
+let NSDT = require('./nsdt');
 let NoXerveAgent = new(require('./index'))({});
 let Node = new(require('./node'))();
+let Node2 = new(require('./node'))();
 let Activity = new(require('./activity'))();
 let Service = new(require('./service'))();
 let Protocol = new(require('./protocol'))({
@@ -31,7 +35,7 @@ let Protocol = new(require('./protocol'))({
     activity: Activity,
     service: Service
   },
-  node_module: new(require('./node'))()
+  node_module: Node2
 });
 let Utils = require('./utils');
 
@@ -47,37 +51,37 @@ console.log('[Node module] Preparing test...');
 
 // Test created tunnel either from "createTunnel" function or "create-tunnel" event.
 let tunnel_test = (tunnel) => {
-  if(tunnel.returnValue('from_connector')) console.log('[Node module] Tunnel created from connector.');
-  if(tunnel.returnValue('from_interface')) console.log('[Node module] Tunnel created from interface.');
+  if (tunnel.returnValue('from_connector')) console.log('[Node module] Tunnel created from connector.');
+  if (tunnel.returnValue('from_interface')) console.log('[Node module] Tunnel created from interface.');
   tunnel.on('ready', () => {
-    if(tunnel.returnValue('from_connector')) {
+    if (tunnel.returnValue('from_connector')) {
       console.log('[Node module] Tunnel created from connector. Ready.');
-      tunnel.send('Sent from connector.', (error)=> {
+      tunnel.send('Sent from connector.', (error) => {
         console.log('[Node module] "Sent from interface." sent.');
       });
     }
-    if(tunnel.returnValue('from_interface')) {
+    if (tunnel.returnValue('from_interface')) {
       console.log('[Node module] Tunnel created from interface. Ready.');
-      tunnel.send('Sent from interface.', (error)=> {
+      tunnel.send('Sent from interface.', (error) => {
         console.log('[Node module] "Sent from interface." sent.');
       });
     }
   });
   tunnel.on('data', (data) => {
-    if(tunnel.returnValue('from_connector')) {
+    if (tunnel.returnValue('from_connector')) {
       console.log('[Node module] Tunnel created from connector received data: "', data, '"');
       finish('node_interface_send_test');
     }
-    if(tunnel.returnValue('from_interface')) {
+    if (tunnel.returnValue('from_interface')) {
       console.log('[Node module] Tunnel created from interface received data: "', data, '"');
       finish('node_connector_send_test');
     }
   });
   tunnel.on('close', () => {
-    if(tunnel.returnValue('from_connector')) {
+    if (tunnel.returnValue('from_connector')) {
       console.log('[Node module] Tunnel created from connector closed.');
     }
-    if(tunnel.returnValue('from_interface')) {
+    if (tunnel.returnValue('from_interface')) {
       console.log('[Node module] Tunnel created from interface closed.');
     }
   });
@@ -103,36 +107,49 @@ Node.createInterface('WebSocket', {
       tunnel_test(tunnel);
     }
   });
+})
 
-  // **** Node Module Test End ****
+// **** Node Module Test End ****
 
-  // **** Protocol Module Test ****
-  Protocol.start();
-  // **** Protocol Module Test End ****
+// **** Protocol Module Test Start ****
+Protocol.start();
+// **** Protocol Module Test End ****
 
 
-  // **** Service Module Test****
-  Service.on('connect', (service_of_activity)=> {
-    console.log('[Service module] Activity created.');
-  });
-  // **** Service Module Test End****
+// **** Service Module Test Start ****
+Service.on('connect', (service_of_activity) => {
+  console.log('[Service module] Activity created.');
+  finish('service_test');
+});
+// **** Service Module Test End ****
 
-  // **** Activity Module Test ****
+
+Node2.createInterface('WebSocket', {
+  host: '0.0.0.0',
+  port: 12345
+}, (err, id) => {
+  if (err) console.log('[Node2 module] Create interface error.', err);
 
   console.log('[Activity module] Activity create test.');
+
+  // **** Activity Module Test Start ****
   Activity.createActivity([{
     interface_name: 'WebSocket',
     interface_connect_settings: {
       host: '0.0.0.0',
-      port: 1234
+      port: 12345
     }
-  }], (error, activity_of_service)=> {
-    if(error) console.log(error);
+  }], (error, activity_of_service) => {
+    if (error) console.log(error);
     else {
       console.log('[Activity module] Activity created.');
+      finish('activity_test');
     }
   });
-
-  // **** Activity Module Test End****
-
+  // **** Activity Module Test End ****
 })
+
+console.log('[NSDT] ', NSDT.decode(NSDT.encode({
+  host: '0.0.0.0',
+  port: 12345
+})));

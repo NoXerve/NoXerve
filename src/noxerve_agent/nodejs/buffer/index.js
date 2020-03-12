@@ -36,5 +36,13 @@ module.exports = {
 
   isBuffer: (...args) => {
     return Buffer.isBuffer.apply(null, args);
+  },
+
+  writeUInt32BE: (...args) => {
+    return Buffer.writeUInt32BE.apply(null, args);
+  },
+
+  readUInt32BE: (...args) => {
+    return Buffer.readUInt32BE.apply(null, args);
   }
 };
