@@ -8,6 +8,7 @@
 
 let Crypto = require('crypto');
 
+// Crypto level random bytes.
 module.exports.random8bytes = function() {
   return Crypto.randomBytes(8);
 }

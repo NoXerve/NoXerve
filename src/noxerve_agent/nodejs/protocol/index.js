@@ -110,12 +110,16 @@ Protocol.prototype._openHandshake = function(interface_name, interface_connect_s
       tunnel.on('data', (data) => {
         if (stage === 0) {
           // Call acknowledge_synchronization function. Respond with acknowledge_information for remote.
-          let acknowledge_information = acknowledge_synchronization(true, data);
+          const acknowledge_information = acknowledge_synchronization(true, data);
 
           // stage 1 => waiting to finish up. If any error happened call
           // "finish_handshake" from arguments.
           stage = 1;
           try {
+            if(acknowledge_information === false) {
+              // [Flag] Uncatogorized error.
+              throw true;
+            }
             tunnel.send(acknowledge_information, (error) => {
               if (error) {
                 stage = -1;
@@ -186,14 +190,21 @@ Protocol.prototype.start = function() {
       // stage 0 => waiting to synchronize.
       // Error => call nothing.
       // stage 1 => waiting to acknowledge.
-      // Error => call onSynchronizationError.
+      // Error => call synchronization_error_handler.
       let stage = 0;
 
       let ready_state = false;
       let related_module = null;
 
-      // Needed fo stage 1. "onSynchronizationError"'s argument from protocol module.
-      let synchronize_information_for_synchronization_error = null;
+      let synchronization_error_handler;
+      let acknowledge_handler;
+
+      const onSynchronizationError = (callback)=> {
+        synchronization_error_handler = callback;
+      };
+      const onAcknowledge = (callback)=> {
+        acknowledge_handler = callback;
+      };
 
       tunnel.on('ready', () => {
         ready_state = true;
@@ -203,17 +214,13 @@ Protocol.prototype.start = function() {
           // Check if any protocol module synchronize with the data or not.
           for (const protocol_name in this._protocol_modules) {
             // Call synchronize function. Check will it respond with data or not.
-            let synchronize_returned_data = this._protocol_modules[protocol_name].synchronize(data);
+            let synchronize_returned_data = this._protocol_modules[protocol_name].synchronize(data, onSynchronizationError, onAcknowledge);
 
             // If responded then finish up.
             if (synchronize_returned_data !== false && synchronize_returned_data !== null) {
 
               // Associate protocol module and send data to remote.
               related_module = this._protocol_modules[protocol_name];
-
-              // stage 1 => waiting to acknowledge. If any error happened call
-              // "onSynchronizationError" from protocol module.
-              synchronize_information_for_synchronization_error = data;
 
               stage = 1;
 
@@ -223,14 +230,19 @@ Protocol.prototype.start = function() {
                   if (error) {
                     stage = -1;
                     tunnel.close();
-                    related_module.onSynchronizationError(error, data);
+                    synchronization_error_handler(error, data);
                   }
                 });
               } catch (error) {
                 stage = -1;
                 tunnel.close();
-                related_module.onSynchronizationError(error, data);
+                synchronization_error_handler(error, data);
               }
+            }
+            else {
+              // Reset handlers.
+              synchronization_error_handler = null;
+              acknowledge_handler = null;
             }
           }
 
@@ -245,7 +257,7 @@ Protocol.prototype.start = function() {
           tunnel.on('error', () => {});
 
           // Finished handshake. Transfer tunnel ownership.
-          related_module.acknowledge(data, tunnel);
+          acknowledge_handler(data, tunnel);
         }
       });
 
@@ -258,7 +270,7 @@ Protocol.prototype.start = function() {
           } else if (stage === 1) {
             stage = -1;
             tunnel.close();
-            related_module.onSynchronizationError(error, synchronize_information_for_synchronization_error);
+            synchronization_error_handler(error);
           }
         } else {
           // Happened error even not ready at all. Abort opreation without any further actions.
@@ -270,7 +282,7 @@ Protocol.prototype.start = function() {
       tunnel.on('close', () => {
         if (stage === 1) {
           // [Flag] Uncatogorized error.
-          related_module.onSynchronizationError(true, synchronize_information_for_synchronization_error);
+          synchronization_error_handler(true);
         }
       });
     }

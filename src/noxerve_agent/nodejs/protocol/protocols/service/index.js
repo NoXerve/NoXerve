@@ -51,34 +51,40 @@ function ServiceProtocol(settings) {
    * @private
    * @description ActivityId to tunnel dictionary.
    */
-  this._activity_to_tunnel_dict = {};
+  this._activity_id_to_tunnel_dict = {};
 }
 
 // [Flag] Unfinished annotation.
-ServiceProtocol.prototype.synchronize = function(synchronize_information) {
+ServiceProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge) {
   // Synchronize information for handshake
   // Format:
   // service-activity byte
   // 0x01
   if(synchronize_information.length === 1 && synchronize_information[1] === 1) {
+    const generated_activity_id = Utils.random8bytes();
+    const generated_activity_id_base64 = generated_activity_id.toString('base64');
+    this._activity_id_to_tunnel_dict[generated_activity_id_base64] = null;
 
+    onError((error)=> {
+      return false;
+    });
+
+    onAcknowledge((acknowledge_information, tunnel)=> {
+      if(acknowledge_information[0] === 0x01) {
+        this._service_module.emit('connect', ()=> {
+
+        });
+      }
+      else {
+        return false;
+      }
+    });
+
+    // Send 8 bytes id;
+    return generated_activity_id;
   }
   else return false;
 }
-
-// [Flag] Unfinished annotation.
-// The "synchronize_information" parameter is identical to the one from synchronize.
-ServiceProtocol.prototype.onSynchronizationError = function(err, synchronize_information) {
-
-  return false;
-}
-
-// [Flag] Unfinished annotation.
-ServiceProtocol.prototype.acknowledge = function(acknowledge_information, tunnel) {
-
-  return false;
-}
-
 
 module.exports = {
   protocol_name: 'service',

@@ -70,7 +70,7 @@ ActivityProtocol.prototype._shuffleList = function(array) {
 ActivityProtocol.prototype.start = function() {
 
   // Create activity from activity module.
-  this._activity_module.on('create-activity', (interface_connect_settings_list, callback) => {
+  this._activity_module.on('create-activity', (interface_connect_settings_list, create_activity_callback) => {
 
     // Shuffle for clientwise loadbalancing.
     let shuffled_interface_connect_settings_list = this._shuffleList(interface_connect_settings_list);
@@ -99,7 +99,7 @@ ActivityProtocol.prototype.start = function() {
         // No more next loop. Exit.
         else {
           // [Flag] Uncatogorized error.
-          callback(true);
+          create_activity_callback(true);
         }
       };
 
@@ -114,8 +114,16 @@ ActivityProtocol.prototype.start = function() {
         else {
           // Handshake opened. Check if synchronize_acknowledgement_information valid.
           try {
-            let acknowledge_information;
-            //
+            activity_id = synchronize_acknowledgement_information;
+
+            // Acknowledgement information for handshake
+            // Format:
+            // acknowledge byte
+            // 0x01(ok)
+            // 0x00(not ok)
+            const acknowledge_information = Buf.from([0x01]);
+
+            // Return acknowledge binary.
             return acknowledge_information;
           }
           catch(error) {
@@ -134,10 +142,28 @@ ActivityProtocol.prototype.start = function() {
           next_loop();
         }
         else {
-          callback(error, tunnel);
+          create_activity_callback(false, (service_api)=> {
+            // Start communication with service.
+            service_api.on('', ()=> {
+              tunnel.send();
+            });
+            
+            tunnel.on('data', ()=> {
+              service_api.emit();
+            });
+
+            tunnel.on('error', (error)=> {
+              service_api.emit();
+            });
+
+            tunnel.on('close', ()=> {
+              service_api.emit();
+            });
+          });
         }
       }
 
+      // Callbacks setup completed. Start handshake process.
       _open_handshake_function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
     };
     loop();
@@ -152,19 +178,6 @@ ActivityProtocol.prototype.close = function() {
 // [Flag] Unfinished annotation.
 ActivityProtocol.prototype.synchronize = function(synchronize_information) {
   // Activity doesn't support SYN.
-  return false;
-}
-
-// [Flag] Unfinished annotation.
-// The "synchronize_information" parameter is identical to the one from synchronize.
-ActivityProtocol.prototype.onSynchronizationError = function(err, synchronize_information) {
-  // Activity doesn't support SYN.
-  return false;
-}
-
-// [Flag] Unfinished annotation.
-ActivityProtocol.prototype.acknowledge = function(acknowledge_information, tunnel) {
-  // Activity doesn't support ACK.
   return false;
 }
 

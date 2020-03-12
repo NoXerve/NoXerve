@@ -58,4 +58,19 @@ Service.prototype.redirect = function(activity_id, worker_id, callback) {
 
 }
 
+// [Flag] Unfinished annotation.
+// Alias of Service.define.
+Service.prototype.def = this.define;
+
+// [Flag] Unfinished annotation.
+Service.prototype.define = function(function_name, callback) {
+
+}
+
+// [Flag] Unfinished annotation.
+// activity_id is 8 bytes binary in base64 format.
+Service.prototype.emit = function(activity_id, callback) {
+
+}
+
 module.exports = Service;
