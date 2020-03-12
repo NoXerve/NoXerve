@@ -101,6 +101,7 @@ function Node(settings) {
  * @private
  */
 Node.prototype._newTunnel = function(interface_name, from_interface, from_connector, send, close, callback) {
+  let called_callback = false;
   // Catch error.
   try {
     // Create a new tunnel object with proper setting.
@@ -115,9 +116,11 @@ Node.prototype._newTunnel = function(interface_name, from_interface, from_connec
     // Get tunnel emitter and pass to interface or connector.
     tunnel.getEmitter((error, emitter) => {
       if (error) {
+        called_callback = true;
         callback(error);
       } else {
         this._event_listeners['tunnel-create'](tunnel);
+        called_callback = true;
         callback(error, emitter);
       }
     });
@@ -188,6 +191,7 @@ Node.prototype._checkConnectorAvaliable = function(interface_name, callback) {
  * @description Service events. Each corresponded with an edvidual activity.
  */
 Node.prototype.createInterface = function(interface_name, interface_settings, callback) {
+  let called_callback = false;
   // Catch error.
   try {
     // Check interface settings match the requirement of interface module.
@@ -211,15 +215,18 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
     // Start interface
     interface_instance.start((error) => {
       if (error) {
+        called_callback = true;
         callback(error);
       } else {
         // Append interface and fires callback with no error.
         this._active_interfaces.push(interface_instance);
+        called_callback = true;
         callback(false, this._active_interfaces.length - 1);
       }
     });
   } catch (error) {
-    callback(error);
+    if(called_callback) throw error;
+    else callback(error);
   }
 }
 
@@ -234,26 +241,31 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
  * @description Service events. Each corresponded with an edvidual activity.
  */
 Node.prototype.destroyInterface = function(interface_id, callback) {
+  let called_callback = false;
   // Catch error.
   try {
     this._checkInterfaceExists(interface_id, (error) => {
       if (error) {
+        called_callback = true;
         callback(error);
       } else {
         // Gracefully destroy interface.
         this._active_interfaces[interface_id].destroy((error) => {
           if (error) {
+            called_callback = true;
             callback(error);
           } else {
             // Set this interface slot null. Cancel referation for garbage collection.
             this._active_interfaces[interface_id] = null;
+            called_callback = true;
             callback(error);
           }
         });
       }
     });
   } catch (error) {
-    callback(error);
+    if(called_callback) throw error;
+    else callback(error);
   }
 }
 
@@ -269,6 +281,7 @@ Node.prototype.destroyInterface = function(interface_id, callback) {
  * @description Service events. Each corresponded with an edvidual activity.
  */
 Node.prototype.createTunnel = function(interface_name, interface_connect_settings, callback) {
+  let called_callback = false;
   // Catch error.
   try {
     this._checkConnectorAvaliable(interface_name, (error) => {
@@ -298,8 +311,10 @@ Node.prototype.createTunnel = function(interface_name, interface_connect_setting
         // Get tunnel emitter and pass to interface or connector.
         tunnel.getEmitter((error, emitter) => {
           if (error) {
+            called_callback = true;
             callback(error);
           } else {
+            called_callback = true;
             callback(false, tunnel);
             emitter_initializer_from_connector(emitter);
           }
@@ -307,7 +322,8 @@ Node.prototype.createTunnel = function(interface_name, interface_connect_setting
       });
     });
   } catch (error) {
-    callback(error);
+    if(called_callback) throw error;
+    else callback(error);
   }
 }
 

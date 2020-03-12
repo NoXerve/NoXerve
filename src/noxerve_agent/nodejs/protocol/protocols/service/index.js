@@ -54,13 +54,18 @@ function ServiceProtocol(settings) {
   this._activity_id_to_tunnel_dict = {};
 }
 
+ServiceProtocol.prototype.start = function() {
+
+}
+
 // [Flag] Unfinished annotation.
 ServiceProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge) {
   // Synchronize information for handshake
   // Format:
   // service-activity byte
   // 0x01
-  if(synchronize_information.length === 1 && synchronize_information[1] === 1) {
+
+  if(synchronize_information.length === 1 && synchronize_information[0] === 1) {
     const generated_activity_id = Utils.random8bytes();
     const generated_activity_id_base64 = generated_activity_id.toString('base64');
     this._activity_id_to_tunnel_dict[generated_activity_id_base64] = null;
@@ -89,5 +94,5 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
 module.exports = {
   protocol_name: 'service',
   related_module_name: 'service',
-  module: function() {}
+  module: ServiceProtocol
 };

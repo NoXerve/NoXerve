@@ -23,9 +23,11 @@ let finish = (test_name) => {
 
 let NoXerveAgent = new(require('./index'))({});
 let Node = new(require('./node'))();
+let Activity = new(require('./activity'))();
 let Protocol = new(require('./protocol'))({
   modules: {
-
+    activity: Activity,
+    service: new function() {}
   },
   node_module: Node
 });
@@ -90,7 +92,23 @@ Node.createInterface('WebSocket', {
     else {
       tunnel_test(tunnel);
     }
-  })
-})
+  });
 
-// **** Node Module Test End ****
+  // **** Node Module Test End ****
+
+  // **** Protocol Module Test ****
+  Protocol.start();
+  // **** Protocol Module Test End ****
+
+  // **** Activity Module Test ****
+
+  Activity.createActivity([{
+    interface_name: 'WebSocket',
+    interface_connect_settings: {
+      host: '0.0.0.0',
+      port: 1234
+    }
+  }], (error, activity_of_service)=> {
+    console.log(error);
+  });
+})

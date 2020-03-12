@@ -12,8 +12,8 @@
  */
 
 
-const Errors = require('../../../errors');
-const ServiceAPI = require('./service_api');
+const Errors = require('../errors');
+const ActivityOfService = require('./activity_of_service');
 
 
 /**
@@ -44,19 +44,19 @@ Activity.prototype.on = function(event_name, listener) {
 }
 // [Flag] Unfinished annotation.
 Activity.prototype.createActivity = function(interface_connect_settings_list, callback) {
-  this._event_listeners['create-activity'](interface_connect_settings_list, (error, service_api_handler)=> {
+  this._event_listeners['create-activity'](interface_connect_settings_list, (error, activity_of_service_handler)=> {
     if(error) {
       callback(error);
     }
     else {
       try {
-        let service_api = new ServiceAPI();
+        let activity_of_service = new ActivityOfService();
 
         // Setup service api.
-        service_api_handler(service_api);
+        activity_of_service_handler(activity_of_service);
 
         // Finish up withour problem.
-        callback(false, service_api);
+        callback(false, activity_of_service);
       }
       catch(error) {
         callback(error);
@@ -64,3 +64,5 @@ Activity.prototype.createActivity = function(interface_connect_settings_list, ca
     }
   });
 }
+
+module.exports = Activity;

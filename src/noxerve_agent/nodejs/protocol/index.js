@@ -55,6 +55,103 @@ function Protocol(settings) {
   this._node_module = settings.node_module;
 
   /**
+   * Handshake routine:
+   * open_handshake(initiative)
+   * => synchronize(passive)
+   * => acknowledge_synchronization(initiative finished)
+   * => acknowledge(passive finished)
+   */
+
+  // [Flag] Unfinished annotation.
+  this._openHandshake = (interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake) => {
+    this._node_module.createTunnel(interface_name, interface_connect_settings, (error, tunnel) => {
+      if (error) callback(error);
+      else {
+        // Use stage variable to identify current handshake progress.
+        // Avoiding proccess executed wrongly.
+        // stage -1 => Emitted error.
+        // Be called => stage 0
+        // stage 0 => waiting to acknowledge synchronization.
+        // Error => call acknowledge_synchronization.
+        // stage 1 => waiting to finish up.
+        // Error => call finish_handshake.
+        let stage = 0;
+
+        let ready_state = false;
+
+        tunnel.on('ready', () => {
+          ready_state = true;
+          // Send synchronize_information as tunnel is ready.
+          tunnel.send(synchronize_information);
+        });
+
+        tunnel.on('data', (data) => {
+          if (stage === 0) {
+            // Call acknowledge_synchronization function. Respond with acknowledge_information for remote.
+            const acknowledge_information = acknowledge_synchronization(false, data);
+
+            // stage 1 => waiting to finish up. If any error happened call
+            // "finish_handshake" from arguments.
+            stage = 1;
+            try {
+              if (acknowledge_information === false) {
+                // [Flag] Uncatogorized error.
+                throw true;
+              }
+              tunnel.send(acknowledge_information, (error) => {
+                if (error) {
+                  stage = -1;
+                  tunnel.close();
+                  finish_handshake(error);
+                } else {
+                  // Reset events.
+                  tunnel.on('ready', () => {});
+                  tunnel.on('data', () => {});
+                  tunnel.on('error', () => {});
+
+                  // Finish up
+                  finish_handshake(error, tunnel);
+                }
+              });
+            } catch (error) {
+              stage = -1;
+              tunnel.close();
+              finish_handshake(error);
+            }
+          } else if (stage === 1) {
+            // Nothing happened
+          }
+        });
+
+        tunnel.on('error', (error) => {
+          if (stage === 0) {
+            // [Flag] Uncatogorized error.
+            stage = -1;
+            tunnel.close();
+            acknowledge_synchronization(error);
+          } else if (stage === 1) {
+            // [Flag] Uncatogorized error.
+            stage = -1;
+            tunnel.close();
+            finish_handshake(true);
+          }
+        });
+
+        tunnel.on('close', () => {
+          if (stage === 0) {
+            // [Flag] Uncatogorized error.
+            acknowledge_synchronization(true);
+          } else if (stage === 1) {
+            // [Flag] Uncatogorized error.
+            finish_handshake(true);
+          }
+        });
+      }
+    });
+  }
+
+
+  /**
    * @memberof module:Protocol
    * @type {object}
    * @private
@@ -67,10 +164,9 @@ function Protocol(settings) {
     let Protocol = SupportedProtocols[protocol_name];
 
     // Check it's related module exists.
-    if (!this._imported_modules[Protocol.related_module_name]) {
+    if (this._imported_modules[Protocol.related_module_name]) {
 
-      // Check it's related module exists.
-      this._protocol_modules[Protocol.protocol_name] = new Protocol.module({
+      this._protocol_modules[Protocol.protocol_name] = new(Protocol.module)({
         related_module: this._imported_modules[Protocol.related_module_name],
         open_handshake: this._openHandshake
       });
@@ -78,103 +174,12 @@ function Protocol(settings) {
   }
 }
 
-/**
- * Handshake routine:
- * open_handshake(initiative)
- * => synchronize(passive)
- * => acknowledge_synchronization(initiative finished)
- * => acknowledge(passive finished)
- */
-
-// [Flag] Unfinished annotation.
-Protocol.prototype._openHandshake = function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake) {
-  this._node_module.createTunnel(interface_name, interface_connect_settings, (error, tunnel) => {
-    if (error) callback(error);
-    else {
-      // Use stage variable to identify current handshake progress.
-      // Avoiding proccess executed wrongly.
-      // stage -1 => Emitted error.
-      // Be called => stage 0
-      // stage 0 => waiting to acknowledge synchronization.
-      // Error => call acknowledge_synchronization.
-      // stage 1 => waiting to finish up.
-      // Error => call finish_handshake.
-      let stage = 0;
-
-      let ready_state = false;
-
-      tunnel.on('ready', () => {
-        ready_state = true;
-      });
-
-      tunnel.on('data', (data) => {
-        if (stage === 0) {
-          // Call acknowledge_synchronization function. Respond with acknowledge_information for remote.
-          const acknowledge_information = acknowledge_synchronization(true, data);
-
-          // stage 1 => waiting to finish up. If any error happened call
-          // "finish_handshake" from arguments.
-          stage = 1;
-          try {
-            if(acknowledge_information === false) {
-              // [Flag] Uncatogorized error.
-              throw true;
-            }
-            tunnel.send(acknowledge_information, (error) => {
-              if (error) {
-                stage = -1;
-                tunnel.close();
-                finish_handshake(error);
-              } else {
-                // Reset events.
-                tunnel.on('ready', () => {});
-                tunnel.on('data', () => {});
-                tunnel.on('error', () => {});
-
-                // Finish up
-                finish_handshake(error, tunnel);
-              }
-            });
-          } catch (error) {
-            stage = -1;
-            tunnel.close();
-            finish_handshake(error);
-          }
-        } else if (stage === 1) {
-          // Nothing happened
-        }
-      });
-
-      tunnel.on('error', () => {
-        if (stage === 0) {
-          // [Flag] Uncatogorized error.
-          stage = -1;
-          tunnel.close();
-          acknowledge_synchronization(true);
-        } else if (stage === 1) {
-          // [Flag] Uncatogorized error.
-          stage = -1;
-          tunnel.close();
-          finish_handshake(true);
-        }
-      });
-
-      tunnel.on('close', () => {
-        if (stage === 0) {
-          // [Flag] Uncatogorized error.
-          acknowledge_synchronization(true);
-        } else if (stage === 1) {
-          // [Flag] Uncatogorized error.
-          finish_handshake(true);
-        }
-      });
-      tunnel.send(open_handshake_return_data);
-    }
-  });
-}
-
 // [Flag] Unfinished annotation.
 Protocol.prototype.start = function() {
+  for (const module_name in this._protocol_modules) {
+    console.log(this._protocol_modules[module_name]);
+    this._protocol_modules[module_name].start();
+  }
   // Handle tunnel create event from node module.
   // Specificlly speaking, use handshake to identify which module does tunnel belong to.
   this._node_module.on('tunnel-create', (tunnel) => {
@@ -199,10 +204,10 @@ Protocol.prototype.start = function() {
       let synchronization_error_handler;
       let acknowledge_handler;
 
-      const onSynchronizationError = (callback)=> {
+      const onSynchronizationError = (callback) => {
         synchronization_error_handler = callback;
       };
-      const onAcknowledge = (callback)=> {
+      const onAcknowledge = (callback) => {
         acknowledge_handler = callback;
       };
 
@@ -238,8 +243,7 @@ Protocol.prototype.start = function() {
                 tunnel.close();
                 synchronization_error_handler(error, data);
               }
-            }
-            else {
+            } else {
               // Reset handlers.
               synchronization_error_handler = null;
               acknowledge_handler = null;

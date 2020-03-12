@@ -88,12 +88,12 @@ ActivityProtocol.prototype.start = function() {
     let index = 0;
     let loop = ()=> {
       const interface_name = shuffled_interface_connect_settings_list[index].interface_name;
-      const interface_connect_settings = shuffled_interface_connect_settings_list[interface_name].interface_connect_settings;
+      const interface_connect_settings = shuffled_interface_connect_settings_list[index].interface_connect_settings;
 
       // Loop loop() with condition.
       const next_loop = ()=> {
+        index++;
         if(index < shuffled_interface_connect_settings_list.length) {
-          index++;
           loop();
         }
         // No more next loop. Exit.
@@ -106,6 +106,7 @@ ActivityProtocol.prototype.start = function() {
       const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information)=> {
         if(open_handshanke_error) {
           // Unable to open handshake. Next loop.
+          console.log(open_handshanke_error);
           next_loop();
 
           // Return acknowledge_information(not acknowledge).
@@ -115,7 +116,6 @@ ActivityProtocol.prototype.start = function() {
           // Handshake opened. Check if synchronize_acknowledgement_information valid.
           try {
             activity_id = synchronize_acknowledgement_information;
-
             // Acknowledgement information for handshake
             // Format:
             // acknowledge byte
@@ -142,29 +142,29 @@ ActivityProtocol.prototype.start = function() {
           next_loop();
         }
         else {
-          create_activity_callback(false, (service_api)=> {
+          create_activity_callback(false, (activity_of_service)=> {
             // Start communication with service.
-            service_api.on('', ()=> {
+            activity_of_service.on('', ()=> {
               tunnel.send();
             });
-            
+
             tunnel.on('data', ()=> {
-              service_api.emit();
+              activity_of_service.emit();
             });
 
             tunnel.on('error', (error)=> {
-              service_api.emit();
+              activity_of_service.emit();
             });
 
             tunnel.on('close', ()=> {
-              service_api.emit();
+              activity_of_service.emit();
             });
           });
         }
       }
 
       // Callbacks setup completed. Start handshake process.
-      _open_handshake_function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
+      this._open_handshake_function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
     };
     loop();
   });
