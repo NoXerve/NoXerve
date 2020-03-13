@@ -109,7 +109,6 @@ ServiceOfActivityHandler.prototype.handle = function(error, service_of_activity,
     });
 
     tunnel.on('data', (data) => {
-      console.log('service', data);
       // code | type
       // 0x01 service-function-call
 

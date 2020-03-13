@@ -104,7 +104,6 @@ ActivityOfServiceHandler.prototype.handle = function(error, activity_of_service,
     activity_of_service.on('service-function-call',
       (service_function_name, service_function_arguments, service_function_callback) => {
         const service_function_callback_id = Utils.random4bytes();
-        console.log(service_function_callback_id);
 
         // Register callback with callback id locally.
         service_function_callback_dict[service_function_callback_id.toString('base64')] = service_function_callback;
@@ -141,7 +140,6 @@ ActivityOfServiceHandler.prototype.handle = function(error, activity_of_service,
       } else if (protocol_code === this._protocol_codes.service_function_call_data[0]) {
         const service_function_callback_id = data.slice(0, 4);
         const service_function_yielded_data = NSDT.decode(data.slice(4));
-        console.log(service_function_callback_id);
         service_function_callback_dict[service_function_callback_id.toString('base64')](false, service_function_yielded_data, false);
       }
     });

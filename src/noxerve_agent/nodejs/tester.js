@@ -122,8 +122,9 @@ Service.on('connect', (service_of_activity) => {
   service_of_activity.define('test_func', (service_function_parameters, return_data, yield_data) => {
     console.log('[Service module] Service function called.');
     console.log('[Service module] Parameters value: ', service_function_parameters);
-    yield_data({bar: 'call from service'});
-    return_data({bar: 'call from service'});
+    yield_data({bar: 13579});
+    yield_data(Buffer.from([1, 2, 3, 4, 5]));
+    return_data({bar: 'last round'});
     finish('service_test');
   });
 });
