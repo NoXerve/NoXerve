@@ -173,7 +173,7 @@ Tunnel.prototype.on = function(event_name, callback) {
  * @description Send data. Blob data.
  */
 Tunnel.prototype.send = function(blob, callback) {
-  console.log('send', blob);
+  // console.log('tunnel send', blob); // Debug.
   this._send_function(blob, callback);
 }
 

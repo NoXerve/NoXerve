@@ -12,12 +12,17 @@ let Tests = [
   'node_connector_send_test',
   'node_interface_send_test',
   'activity_test',
-  'service_test'
+  'service_function_test',
+  'service_yield_test',
+  'other_test'
 ];
+
+let test_count = Tests.length;
 
 let finish = (test_name) => {
   let index = Tests.indexOf(test_name);
   if (index !== -1) Tests.splice(index, 1);
+  console.log('[Tester] Progress: '+(test_count-Tests.length)+'/'+test_count+'. Finished "'+test_name+'" test.');
   if (!Tests.length) {
     console.log('[Tester] Test finished. Executed all tests. Validate your test from printed result.');
     process.exit();
@@ -39,11 +44,17 @@ let Protocol = new(require('./protocol'))({
 });
 let Utils = require('./utils');
 
-console.log('[Crypto] random8bytes ', Utils.random8bytes());
+console.log('[Utils module] random8bytes ', Utils.random8bytes());
+console.log('[NSDT module] ', NSDT.decode(NSDT.encode({
+  host: '0.0.0.0',
+  port: 12345
+})));
+finish('other_test');
 
 console.log('[Node module] NoXerveAgent Object: ', NoXerveAgent);
 console.log('[Node module] Node Object: ', Node);
 console.log('[Node module] Protocol Object: ', Protocol);
+
 
 // **** Node Module Test Start ****
 
@@ -122,14 +133,24 @@ Service.on('connect', (service_of_activity) => {
   service_of_activity.on('close', ()=> {
     console.log('[Service module] Service closed.');
   });
-  service_of_activity.define('test_func', (service_function_parameters, return_data, yield_data) => {
+  service_of_activity.handleYielding('field1', (yielding_handler_parameter, ready_yielding) => {
+    console.log('[Service module] Service handleYielding started.');
+    console.log('[Service module] Parameters value: ', yielding_handler_parameter);
+    ready_yielding('service ok for yielding.', (error, data, eof)=> {
+      if(error) console.log('[Service module] Yielding error.', error);
+      console.log('[Service module] Yielded value: ', data);
+      if(eof) finish('service_yield_test');
+    });
+  });
+  service_of_activity.define('test_func', (service_function_parameter, return_data, yield_data) => {
     console.log('[Service module] Service function called.');
-    console.log('[Service module] Parameters value: ', service_function_parameters);
-    service_of_activity.close();
+    console.log('[Service module] Parameters value: ', service_function_parameter);
+    // service_of_activity.close();
     yield_data({bar: 13579});
+    yield_data(Utils.random8bytes());
     yield_data(Buffer.from([1, 2, 3, 4, 5]));
     return_data({bar: 'last round'});
-    finish('service_test');
+    finish('service_function_test');
   });
 });
 // **** Service Module Test End ****
@@ -151,6 +172,7 @@ Node2.createInterface('WebSocket', {
       port: 12345
     }
   }], (error, activity_of_service) => {
+
     if (error) console.log(error);
     else {
       console.log('[Activity module] Activity created.');
@@ -158,16 +180,23 @@ Node2.createInterface('WebSocket', {
         console.log('[Activity module] Activity closed.');
         finish('activity_test');
       });
+      activity_of_service.startYielding('field1', 'yield from activity', (error, yielding_start_parameter, finish_yield, yield_data) => {
+        if (error) console.log('[Activity module] Yield error.', error);
+        console.log('[Service module] yielding_start_parameter value: ', yielding_start_parameter);
+
+        yield_data(123);
+        yield_data({foo: 123});
+        yield_data(Buffer.from([5, 4, 3, 2, 1]));
+        finish_yield();
+      });
       activity_of_service.call('test_func', {foo: 'call from activity'}, (err, data, eof)=> {
         console.log('[Activity module] Return value: ', data);
-        if(eof) activity_of_service.close();
+        if(eof) activity_of_service.call('test_func', {foo: 'call from activity'}, (err, data, eof)=> {
+          console.log('[Activity module] Returned value: ', data);
+          if(eof) setTimeout(()=>{activity_of_service.close()}, 1500);
+        });
       });
     }
   });
   // **** Activity Module Test End ****
 })
-
-console.log('[NSDT] ', NSDT.decode(NSDT.encode({
-  host: '0.0.0.0',
-  port: 12345
-})));

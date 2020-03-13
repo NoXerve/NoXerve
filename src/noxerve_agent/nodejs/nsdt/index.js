@@ -43,7 +43,10 @@ const MaxBytesLength = Math.pow(2, 32);
 module.exports.encode = function(noxerve_supported_data_type_object) {
   let blob;
   let type;
-
+  // Patch undefined.
+  if(typeof(noxerve_supported_data_type_object) === 'undefined') {
+    noxerve_supported_data_type_object = null;
+  }
   if (Buf.isBuffer(noxerve_supported_data_type_object)) {
     type = 0x00;
     blob = noxerve_supported_data_type_object;

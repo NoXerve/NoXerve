@@ -62,13 +62,13 @@ ActivityOfService.prototype.on = function(event_name, listener) {
 }
 
 // [Flag] Unfinished annotation.
-ActivityOfService.prototype.onEvent = function(event_name, listener) {
-  this._activity_event_listeners[event_name] = listener;
+ActivityOfService.prototype.startYielding = function(field_name, yielding_start_argument, yielding_start_callback) {
+  this._event_listeners['yielding-start'](field_name, yielding_start_argument, yielding_start_callback);
 }
 
 // [Flag] Unfinished annotation.
-ActivityOfService.prototype.call = function(service_function_name, service_function_arguments, service_function_callback) {
-  this._event_listeners['service-function-call'](service_function_name, service_function_arguments, service_function_callback);
+ActivityOfService.prototype.call = function(service_function_name, service_function_argument, service_function_callback) {
+  this._event_listeners['service-function-call'](service_function_name, service_function_argument, service_function_callback);
 }
 
 // [Flag] Unfinished annotation.

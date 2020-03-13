@@ -40,14 +40,17 @@ function ServiceOfActivity(settings) {
    * @private
    */
   this._event_listeners = {
-    'service-function-call': (service_function_name, service_function_parameters, return_value, yield_value)=> {
+    'service-function-call': (service_function_name, service_function_parameter, return_value, yield_value)=> {
       // return_value(error, NSDT), yield(NSDT)
-      this._service_functions[service_function_name](service_function_parameters, return_value, yield_value);
+      this._service_functions[service_function_name](service_function_parameter, return_value, yield_value);
     },
     'passively-close': ()=> {
       this._closed = true;
       const close_handler = this._event_listeners['close'];
       if(close_handler) close_handler();
+    },
+    'yielding-start': (field_name, yielding_handler_parameter, ready_yielding)=> {
+      this._yielding_handlers[field_name](yielding_handler_parameter, ready_yielding);
     }
   };
 
@@ -57,6 +60,13 @@ function ServiceOfActivity(settings) {
    * @private
    */
   this._service_functions = {};
+
+  /**
+   * @memberof module:ServiceOfActivity
+   * @type {object}
+   * @private
+   */
+  this._yielding_handlers = {};
 }
 
 // [Flag] Unfinished annotation.
@@ -70,8 +80,10 @@ ServiceOfActivity.prototype.on = function(event_name, listener) {
 }
 
 // [Flag] Unfinished annotation.
-ServiceOfActivity.prototype.emit = function(event_name, event_data) {
-  this._event_listeners['actvity-event-emit'](event_name, event_data);
+ServiceOfActivity.prototype.handleYielding = function(field_name, yielding_handler) {
+  this._yielding_handlers[field_name] = yielding_handler;
+  this._event_listeners['yielding-handle'](field_name);
+
 }
 
 // [Flag] Unfinished annotation.
