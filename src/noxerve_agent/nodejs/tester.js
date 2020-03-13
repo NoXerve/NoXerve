@@ -119,9 +119,13 @@ Protocol.start();
 // **** Service Module Test Start ****
 Service.on('connect', (service_of_activity) => {
   console.log('[Service module] Activity created.');
+  service_of_activity.on('close', ()=> {
+    console.log('[Service module] Service closed.');
+  });
   service_of_activity.define('test_func', (service_function_parameters, return_data, yield_data) => {
     console.log('[Service module] Service function called.');
     console.log('[Service module] Parameters value: ', service_function_parameters);
+    service_of_activity.close();
     yield_data({bar: 13579});
     yield_data(Buffer.from([1, 2, 3, 4, 5]));
     return_data({bar: 'last round'});
@@ -150,9 +154,13 @@ Node2.createInterface('WebSocket', {
     if (error) console.log(error);
     else {
       console.log('[Activity module] Activity created.');
+      activity_of_service.on('close', () => {
+        console.log('[Activity module] Activity closed.');
+        finish('activity_test');
+      });
       activity_of_service.call('test_func', {foo: 'call from activity'}, (err, data, eof)=> {
         console.log('[Activity module] Return value: ', data);
-        if(eof) finish('activity_test');
+        if(eof) activity_of_service.close();
       });
     }
   });

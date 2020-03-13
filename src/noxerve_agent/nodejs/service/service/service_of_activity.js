@@ -29,6 +29,13 @@ function ServiceOfActivity(settings) {
 
   /**
    * @memberof module:ServiceOfActivity
+   * @type {bool}
+   * @private
+   */
+  this._closed = false;
+
+  /**
+   * @memberof module:ServiceOfActivity
    * @type {object}
    * @private
    */
@@ -36,6 +43,11 @@ function ServiceOfActivity(settings) {
     'service-function-call': (service_function_name, service_function_parameters, return_value, yield_value)=> {
       // return_value(error, NSDT), yield(NSDT)
       this._service_functions[service_function_name](service_function_parameters, return_value, yield_value);
+    },
+    'passively-close': ()=> {
+      this._closed = true;
+      const close_handler = this._event_listeners['close'];
+      if(close_handler) close_handler();
     }
   };
 
@@ -45,6 +57,11 @@ function ServiceOfActivity(settings) {
    * @private
    */
   this._service_functions = {};
+}
+
+// [Flag] Unfinished annotation.
+ServiceOfActivity.prototype.close = function() {
+  this._event_listeners['initiative-close']();
 }
 
 // [Flag] Unfinished annotation.

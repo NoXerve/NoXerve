@@ -35,6 +35,11 @@ function ActivityOfService(settings) {
   this._event_listeners = {
     'actvity-event-emit': ()=> {
 
+    },
+    'passively-close': ()=> {
+      this._closed = true;
+      const close_handler = this._event_listeners['close'];
+      if(close_handler) close_handler();
     }
   };
 
@@ -44,6 +49,11 @@ function ActivityOfService(settings) {
    * @private
    */
   this._activity_event_listeners = {};
+}
+
+// [Flag] Unfinished annotation.
+ActivityOfService.prototype.close = function() {
+  this._event_listeners['initiative-close']();
 }
 
 // [Flag] Unfinished annotation.

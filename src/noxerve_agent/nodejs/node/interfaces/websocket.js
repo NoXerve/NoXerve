@@ -110,7 +110,6 @@ Interface.prototype.start = function(callback) {
               this._event_listeners['error'](error);
             } else {
               ws.on('message', (message) => {
-                console.log('interface', message);
                 tunnel_emitter('data', message);
               });
 

@@ -67,7 +67,7 @@ function ActivityOfServiceHandler(settings) {
 ActivityOfServiceHandler.prototype._hash_string_4bytes = function(string) {
   let result = this._string_to_hash[string];
   if (!result) {
-    const hash_sha256 = Crypto.createHash('sha256');
+    const hash_sha256 = Crypto.createHash('md5');
     hash_sha256.update(string);
     result = hash_sha256.digest().slice(0, 4);
     this._string_to_hash[string] = result;
@@ -118,7 +118,13 @@ ActivityOfServiceHandler.prototype.handle = function(error, activity_of_service,
           service_function_callback_id,
           NSDT.encode(service_function_arguments)
         ]));
-      });
+      }
+    );
+
+    // Start communication with service.
+    activity_of_service.on('initiative-close', () => {
+      tunnel.close();
+    });
 
     tunnel.on('data', (data) => {
       // code | type
@@ -141,15 +147,24 @@ ActivityOfServiceHandler.prototype.handle = function(error, activity_of_service,
         const service_function_callback_id = data.slice(0, 4);
         const service_function_yielded_data = NSDT.decode(data.slice(4));
         service_function_callback_dict[service_function_callback_id.toString('base64')](false, service_function_yielded_data, false);
+
+      // Handle service function call error.
+    } else if (protocol_code === this._protocol_codes.service_function_call_error[0]) {
+        const service_function_callback_id = data.slice(0, 4);
+        const service_function_callback_id_base64 = service_function_callback_id.toString('base64');
+        service_function_callback_dict[service_function_callback_id_base64](true, null, true);
+
+        // EOF, delete the callback no longer useful.
+        delete service_function_callback_dict[service_function_callback_id_base64];
       }
     });
 
     tunnel.on('error', (error) => {
-      activity_of_service.emitEventListener();
+      activity_of_service.emitEventListener('externel-error');
     });
 
     tunnel.on('close', () => {
-      activity_of_service.emitEventListener();
+      activity_of_service.emitEventListener('passively-close');
     });
   }
 }

@@ -69,7 +69,7 @@ function ServiceOfActivityHandler(settings) {
 ServiceOfActivityHandler.prototype._hash_string_4bytes = function(string) {
   let result = this._string_to_hash[string];
   if (!result) {
-    const hash_sha256 = Crypto.createHash('sha256');
+    const hash_sha256 = Crypto.createHash('md5');
     hash_sha256.update(string);
     result = hash_sha256.digest().slice(0, 4);
     this._string_to_hash[string] = result;
@@ -103,9 +103,10 @@ ServiceOfActivityHandler.prototype.handle = function(error, service_of_activity,
     service_of_activity.on('service-function-define', (service_function_name) => {
       this._hash_string_4bytes(service_function_name);
     });
-    // Start communication with service.
-    service_of_activity.on('', () => {
-      tunnel.send();
+
+    // Close communication with activity.
+    service_of_activity.on('initiative-close', () => {
+      tunnel.close();
     });
 
     tunnel.on('data', (data) => {
@@ -119,54 +120,67 @@ ServiceOfActivityHandler.prototype.handle = function(error, service_of_activity,
       // +1 | +4 | +4 | ~
       // protocol_code, service_function_name, service_function_callback_id, NSDT_encoded
       if (protocol_code === this._protocol_codes.service_function_call[0]) {
-        const service_function_name = this._stringify_4bytes_hash(data.slice(0, 4));
-        const service_function_callback_id = data.slice(4, 8);
-        const service_function_parameters = NSDT.decode(data.slice(8));
+        let service_function_callback_id;
+        // Important value. Calculate first.
+        try {
+          service_function_callback_id = data.slice(4, 8);
+        }
+        catch(e) {}
+        // Catch error.
+        try {
+          const service_function_name = this._stringify_4bytes_hash(data.slice(0, 4));
+          const service_function_parameters = NSDT.decode(data.slice(8));
 
-        service_of_activity.emitEventListener('service-function-call',
-          service_function_name,
-          service_function_parameters,
+          service_of_activity.emitEventListener('service-function-call',
+            service_function_name,
+            service_function_parameters,
 
-          // Return function.
-          (data) => {
-            // Service Protocol type "service_function_call_data" code 0x02
-            // format:
-            // +1 | +4 | ~
-            // service_function_call_data, service_function_callback_id, NSDT_encoded
+            // Return function.
+            (data) => {
+              // Service Protocol type "service_function_call_data" code 0x02
+              // format:
+              // +1 | +4 | ~
+              // service_function_call_data, service_function_callback_id, NSDT_encoded
 
-            tunnel.send(Buf.concat([
-              this._protocol_codes.service_function_call_data_eof,
-              service_function_callback_id
-              , NSDT.encode(data)
-            ]));
-          },
+              tunnel.send(Buf.concat([
+                this._protocol_codes.service_function_call_data_eof,
+                service_function_callback_id
+                , NSDT.encode(data)
+              ]));
+            },
 
-          // Yield function.
-          (data) => {
-            // Service Protocol type "service_function_call_data" code 0x03
-            // format:
-            // +1 | +4 | ~
-            // service_function_call_data, service_function_callback_id, NSDT_encoded
+            // Yield function.
+            (data) => {
+              // Service Protocol type "service_function_call_data" code 0x03
+              // format:
+              // +1 | +4 | ~
+              // service_function_call_data, service_function_callback_id, NSDT_encoded
 
-            tunnel.send(Buf.concat([
-              this._protocol_codes.service_function_call_data,
-              service_function_callback_id
-              , NSDT.encode(data)
-            ]));
-          }
-        );
-
+              tunnel.send(Buf.concat([
+                this._protocol_codes.service_function_call_data,
+                service_function_callback_id
+                , NSDT.encode(data)
+              ]));
+            }
+          );
+        }
+        catch(error) {
+          tunnel.send(Buf.concat([
+            this._protocol_codes.service_function_call_error,
+            service_function_callback_id
+          ]));
+        }
       } else if (protocol_code === 0x01) {
 
       }
     });
 
     tunnel.on('error', (error) => {
-      service_of_activity.emitEventListener();
+      service_of_activity.emitEventListener('externel-error');
     });
 
     tunnel.on('close', () => {
-      service_of_activity.emitEventListener();
+      service_of_activity.emitEventListener('passively-close');
     });
   }
 }
