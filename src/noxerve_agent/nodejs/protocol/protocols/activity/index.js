@@ -54,9 +54,15 @@ function ActivityProtocol(settings) {
   this._activity_of_service_handler_module = new ActivityOfServiceHandler();
 }
 
-// [Flag] Unfinished annotation.
-// Reference: https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
-ActivityProtocol.prototype._shuffleList = function(array) {
+/**
+ * @memberof module:ActivityProtocol
+ * @param {array} array
+ * @return array
+ * @private
+ * @description Reference: https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array.
+ * For clientside loadbalancing.
+ */
+ActivityProtocol.prototype._shuffleArray = function(array) {
   let current_index = array.length,
     temporary_value, random_index;
 
@@ -76,14 +82,22 @@ ActivityProtocol.prototype._shuffleList = function(array) {
   return array;
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @callback module:ActivityProtocol~callback_of_start
+ * @param {error} error
+ */
+/**
+ * @memberof module:ActivityProtocol
+ * @param {module:ActivityProtocol~callback_of_start} callback
+ * @description Start the module.
+ */
 ActivityProtocol.prototype.start = function() {
 
   // Create activity from activity module.
   this._activity_module.on('create-activity', (interface_connect_settings_list, create_activity_callback) => {
 
     // Shuffle for clientwise loadbalancing.
-    let shuffled_interface_connect_settings_list = this._shuffleList(interface_connect_settings_list);
+    let shuffled_interface_connect_settings_list = this._shuffleArray(interface_connect_settings_list);
 
     // Get activity_id from synchronize_acknowledgement_information;
     let activity_id;
@@ -164,12 +178,25 @@ ActivityProtocol.prototype.start = function() {
   });
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @callback module:ActivityProtocol~callback_of_close
+ * @param {error} error
+ */
+/**
+ * @memberof module:ActivityProtocol
+ * @param {module:ActivityProtocol~callback_of_close} callback
+ * @description Start the module.
+ */
 ActivityProtocol.prototype.close = function() {
 
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @memberof module:ActivityProtocol
+ * @param {buffer} synchronize_information
+ * @return {buffer} synchronize_acknowledgement_information
+ * @description Synchronize handshake from remote emitter.
+ */
 ActivityProtocol.prototype.synchronize = function(synchronize_information) {
   // Activity doesn't support SYN.
   return false;

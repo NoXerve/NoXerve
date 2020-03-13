@@ -115,8 +115,8 @@ ServiceOfActivityHandler.prototype.handle = function(error, service_of_activity,
     });
 
     // Close communication with activity.
-    service_of_activity.on('initiative-close', () => {
-      tunnel.close();
+    service_of_activity.on('initiative-close', (callback) => {
+      tunnel.close(callback);
     });
 
     tunnel.on('data', (data) => {

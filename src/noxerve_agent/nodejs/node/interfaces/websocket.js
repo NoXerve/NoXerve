@@ -38,7 +38,7 @@ function Interface(settings, new_tunnel) {
 
   /**
    * @memberof Interface
-   * @type {bool}
+   * @type {boolean}
    * @private
    * @description Indicate interface started or not.
    */
@@ -46,7 +46,7 @@ function Interface(settings, new_tunnel) {
 
   /**
    * @memberof Interface
-   * @type {bool}
+   * @type {boolean}
    * @private
    * @description Indicate interface _closed or not.
    */

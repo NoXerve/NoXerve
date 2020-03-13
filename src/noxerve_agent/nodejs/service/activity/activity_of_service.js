@@ -51,27 +51,74 @@ function ActivityOfService(settings) {
   this._activity_event_listeners = {};
 }
 
-// [Flag] Unfinished annotation.
-ActivityOfService.prototype.close = function() {
-  this._event_listeners['initiative-close']();
+/**
+ * @callback module:ActivityOfService~callback_of_close
+ * @param {error} error
+ */
+/**
+ * @memberof module:ActivityOfService
+ * @param {module:ActivityOfService~callback_of_close} callback
+ * @description Close ActivityOfService.
+ */
+ActivityOfService.prototype.close = function(callback) {
+  this._event_listeners['initiative-close'](callback);
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @callback module:ActivityOfService~callback_of_on
+ * @description Parameters depends.
+ */
+/**
+ * @memberof module:ActivityOfService
+ * @param {string} event_name
+ * @param {module:ActivityOfService~callback_of_on} callback
+ * @description ActivityOfService events registeration.
+ */
 ActivityOfService.prototype.on = function(event_name, listener) {
   this._event_listeners[event_name] = listener;
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @callback module:ActivityOfService~callback_of_start_yielding
+ * @param {error} error
+ * @param {noxerve_supported_data_type} yielding_start_callback_parameter
+ * @param {function} finish_yield
+ * @param {function} yield_data
+ */
+/**
+ * @memberof module:ActivityOfService
+ * @param {string} field_name
+ * @param {noxerve_supported_data_type} yielding_start_argument
+ * @param {module:Service~callback_of_start_yielding} yielding_start_callback
+ * @description ActivityOfService startYielding. Provide ability to stream data
+ * from activity to service. Yielded data handled by service
+ */
 ActivityOfService.prototype.startYielding = function(field_name, yielding_start_argument, yielding_start_callback) {
   this._event_listeners['yielding-start'](field_name, yielding_start_argument, yielding_start_callback);
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @callback module:ActivityOfService~callback_of_call
+ * @param {error} error
+ * @param {noxerve_supported_data_type} service_function_return_data
+ * @param {boolean} is_end_of_file
+ */
+/**
+ * @memberof module:ActivityOfService
+ * @param {string} service_function_name
+ * @param {noxerve_supported_data_type} service_function_argument
+ * @param {module:Service~callback_of_call} service_function_callback
+ * @description ActivityOfService call. Call service function defined from service.
+ */
 ActivityOfService.prototype.call = function(service_function_name, service_function_argument, service_function_callback) {
   this._event_listeners['service-function-call'](service_function_name, service_function_argument, service_function_callback);
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @memberof module:ActivityOfService
+ * @param {string} event_name
+ * @description ActivityOfService events emitter. For internal uses.
+ */
 ActivityOfService.prototype.emitEventListener = function(event_name, ...params) {
   this._event_listeners[event_name].apply(null, params);
 }

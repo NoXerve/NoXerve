@@ -62,7 +62,11 @@ function Protocol(settings) {
    * => acknowledge(passive finished)
    */
 
-  // [Flag] Unfinished annotation.
+   /**
+    * @memberof module:Protocol
+    * @type {object}
+    * @private
+    */
   this._openHandshake = (interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake) => {
     this._node_module.createTunnel(interface_name, interface_connect_settings, (error, tunnel) => {
       if (error) callback(error);
@@ -174,8 +178,15 @@ function Protocol(settings) {
   }
 }
 
-// [Flag] Unfinished annotation.
-Protocol.prototype.start = function() {
+/**
+ * @callback module:Protocol~callback_of_start
+ * @param {error} error
+ */
+/**
+ * @memberof module:Protocol
+ * @param {module:Protocol~callback_of_start} callback
+ */
+Protocol.prototype.start = function(callback) {
   for (const module_name in this._protocol_modules) {
     this._protocol_modules[module_name].start();
   }
@@ -292,7 +303,14 @@ Protocol.prototype.start = function() {
   });
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @callback module:Protocol~callback_of_close
+ * @param {error} error
+ */
+/**
+ * @memberof module:Protocol
+ * @param {module:Protocol~callback_of_close} callback
+ */
 Protocol.prototype.close = function() {
 
 }

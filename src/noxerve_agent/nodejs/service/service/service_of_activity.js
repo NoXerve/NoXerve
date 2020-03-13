@@ -29,7 +29,7 @@ function ServiceOfActivity(settings) {
 
   /**
    * @memberof module:ServiceOfActivity
-   * @type {bool}
+   * @type {boolean}
    * @private
    */
   this._closed = false;
@@ -69,30 +69,80 @@ function ServiceOfActivity(settings) {
   this._yielding_handlers = {};
 }
 
-// [Flag] Unfinished annotation.
-ServiceOfActivity.prototype.close = function() {
-  this._event_listeners['initiative-close']();
+/**
+ * @callback module:ServiceOfActivity~callback_of_close
+ * @param {error} error
+ */
+/**
+ * @memberof module:ServiceOfActivity
+ * @param {module:ServiceOfActivity~callback_of_close} callback
+ * @description Close ServiceOfActivity.
+ */
+ServiceOfActivity.prototype.close = function(callback) {
+  this._event_listeners['initiative-close'](callback);
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @callback module:ServiceOfActivity~callback_of_on
+ * @description Parameters depends.
+ */
+/**
+ * @memberof module:ServiceOfActivity
+ * @param {string} event_name
+ * @param {module:ServiceOfActivity~callback_of_on} callback
+ * @description ServiceOfActivity events registeration.
+ */
 ServiceOfActivity.prototype.on = function(event_name, listener) {
   this._event_listeners[event_name] = listener;
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @callback module:ServiceOfActivity~ready_yielding_callback
+ * @param {error} error
+ * @param {noxerve_supported_data_type} data
+ * @param {boolean} end_of_file
+ */
+/**
+ * @callback module:ServiceOfActivity~yielding_handler
+ * @param {noxerve_supported_data_type} yielding_handler_parameter
+ * @param {module:ServiceOfActivity~ready_yielding_callback} ready_yielding
+ */
+/**
+ * @memberof module:ServiceOfActivity
+ * @param {string} field_name
+ * @param {module:ServiceOfActivity~yielding_handler} yielding_handler
+ * @description ServiceOfActivity yield handler registeration. Handle yield from
+ * activity to a specific field.
+ */
 ServiceOfActivity.prototype.handleYielding = function(field_name, yielding_handler) {
   this._yielding_handlers[field_name] = yielding_handler;
   this._event_listeners['yielding-handle'](field_name);
 
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @callback module:ServiceOfActivity~service_function
+ * @param {noxerve_supported_data_type} service_function_parameter
+ * @param {function} return_data
+ * @param {function} yield_data
+ */
+/**
+ * @memberof module:ServiceOfActivity
+ * @param {string} service_function_name
+ * @param {module:ServiceOfActivity~service_function} service_function
+ * @description ServiceOfActivity service function registeration. Provide ability to stream data
+ * from service to activity.
+ */
 ServiceOfActivity.prototype.define = function(service_function_name, service_function) {
   this._service_functions[service_function_name] = service_function;
   this._event_listeners['service-function-define'](service_function_name);
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @memberof module:ServiceOfActivity
+ * @param {string} event_name
+ * @description ServiceOfActivity events emitter. For internal uses.
+ */
 ServiceOfActivity.prototype.emitEventListener = function(event_name, ...params) {
   this._event_listeners[event_name].apply(null, params);
 }

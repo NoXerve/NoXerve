@@ -61,7 +61,7 @@ function Tunnel(settings) {
 
   /**
    * @memberof module:Tunnel
-   * @type {bool}
+   * @type {boolean}
    * @private
    * @description State if getemitter have been called or not.
    */

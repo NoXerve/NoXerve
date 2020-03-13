@@ -38,8 +38,12 @@ const MaxBytesLength = Math.pow(2, 32);
 //   this._settings = settings;
 // }
 
-// [Flag] Unfinished annotation.
-// NSDT => blob
+/**
+ * @memberof module:NSDT
+ * @param {object} noxerve_supported_data_type_object
+ * @return {buffer} noxerve_supported_data_type_blob
+ * @description NSDT => blob
+ */
 module.exports.encode = function(noxerve_supported_data_type_object) {
   let blob;
   let type;
@@ -64,8 +68,12 @@ module.exports.encode = function(noxerve_supported_data_type_object) {
   }
 }
 
-// [Flag] Unfinished annotation.
-// blob => NSDT
+/**
+ * @memberof module:NSDT
+ * @param {buffer} noxerve_supported_data_type_blob
+ * @return {object} noxerve_supported_data_type_object
+ * @description blob => NSDT
+ */
 module.exports.decode = function(noxerve_supported_data_type_blob) {
   let type = noxerve_supported_data_type_blob[0];
 

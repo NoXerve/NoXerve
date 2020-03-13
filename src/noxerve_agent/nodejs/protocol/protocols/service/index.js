@@ -67,7 +67,12 @@ ServiceProtocol.prototype.start = function() {
 
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @memberof module:ServiceProtocol
+ * @param {buffer} synchronize_information
+ * @return {buffer} synchronize_acknowledgement_information
+ * @description Synchronize handshake from remote emitter.
+ */
 ServiceProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge) {
   // Synchronize information for handshake
   // Format:

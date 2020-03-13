@@ -182,7 +182,7 @@ Node2.createInterface('WebSocket', {
       });
       activity_of_service.startYielding('field1', 'yield from activity', (error, yielding_start_parameter, finish_yield, yield_data) => {
         if (error) console.log('[Activity module] Yield error.', error);
-        console.log('[Service module] yielding_start_parameter value: ', yielding_start_parameter);
+        console.log('[Activity module] yielding_start_parameter value: ', yielding_start_parameter);
 
         yield_data(123);
         yield_data({foo: 123});

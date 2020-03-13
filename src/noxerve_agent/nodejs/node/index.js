@@ -188,7 +188,7 @@ Node.prototype._checkConnectorAvaliable = function(interface_name, callback) {
  * @param {string} interface_name - "websocket", "tcp" or "websocket_secure".
  * @param {object} interface_settings
  * @param {module:Node~callback_of_create_interface} callback
- * @description Service events. Each corresponded with an edvidual activity.
+ * @description Create interface via avaliable interfaces.
  */
 Node.prototype.createInterface = function(interface_name, interface_settings, callback) {
   let called_callback = false;
@@ -239,7 +239,7 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
  * @memberof module:Node
  * @param {string} interface_id - Which you've obtained from "createInterface".
  * @param {module:Node~callback_of_destroy_interface} callback
- * @description Service events. Each corresponded with an edvidual activity.
+ * @description Destroy exists interface.
  */
 Node.prototype.destroyInterface = function(interface_id, callback) {
   let called_callback = false;
@@ -279,7 +279,7 @@ Node.prototype.destroyInterface = function(interface_id, callback) {
  * @param {string} interface_name,
  * @param {object} interface_connect_settings,
  * @param {module:Node~callback_of_create_tunnel} callback
- * @description Service events. Each corresponded with an edvidual activity.
+ * @description Create tunnel via available interfaces.
  */
 Node.prototype.createTunnel = function(interface_name, interface_connect_settings, callback) {
   let called_callback = false;
@@ -336,7 +336,7 @@ Node.prototype.createTunnel = function(interface_name, interface_connect_setting
  * @memberof module:Node
  * @param {string} event_name
  * @param {module:Node~callback_of_on} callback
- * @description Service events. Each corresponded with an edvidual activity.
+ * @description Register event listener.
  */
 Node.prototype.on = function(event_name, callback) {
   this._event_listeners[event_name] = callback;
@@ -349,7 +349,7 @@ Node.prototype.on = function(event_name, callback) {
 /**
  * @memberof module:Node
  * @param {module:Node~callback_of_close} callback
- * @description Service events. Each corresponded with an edvidual activity.
+ * @description Close module.
  */
 Node.prototype.close = function(interface_id, callback) {
   // Catch error.

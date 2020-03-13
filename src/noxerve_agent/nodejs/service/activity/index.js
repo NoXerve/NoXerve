@@ -38,11 +38,31 @@ function Activity(settings) {
    this._event_listeners = {};
 }
 
-// [Flag] Unfinished annotation.
+/**
+ * @callback module:Activity~callback_of_on
+ * @description callback parameter based on event's type.
+ */
+/**
+ * @memberof module:Activity
+ * @param {string} event_name
+ * @param {module:Activity~callback_of_on} callback
+ * @description Activity events registeration.
+ */
 Activity.prototype.on = function(event_name, listener) {
   this._event_listeners[event_name] = listener;
 }
-// [Flag] Unfinished annotation.
+
+/**
+ * @callback module:Activity~callback_of_create_activity
+ * @param {error} error
+ * @param {object} activity_of_service
+ */
+/**
+ * @memberof module:Activity
+ * @param {array} interface_connect_settings_list
+ * @param {module:Activity~callback_of_create_activity} callback
+ * @description Activity events registeration.
+ */
 Activity.prototype.createActivity = function(interface_connect_settings_list, callback) {
   this._event_listeners['create-activity'](interface_connect_settings_list, (error, activity_of_service_handler)=> {
     if(error) {

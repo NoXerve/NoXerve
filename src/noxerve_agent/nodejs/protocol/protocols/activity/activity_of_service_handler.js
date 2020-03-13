@@ -148,8 +148,8 @@ ActivityOfServiceHandler.prototype.handle = function(error, activity_of_service,
     });
 
     // Start communication with service.
-    activity_of_service.on('initiative-close', () => {
-      tunnel.close();
+    activity_of_service.on('initiative-close', (callback) => {
+      tunnel.close(callback);
     });
 
     tunnel.on('data', (data) => {
