@@ -13,7 +13,7 @@
 
 const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
-const activity_of_service_handler = require('./activity_of_service_handler');
+const ActivityOfServiceHandler = require('./activity_of_service_handler');
 
 
 /**
@@ -44,6 +44,14 @@ function ActivityProtocol(settings) {
    * @description Open a handshake.
    */
   this._open_handshake_function = settings.open_handshake;
+
+  /**
+   * @memberof module:ActivityProtocol
+   * @type {object}
+   * @private
+   * @description ActivityOfServiceHandler submodule.
+   */
+  this._activity_of_service_handler_module = new ActivityOfServiceHandler();
 }
 
 // [Flag] Unfinished annotation.
@@ -144,7 +152,7 @@ ActivityProtocol.prototype.start = function() {
         }
         else {
           create_activity_callback(false, (error, activity_of_service)=> {
-            activity_of_service_handler(error, activity_of_service, tunnel);
+            this._activity_of_service_handler_module.handle(error, activity_of_service, tunnel);
           });
         }
       }

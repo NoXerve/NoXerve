@@ -11,7 +11,7 @@
  * @module Service
  */
 
- const Errors = require('../errors');
+ const Errors = require('../../errors');
  const ServiceOfActivity = require('./service_of_activity');
 
 /**
@@ -35,15 +35,17 @@ function Service(settings) {
    */
   this._event_listeners = {
     // Internal private default events.
-    'activity-connect': (callback)=> {
+    'service-of-activity-request': (callback)=> {
       try {
         const service_of_activity = new ServiceOfActivity();
-        this._event_listeners.connect(service_of_activity);
         callback(false, service_of_activity);
       }
       catch(error) {
         callback(error);
       }
+    },
+    'service-of-activity-ready': (service_of_activity)=> {
+      this._event_listeners.connect(service_of_activity);
     }
   };
 };

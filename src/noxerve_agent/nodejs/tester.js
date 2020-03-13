@@ -28,8 +28,8 @@ let NSDT = require('./nsdt');
 let NoXerveAgent = new(require('./index'))({});
 let Node = new(require('./node'))();
 let Node2 = new(require('./node'))();
-let Activity = new(require('./activity'))();
-let Service = new(require('./service'))();
+let Activity = new(require('./service/activity'))();
+let Service = new(require('./service/service'))();
 let Protocol = new(require('./protocol'))({
   modules: {
     activity: Activity,
@@ -119,7 +119,13 @@ Protocol.start();
 // **** Service Module Test Start ****
 Service.on('connect', (service_of_activity) => {
   console.log('[Service module] Activity created.');
-  finish('service_test');
+  service_of_activity.define('test_func', (service_function_parameters, return_data, yield_data) => {
+    console.log('[Service module] Service function called.');
+    console.log('[Service module] Parameters value: ', service_function_parameters);
+    yield_data({bar: 'call from service'});
+    return_data({bar: 'call from service'});
+    finish('service_test');
+  });
 });
 // **** Service Module Test End ****
 
@@ -143,7 +149,10 @@ Node2.createInterface('WebSocket', {
     if (error) console.log(error);
     else {
       console.log('[Activity module] Activity created.');
-      finish('activity_test');
+      activity_of_service.call('test_func', {foo: 'call from activity'}, (err, data, eof)=> {
+        console.log('[Activity module] Return value: ', data);
+        if(eof) finish('activity_test');
+      });
     }
   });
   // **** Activity Module Test End ****

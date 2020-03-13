@@ -110,6 +110,7 @@ Interface.prototype.start = function(callback) {
               this._event_listeners['error'](error);
             } else {
               ws.on('message', (message) => {
+                console.log('interface', message);
                 tunnel_emitter('data', message);
               });
 
@@ -280,6 +281,12 @@ module.exports = {
     host: 'IP address. Or other alternative addressing.',
     port: 'Port number.'
   },
+
+  /**
+   * @memberof module:WebsocketInterface
+   * @type {boolean}
+   */
+  secured: false,
 
   /**
    * @memberof module:WebsocketInterface

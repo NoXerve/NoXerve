@@ -13,7 +13,7 @@
 
 const Errors = require('./errors');
 let Worker = require('./worker');
-let Service = require('./service');
+let Service = require('./service/service');
 let Node = require('./node');
 // let SecuredNode = require('./node/secured_node');
 

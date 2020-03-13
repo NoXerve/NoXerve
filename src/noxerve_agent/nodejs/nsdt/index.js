@@ -21,6 +21,7 @@ const MaxBytesLength = Math.pow(2, 32);
 // Code | Type
 // 0 blob
 // 1 json
+// 2 noxerve callback dictionary
 
 // /**
 //  * @constructor module:NSDT
@@ -67,7 +68,7 @@ module.exports.decode = function(noxerve_supported_data_type_blob) {
 
   if (type === 0x00) {
     return noxerve_supported_data_type_blob.slice(1);
-    
+
   } else if (type === 0x01) {
     return JSON.parse(Buf.decode(noxerve_supported_data_type_blob.slice(1)));
   }

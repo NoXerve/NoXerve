@@ -11,7 +11,7 @@
  * @module ActivityOfService
  */
 
-const Errors = require('../errors');
+const Errors = require('../../errors');
 
 /**
  * @constructor module:ActivityOfService
@@ -28,11 +28,22 @@ function ActivityOfService(settings) {
   this._settings = settings;
 
   /**
-   * @memberof module:Activity
+   * @memberof module:ActivityOfService
    * @type {object}
    * @private
    */
-  this._event_listeners = {};
+  this._event_listeners = {
+    'actvity-event-emit': ()=> {
+
+    }
+  };
+
+  /**
+   * @memberof module:ActivityOfService
+   * @type {object}
+   * @private
+   */
+  this._activity_event_listeners = {};
 }
 
 // [Flag] Unfinished annotation.
@@ -41,7 +52,17 @@ ActivityOfService.prototype.on = function(event_name, listener) {
 }
 
 // [Flag] Unfinished annotation.
-ActivityOfService.prototype.emit = function(event_name, ...params) {
+ActivityOfService.prototype.onEvent = function(event_name, listener) {
+  this._activity_event_listeners[event_name] = listener;
+}
+
+// [Flag] Unfinished annotation.
+ActivityOfService.prototype.call = function(service_function_name, service_function_arguments, service_function_callback) {
+  this._event_listeners['service-function-call'](service_function_name, service_function_arguments, service_function_callback);
+}
+
+// [Flag] Unfinished annotation.
+ActivityOfService.prototype.emitEventListener = function(event_name, ...params) {
   this._event_listeners[event_name].apply(null, params);
 }
 

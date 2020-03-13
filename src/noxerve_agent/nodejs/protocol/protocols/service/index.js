@@ -14,7 +14,7 @@
 const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
-const service_of_activity_handler = require('./service_of_activity_handler');
+const ServiceOfActivityHandler = require('./service_of_activity_handler');
 
 
 /**
@@ -53,6 +53,14 @@ function ServiceProtocol(settings) {
    * @description ActivityId to tunnel dictionary.
    */
   this._activity_id_to_tunnel_dict = {};
+
+  /**
+   * @memberof module:ServiceProtocol
+   * @type {object}
+   * @private
+   * @description ServiceOfActivityHandler submodule.
+   */
+  this._service_of_activity_handler_module = new ServiceOfActivityHandler();
 }
 
 ServiceProtocol.prototype.start = function() {
@@ -66,30 +74,29 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
   // service-activity byte
   // 0x01
 
-  if(synchronize_information.length === 1 && synchronize_information[0] === 1) {
+  if (synchronize_information.length === 1 && synchronize_information[0] === 1) {
     const generated_activity_id = Utils.random8bytes();
     const generated_activity_id_base64 = generated_activity_id.toString('base64');
     this._activity_id_to_tunnel_dict[generated_activity_id_base64] = null;
 
-    onError((error)=> {
+    onError((error) => {
       return false;
     });
 
-    onAcknowledge((acknowledge_information, tunnel)=> {
-      if(acknowledge_information[0] === 0x01) {
-        this._service_module.emit('activity-connect', (error, service_of_activity)=> {
-          service_of_activity_handler(error, service_of_activity, tunnel);
+    onAcknowledge((acknowledge_information, tunnel) => {
+      if (acknowledge_information[0] === 0x01) {
+        this._service_module.emit('service-of-activity-request', (error, service_of_activity) => {
+          this._service_of_activity_handler_module.handle(error, service_of_activity, tunnel);
+          this._service_module.emit('service-of-activity-ready', service_of_activity)
         });
-      }
-      else {
+      } else {
         return false;
       }
     });
 
     // Send 8 bytes id;
     return generated_activity_id;
-  }
-  else return false;
+  } else return false;
 }
 
 module.exports = {

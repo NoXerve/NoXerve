@@ -12,7 +12,7 @@
  */
 
 
-const Errors = require('../errors');
+const Errors = require('../../errors');
 const ActivityOfService = require('./activity_of_service');
 
 
