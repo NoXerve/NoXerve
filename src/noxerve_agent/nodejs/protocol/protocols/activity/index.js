@@ -91,7 +91,7 @@ ActivityProtocol.prototype._shuffleArray = function(array) {
  * @param {module:ActivityProtocol~callback_of_start} callback
  * @description Start the module.
  */
-ActivityProtocol.prototype.start = function() {
+ActivityProtocol.prototype.start = function(callback) {
 
   // Create activity from activity module.
   this._activity_module.on('create-activity', (interface_connect_settings_list, create_activity_callback) => {
@@ -176,6 +176,7 @@ ActivityProtocol.prototype.start = function() {
     };
     loop();
   });
+  if(callback) callback(false);
 }
 
 /**
@@ -187,8 +188,8 @@ ActivityProtocol.prototype.start = function() {
  * @param {module:ActivityProtocol~callback_of_close} callback
  * @description Start the module.
  */
-ActivityProtocol.prototype.close = function() {
-
+ActivityProtocol.prototype.close = function(callback) {
+  if(callback) callback(false);
 }
 
 /**

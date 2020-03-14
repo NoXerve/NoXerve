@@ -63,8 +63,30 @@ function ServiceProtocol(settings) {
   this._service_of_activity_handler_module = new ServiceOfActivityHandler();
 }
 
-ServiceProtocol.prototype.start = function() {
+/**
+ * @callback module:ServiceProtocol~callback_of_start
+ * @param {error} error
+ */
+/**
+ * @memberof module:ServiceProtocol
+ * @param {module:Node~callback_of_start} callback
+ * @description Start running ServiceProtocol.
+ */
+ServiceProtocol.prototype.start = function(callback) {
+  if(callback) callback(false);
+}
 
+/**
+ * @callback module:ServiceProtocol~callback_of_close
+ * @param {error} error
+ */
+/**
+ * @memberof module:ServiceProtocol
+ * @param {module:ServiceProtocol~callback_of_close} callback
+ * @description Start the module.
+ */
+ServiceProtocol.prototype.close = function(callback) {
+  if(callback) callback(false);
 }
 
 /**

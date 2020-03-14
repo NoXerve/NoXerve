@@ -25,11 +25,34 @@ function Worker(settings) {
    * @private
    */
   this._settings = settings;
-  // this._worker_variable = {
-  //   _resources_list_imported: false,
-  //   _resources_list: []
-  // };
+
+  /**
+   * @memberof module:Worker
+   * @type {bool}
+   * @private
+   */
+  this._is_resource_list_fulfilled = false;
+
+  /**
+   * @memberof module:Worker
+   * @type {object}
+   * @private
+   */
+   this._event_listeners = {};
 };
+
+/**
+ * @callback module:Worker~callback_of_
+ * @param {error} error
+ */
+/**
+ * @memberof module:Worker
+ * @param {noxerve_supported_data_type} worker_information
+ * @param {module:Worker~callback_of_} callback
+ */
+Worker.prototype.importWorkerAuthenticityInformation = function(worker_authenticity_information, callback) {
+
+}
 
 /**
  * @callback module:Worker~callback_of_import_resource_list
@@ -37,32 +60,40 @@ function Worker(settings) {
  */
 /**
  * @memberof module:Worker
- * @param {array} resource_list
+ * @param {array} resource_name_list
  * @param {module:Worker~callback_of_import_resource_list} callback
  * @description Connect to NoXerveAgent Worker Network
  */
-Worker.prototype.importResourceList = function(resource_list, callback) {
+Worker.prototype.importResourceList = function(resource_name_list, callback) {
+  this._event_listeners['resources-list-import'](resource_name_list, callback);
+}
+
+/**
+ * @callback module:Worker~callback_of_
+ * @param {error} error
+ */
+/**
+ * @memberof module:Worker
+ * @param {string} resource_name
+ * @param {array} worker_id_to_interface_dict
+ * @param {module:Worker~callback_of_} callback
+ */
+Worker.prototype.claimResource = function(resource_name, worker_id_to_interface_dict, callback) {
 
 }
 
 /**
- * @callback module:Worker~callback_of_connect
- * @param {}
- * @param {}
+ * @callback module:Worker~callback_of_fulfill_resource_list
+ * @param {error} error
  */
 /**
  * @memberof module:Worker
- * @param {object} remote_passive_interfaces
+ * @param {object} resource_name_to_intefaces_dict
  * @param {module:Worker~callback_of_connect} callback
  * @description Connect to NoXerveAgent Worker Network
  */
-Worker.prototype.addConnections = function(remote_passive_interfaces, callback) {
-  if (this.Worker._resources_list_imported !== true) {
-    // abort opearation if resource_list is not prepared
-    callback(true);
-  } else {
-
-  }
+Worker.prototype.fulfillResourceList = function(resource_name_to_intefaces_dict, callback) {
+  this._event_listeners['resources-list-fulfill'](resource_name_to_intefaces_dict, callback);
 }
 
 /**

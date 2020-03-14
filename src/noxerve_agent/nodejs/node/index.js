@@ -343,6 +343,20 @@ Node.prototype.on = function(event_name, callback) {
 }
 
 /**
+ * @callback module:Node~callback_of_start
+ * @param {error} error
+ */
+/**
+ * @memberof module:Node
+ * @param {module:Node~callback_of_start} callback
+ * @description Start running node.
+ */
+ Node.prototype.start = function(callback) {
+   // Catch error.
+   try {} catch (error) {}
+ }
+
+/**
  * @callback module:Node~callback_of_close
  * @param {error} error
  */

@@ -188,7 +188,8 @@ function Protocol(settings) {
  */
 Protocol.prototype.start = function(callback) {
   for (const module_name in this._protocol_modules) {
-    this._protocol_modules[module_name].start();
+    // [Flag] Dirty code.
+    this._protocol_modules[module_name].start(() => {});
   }
   // Handle tunnel create event from node module.
   // Specificlly speaking, use handshake to identify which module does tunnel belong to.
