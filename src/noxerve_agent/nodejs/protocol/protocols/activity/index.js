@@ -94,7 +94,7 @@ ActivityProtocol.prototype._shuffleArray = function(array) {
 ActivityProtocol.prototype.start = function(callback) {
 
   // Create activity from activity module.
-  this._activity_module.on('create-activity', (interface_connect_settings_list, create_activity_callback) => {
+  this._activity_module.on('activity-create', (interface_connect_settings_list, create_activity_callback) => {
 
     // Shuffle for clientwise loadbalancing.
     let shuffled_interface_connect_settings_list = this._shuffleArray(interface_connect_settings_list);
@@ -186,7 +186,7 @@ ActivityProtocol.prototype.start = function(callback) {
 /**
  * @memberof module:ActivityProtocol
  * @param {module:ActivityProtocol~callback_of_close} callback
- * @description Start the module.
+ * @description Close the module.
  */
 ActivityProtocol.prototype.close = function(callback) {
   if(callback) callback(false);

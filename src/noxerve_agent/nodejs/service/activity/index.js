@@ -64,7 +64,7 @@ Activity.prototype.on = function(event_name, listener) {
  * @description Activity events registeration.
  */
 Activity.prototype.createActivity = function(interface_connect_settings_list, callback) {
-  this._event_listeners['create-activity'](interface_connect_settings_list, (error, activity_of_service_handler)=> {
+  this._event_listeners['activity-create'](interface_connect_settings_list, (error, activity_of_service_handler)=> {
     if(error) {
       callback(error);
     }

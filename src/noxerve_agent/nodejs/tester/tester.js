@@ -29,20 +29,20 @@ let finish = (test_name) => {
   }
 };
 
-let NSDT = require('./nsdt');
-let NoXerveAgent = new(require('./index'))({});
-let Node = new(require('./node'))();
-let Node2 = new(require('./node'))();
-let Activity = new(require('./service/activity'))();
-let Service = new(require('./service/service'))();
-let Protocol = new(require('./protocol'))({
+let NSDT = require('../nsdt');
+let NoXerveAgent = new(require('../index'))({});
+let Node = new(require('../node'))();
+let Node2 = new(require('../node'))();
+let Activity = new(require('../service/activity'))();
+let Service = new(require('../service/service'))();
+let Protocol = new(require('../protocol'))({
   modules: {
     activity: Activity,
     service: Service
   },
   node_module: Node2
 });
-let Utils = require('./utils');
+let Utils = require('../utils');
 
 console.log('[Utils module] random8bytes ', Utils.random8bytes());
 console.log('[NSDT module] ', NSDT.decode(NSDT.encode({

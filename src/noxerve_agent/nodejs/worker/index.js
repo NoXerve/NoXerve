@@ -47,11 +47,12 @@ function Worker(settings) {
  */
 /**
  * @memberof module:Worker
+ * @param {integer} worker_id
  * @param {noxerve_supported_data_type} worker_information
  * @param {module:Worker~callback_of_} callback
  */
-Worker.prototype.importWorkerAuthenticityInformation = function(worker_authenticity_information, callback) {
-
+Worker.prototype.importWorkerAuthenticityData = function(worker_id, worker_authenticity_information, callback) {
+  this._event_listeners['worker-authenticity-data-import'](worker_id, worker_authenticity_information, callback);
 }
 
 /**
@@ -62,24 +63,41 @@ Worker.prototype.importWorkerAuthenticityInformation = function(worker_authentic
  * @memberof module:Worker
  * @param {array} resource_name_list
  * @param {module:Worker~callback_of_import_resource_list} callback
- * @description Connect to NoXerveAgent Worker Network
+ * @description Import all resource names that the service needed.
  */
 Worker.prototype.importResourceList = function(resource_name_list, callback) {
   this._event_listeners['resources-list-import'](resource_name_list, callback);
 }
 
 /**
- * @callback module:Worker~callback_of_
+ * @callback module:Worker~callback_of_import_resource_claim_list
+ * @param {error} error
+ */
+/**
+ * @memberof module:Worker
+ * @param {array} resource_claim_list
+ * @param {module:Worker~callback_of_import_resource_claim_list} callback
+ * @description Import all resource names of resources that this service worker have.
+ */
+Worker.prototype.importResourceCliamList = function(resource_claim_list, callback) {
+  this._event_listeners['resource-cliam-list-import'](resource_claim_list, callback);
+}
+
+/**
+ * @callback module:Worker~callback_of_claim_resource
+ * @param {object} resource_object
  * @param {error} error
  */
 /**
  * @memberof module:Worker
  * @param {string} resource_name
  * @param {array} worker_id_to_interface_dict
- * @param {module:Worker~callback_of_} callback
+ * @param {module:Worker~callback_of_claim_resource} callback
+ * @description Claim the resource this service worker have. And connect to
+ * other worker that handle the same resource.
  */
 Worker.prototype.claimResource = function(resource_name, worker_id_to_interface_dict, callback) {
-
+  this._event_listeners['resource-cliam'](resource_name, worker_id_to_interface_dict, callback);
 }
 
 /**

@@ -50,14 +50,6 @@ function ServiceProtocol(settings) {
    * @memberof module:ServiceProtocol
    * @type {object}
    * @private
-   * @description ActivityId to tunnel dictionary.
-   */
-  this._activity_id_to_tunnel_dict = {};
-
-  /**
-   * @memberof module:ServiceProtocol
-   * @type {object}
-   * @private
    * @description ServiceOfActivityHandler submodule.
    */
   this._service_of_activity_handler_module = new ServiceOfActivityHandler();
@@ -69,7 +61,7 @@ function ServiceProtocol(settings) {
  */
 /**
  * @memberof module:ServiceProtocol
- * @param {module:Node~callback_of_start} callback
+ * @param {module:ServiceProtocol~callback_of_start} callback
  * @description Start running ServiceProtocol.
  */
 ServiceProtocol.prototype.start = function(callback) {
@@ -83,7 +75,7 @@ ServiceProtocol.prototype.start = function(callback) {
 /**
  * @memberof module:ServiceProtocol
  * @param {module:ServiceProtocol~callback_of_close} callback
- * @description Start the module.
+ * @description Close the module.
  */
 ServiceProtocol.prototype.close = function(callback) {
   if(callback) callback(false);
@@ -104,7 +96,6 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
   if (synchronize_information.length === 1 && synchronize_information[0] === 1) {
     const generated_activity_id = Utils.random8bytes();
     const generated_activity_id_base64 = generated_activity_id.toString('base64');
-    this._activity_id_to_tunnel_dict[generated_activity_id_base64] = null;
 
     onError((error) => {
       return false;
