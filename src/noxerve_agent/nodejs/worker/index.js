@@ -43,7 +43,7 @@ function Worker(settings) {
 
      },
      'worker-authenticication': (worker_authenticity_information) => {
-
+       return worker_id;
      },
    };
 };
@@ -83,13 +83,13 @@ Worker.prototype.importResourceList = function(resource_name_list, callback) {
 /**
  * @memberof module:Worker
  * @param {string} resource_name
- * @param {array} worker_id_to_interface_dict
+ * @param {array} worker_id_to_interfaces_dict
  * @param {module:Worker~callback_of_handle_resource} callback
  * @description Handle the resource this service worker have. And connect to
  * other workers(peers) that handle the same resource.
  */
-Worker.prototype.handleResource = function(resource_name, worker_id_to_interface_dict, callback) {
-  this._event_listeners['resource-handle'](resource_name, worker_id_to_interface_dict, callback);
+Worker.prototype.handleResource = function(resource_name, worker_id_to_interfaces_dict, callback) {
+  this._event_listeners['resource-handle'](resource_name, worker_id_to_interfaces_dict, callback);
 }
 
 /**
@@ -99,13 +99,13 @@ Worker.prototype.handleResource = function(resource_name, worker_id_to_interface
 /**
  * @memberof module:Worker
  * @param {string} resource_name
- * @param {array} worker_id_to_interface_dict
+ * @param {array} worker_id_to_interfaces_dict
  * @param {module:Worker~callback_of_handle_resource} callback
  * @description Handle the resource this service worker have. And connect to
  * other worker that handle the same resource.
  */
-Worker.prototype.requestResource = function(resource_name, worker_id_to_interface_dict, callback) {
-  this._event_listeners['resource-request'](resource_name, worker_id_to_interface_dict, callback);
+Worker.prototype.requestResource = function(resource_name, worker_id_to_interfaces_dict, callback) {
+  this._event_listeners['resource-request'](resource_name, worker_id_to_interfaces_dict, callback);
 }
 
 
