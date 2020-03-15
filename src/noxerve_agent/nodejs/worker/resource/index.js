@@ -44,6 +44,14 @@
      * @private
      */
     this._is_claimed = false;
+
+    /**
+     * @memberof module:Resource
+     * @type {object}
+     * @private
+     * @description "scope_name" to latest_interation, my_interaion, is_locked, dictionary.
+     */
+    this._scope_dict = {};
  };
 
 /**
@@ -79,6 +87,32 @@ Resource.prototype.isClaimed = function() {
   return this._is_claimed;
 }
 
+// ***** API for claimed workers start *****
+// ***** API for claimed workers start *****
+
+// Each example is a different implementation.
+
+// Example 1 "executeConcurrentTask"
+// task_name: read
+// task_parameter: {path: "reversi.game_record", data: 1231231}
+// scope_name: user.tom
+// scope_interation: 223
+
+// Example 2 "executeConcurrentTask"
+// (this one is not a good implementation since too much scope
+// name , and the hierarchy dependencies of file system may cause some troubles.)
+// task_name: write
+// task_parameter: {file_name: "record_1.txt", data: 1334234}
+// scope_name: user.tom.game_data
+// scope_interation: 321
+
+// Example 3 "executeTask"
+// ("executeTask" not gonna emit writeTaskParameterRecord)
+// task_name: broadcast_message
+// task_parameter: "message 1"
+// scope_name: channel_1
+// scope_interation: null
+
 // [Flag] Unfinished annotation.
 Resource.prototype.createScope = function() {
   this._event_listeners['']();
@@ -89,43 +123,71 @@ Resource.prototype.destroyScope = function() {
   this._event_listeners['']();
 }
 
-// Example
-// task_name: read
-// task_parameter: reversi.game_record
-// scope_name: user.tom
-// scope_interation: 223
-
 // [Flag] Unfinished annotation.
-Resource.prototype.writeTaskParameterRecord = function(task_name, task_parameter, scope_name, scope_interation) {
+Resource.prototype.writeConcurrentTaskParameterRecord = function(task_name, task_parameter, scope_name, scope_interation) {
   this._event_listeners['']();
 }
 
 // [Flag] Unfinished annotation.
-Resource.prototype.readTaskParameterRecord = function(task_name, task_parameter, scope_name, scope_interation) {
+Resource.prototype.readConcurrentTaskParameterRecord = function(task_name, task_parameter, scope_name, scope_interation) {
   this._event_listeners['']();
 }
 
 // [Flag] Unfinished annotation.
-Resource.prototype.deleteTaskParameterRecord = function(task_name, task_parameter, scope_name, scope_interation) {
+Resource.prototype.deleteConcurrentTaskParameterRecord = function(task_name, task_parameter, scope_name, scope_interation) {
   this._event_listeners['']();
 }
 
+// handleConcurrentTask('write', (yielding_handler_parameter, handle_yielding, start_yielding)=> {
+//  handle_yielding('ok', (error, data, eof)=> {
+//    if(eof) start_yielding((error, yielding_start_parameter, finish_yield, yield_data) => {
+//
+//    });
+//  });
+// });
 // [Flag] Unfinished annotation.
-Resource.prototype.handleConcurrentTask = function(task_name, scope_name, task_handler_callback) {
-  this._event_listeners['']();
+Resource.prototype.handleConcurrentTask = function(task_name, task_handler) {
+  task_handler(task_parameter, scope_name, finish, yield_data, is_master);
+  result_callback();
 }
 
 // [Flag] Unfinished annotation.
-Resource.prototype.executeConcurrentTask = function(task_name, task_parameter, scope_name) {
+Resource.prototype.handleTask = function(task_name, task_handler) {
+  task_handler(task_parameter, scope_name, finish, yield_data);
+}
+
+// ***** API for claimed workers end *****
+// ***** API for claimed workers end *****
+
+
+// ***** API for both unclaimed and claimed workers start *****
+// ***** API for both unclaimed and claimed workers start *****
+
+// worker call.
+// -> resource worker whatsoever recieved.
+// -> emit to resource worker peers.(include resource worker whatsoever itself)
+// -> resource worker peers proceed.(include resource worker whatsoever itself)
+// [Flag] Unfinished annotation.
+Resource.prototype.executeConcurrentTask = function(task_name, task_parameter, scope_name, callback) {
   this._event_listeners['']();
 }
 
-// [Flag] Unfinished annotation.
-Resource.prototype.handleTask = function(task_name, scope_name, task_handler_callback) {
+// [Flag] Unfinished annotation. Non-blocking task.
+Resource.prototype.executeTask = function(task_name, task_parameter, scope_name, callback) {
   this._event_listeners['']();
 }
 
-// [Flag] Unfinished annotation.
-Resource.prototype.executeTask = function(task_name, task_parameter, scope_name) {
-  this._event_listeners['']();
+/**
+ * @callback module:Resource~callback_of_on
+ * @param {error} error
+ */
+/**
+ * @memberof module:Worker
+ * @param {string} event_name - "error" "close"
+ * @param {module:Resource~callback_of_on} callback
+ * @description Worker events. "ready" triggered if worker fullfill adequate
+ * resources condition. Which needs to be completed by adding connections.
+ */
+Resource.prototype.on = function(event_name, callback) {
+
 }

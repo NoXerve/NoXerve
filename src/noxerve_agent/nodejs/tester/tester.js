@@ -187,7 +187,7 @@ Node2.createInterface('WebSocket', {
         yield_data(123);
         yield_data({foo: 123});
         yield_data(Buffer.from([5, 4, 3, 2, 1]));
-        finish_yield();
+        finish_yield('haha');
       });
       activity_of_service.call('test_func', {foo: 'call from activity'}, (err, data, eof)=> {
         console.log('[Activity module] Return value: ', data);
