@@ -83,7 +83,7 @@ function WorkerProtocol(settings) {
    * @description Resource name list. Resource names of resources that this service worker have.
    * With name as key, ready, resource_peers as value.
    */
-  this._resource_claim_dict = {};
+  this._resource_handle_dict = {};
 }
 
 /**
@@ -105,17 +105,17 @@ WorkerProtocol.prototype.start = function(callback) {
 
   });
 
-  this._worker_module.on('resource-cliam-list-import', (resource_name, worker_id_to_interface_dict, callback) => {
+  this._worker_module.on('resource-handle', (resource_name, worker_id_to_interface_dict, callback) => {
 
   });
 
-  this._worker_module.on('resource-cliam', (resource_name, worker_id_to_interface_dict, callback) => {
+  this._worker_module.on('resource-request', (resource_name, worker_id_to_interface_dict, callback) => {
 
   });
 
-  this._worker_module.on('resources-list-fulfill', (resource_name_to_intefaces_dict, callback) => {
-
-  });
+  // this._worker_module.on('resources-list-fulfill', (resource_name_to_intefaces_dict, callback) => {
+  //
+  // });
 }
 
 /**
