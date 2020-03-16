@@ -120,7 +120,7 @@ ActivityOfService.prototype.call = function(service_function_name, service_funct
  * @description ActivityOfService events emitter. For internal uses.
  */
 ActivityOfService.prototype.emitEventListener = function(event_name, ...params) {
-  this._event_listeners[event_name].apply(null, params);
+  return this._event_listeners[event_name].apply(null, params);
 }
 
 module.exports = ActivityOfService;

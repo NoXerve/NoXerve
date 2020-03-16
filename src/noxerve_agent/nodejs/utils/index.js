@@ -37,3 +37,16 @@ module.exports.shuffleArray = function(array) {
 
   return array;
 }
+
+module.exports.areBuffersEqual = function (bufA, bufB) {
+    let len = bufA.length;
+    if (len !== bufB.length) {
+        return false;
+    }
+    for (let i = 0; i < len; i++) {
+        if (bufA[i] !== bufB[i]) {
+            return false;
+        }
+    }
+    return true;
+}

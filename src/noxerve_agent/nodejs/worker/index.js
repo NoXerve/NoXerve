@@ -43,7 +43,8 @@ function Worker(settings) {
 
     },
     'worker-authenticication': (worker_authenticity_information) => {
-      return worker_id;
+      console.log(worker_authenticity_information);
+      return true;
     },
   };
 };
@@ -149,6 +150,15 @@ Worker.prototype.requestResource = function(resource_name, worker_id_to_interfac
  */
 Worker.prototype.on = function(event_name, listener) {
   this._event_listeners[event_name] = listener;
+}
+
+/**
+ * @memberof module:Worker
+ * @param {string} event_name
+ * @description Worker events emitter. For internal uses.
+ */
+Worker.prototype.emitEventListener = function(event_name, ...params) {
+  return this._event_listeners[event_name].apply(null, params);
 }
 
 module.exports = Worker;

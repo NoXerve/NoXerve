@@ -14,6 +14,8 @@
 const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
+const Crypto = require('crypto');
+const NSDT = require('../../../nsdt');
 
 /**
  * @constructor module:WorkerProtocol
@@ -53,11 +55,11 @@ function WorkerProtocol(settings) {
 
   /**
    * @memberof module:WorkerProtocol
-   * @type {noxerve_supported_data_type}
+   * @type {buffer}
    * @private
    * @description Worker authenticity data. Avoid being hacked. Provide in handshake communication.
    */
-  this._worker_authenticity_data = null;
+  this._worker_authenticity_data_buffer;
 
   /**
    * @memberof module:WorkerProtocol
@@ -65,7 +67,7 @@ function WorkerProtocol(settings) {
    * @private
    * @description Worker authenticity data. Avoid being hacked. Provide in handshake communication.
    */
-  this._resource_list_hash;
+  this._resource_list_hash_4bytes;
 
   // /**
   //  * @memberof module:WorkerProtocol
@@ -73,7 +75,7 @@ function WorkerProtocol(settings) {
   //  * @private
   //  * @description WorkerId as key tunnel as value dictionary.
   //  */
-  // this._worker_id_to_tunnel_dict = {};
+  // this._peers_worker_id_to_tunnel_dict = {};
   //
 
   /**
@@ -83,6 +85,14 @@ function WorkerProtocol(settings) {
    * @description Resource name list. Resource names that the service needed.
    */
   this._resource_list = [];
+
+  /**
+   * @memberof module:WorkerProtocol
+   * @type {array}
+   * @private
+   * @description Resource name dictionary.
+   */
+  this._resource_name_to_detail_dict = {};
   //
   // /**
   //  * @memberof module:WorkerProtocol
@@ -105,6 +115,28 @@ function WorkerProtocol(settings) {
    * @private
    */
   this._hash_to_string = {};
+
+  /**
+   * @memberof module:WorkerProtocol
+   * @type {integer}
+   * @private
+   */
+  this._peers_worker_id_checksum;
+}
+
+/**
+ * @memberof module:WorkerProtocol
+ * @param {array} worker_id_list
+ * @private
+ */
+WorkerProtocol.prototype._update_peers_worker_id_checksum = function(worker_id_list) {
+  let peers_worker_id_checksum = this._worker_id;
+  for(const index in worker_id_list) {
+    worker_id_list[index] = parseInt(worker_id_list[index]);
+    peers_worker_id_checksum += worker_id_list[index];
+  }
+  this._peers_worker_id_checksum = peers_worker_id_checksum;
+  return peers_worker_id_checksum;
 }
 
 /**
@@ -147,63 +179,99 @@ WorkerProtocol.prototype.start = function(callback) {
   if(callback) callback(false);
   this._worker_module.on('worker-authenticity-data-import', (worker_id, worker_authenticity_information, callback) => {
     this._worker_id = worker_id;
-    this._worker_authenticity_data = worker_authenticity_information;
+    this._worker_authenticity_data_buffer = NSDT.encode(worker_authenticity_information);
     if(worker_id) callback(false);
     // [Flag] Uncatogorized error.
     else callback(true);
   });
 
   this._worker_module.on('resource-list-import', (resource_name_list, callback) => {
+    resource_name_list.sort();
     if(Array.isArray(resource_name_list)) {
       this._resource_list = resource_name_list;
-       callback(false);
+
+      // Create _resource_list_hash_4bytes.
+      let resource_name_concat_string = '';
+      for(const index in resource_name_list) {
+        resource_name_concat_string += resource_name_list[index];
+        this._resource_name_to_detail_dict[resource_name_list[index]] = {ready: false};
+      }
+      // console.log(resource_name_concat_string);
+      this._resource_list_hash_4bytes = this._hash_string_4bytes(resource_name_concat_string);
+
+      callback(false);
     }
     // [Flag] Uncatogorized error.
     else callback(true);
   });
 
-  this._worker_module.on('resource-handle', (resource_name, worker_id_to_interfaces_dict, least_connection_percent, callback) => {
+  this._worker_module.on('resource-handle', (resource_name, peers_worker_id_to_interfaces_dict, least_connection_percent, callback) => {
     if(this._worker_id === 0) {
       // [Flag] Uncatogorized error
       callback(1);
       return;
     }
     else if(!this._resource_list.includes(resource_name)) {
-      console.log(this._resource_list, resource_name);
       // [Flag] Uncatogorized error
       callback(2);
       return;
     }
 
-    const worker_id_list = Utils.shuffleArray(Object.keys(worker_id_to_interfaces_dict));
-    const least_connection_count = Math.ceil((worker_id_list.length * least_connection_percent) / 100);
+    delete peers_worker_id_to_interfaces_dict[this._worker_id];
+
+    const peers_worker_id_list_shuffled = Utils.shuffleArray(Object.keys(peers_worker_id_to_interfaces_dict));
+    const least_connection_count = Math.ceil((peers_worker_id_list_shuffled.length * least_connection_percent) / 100);
+
+    // For authenticity.
+    let peers_worker_id_checksum = this._update_peers_worker_id_checksum(peers_worker_id_list_shuffled);
 
     // Including yourself.
     let connection_count = 1;
     // Create worker peers checksum.
-    for(const index in worker_id_list) {
-      const worker_id = worker_id_list[index];
-      const interfaces = worker_id_to_interfaces_dict[worker_id];
+    for(const index in peers_worker_id_list_shuffled) {
+      const worker_id = peers_worker_id_list_shuffled[index];
+      const interfaces = peers_worker_id_to_interfaces_dict[worker_id];
 
       let loop_index = 0;
 
       const next_loop = ()=> {
-
+        loop_index++;
+        if(loop_index < interfaces.length) {
+          loop_over_interfaces();
+        }
       };
 
       const loop_over_interfaces = ()=> {
         const interface_name = interfaces[loop_index].interface_name;
         const interface_connect_settings = interfaces[loop_index].interface_connect_settings;
-        const synchronize_information = Buf.from([2]);;
-        const acknowledge_synchronization = () => {};
-        const finish_handshake = () => {};
+
+        const synchronize_information = Buf.concat([
+          Buf.from([2]),
+          this._resource_list_hash_4bytes,
+          Buf.from([Math.floor(this._peers_worker_id_checksum/256), this._peers_worker_id_checksum%256]),
+          this._worker_authenticity_data_buffer
+        ]);
+
+        const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information) => {
+          if(open_handshanke_error) {
+            next_loop();
+          }
+          console.log('synchronize_acknowledgement_information', open_handshanke_error, synchronize_acknowledgement_information);
+          return Buf.from([0x01]);
+        };
+
+        const finish_handshake = (error, tunnel) => {
+          console.log(error, tunnel);
+        };
+
         this._open_handshake_function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
       };
 
-      loop_over_interfaces();    }
+      loop_over_interfaces();
+    }
   });
 
-  this._worker_module.on('resource-request', (resource_name, worker_id_to_interfaces_dict, callback) => {
+  this._worker_module.on('resource-request', (resource_name, peers_worker_id_to_interfaces_dict, callback) => {
 
   });
 
@@ -237,20 +305,46 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
   // worker byte
   // 0x02
 
-  if (synchronize_information.length === 1 && synchronize_information[0] === 2) {
+  if (synchronize_information[0] === 0x02 || synchronize_information[0] === 0x03) {
     onError((error) => {
       return false;
     });
 
     onAcknowledge((acknowledge_information, tunnel) => {
       if (acknowledge_information[0] === 0x01) {
+        console.log('acknowledge_information', acknowledge_information);
       } else {
         return false;
       }
     });
 
-    // Send 8 bytes id;
-    return Buf.from([0x01]);
+    if(synchronize_information[0] === 0x02) {
+      // Check resource_list_hash_4bytes match.
+      console.log('synchronize_information', synchronize_information);
+
+      if(
+        Utils.areBuffersEqual(synchronize_information.slice(1, 5), this._resource_list_hash_4bytes.slice(0, 4))
+        &&
+        Math.floor(this._peers_worker_id_checksum/256) === synchronize_information[5]
+        &&
+        this._peers_worker_id_checksum%256 === synchronize_information[6]
+      ){
+        const synchronize_acknowledgement_information = this._worker_module.emitEventListener('worker-authenticication', NSDT.decode(synchronize_information.slice(7)));
+        if(synchronize_acknowledgement_information) {
+          return Buf.concat([Buf.from([0x01]), NSDT.encode(synchronize_acknowledgement_information)]);
+
+        }
+        else {
+          return Buf.from([0x00, 0x01]);
+        }
+      }
+      else {
+        return Buf.from([0x00, 0x00]);
+      }
+    }
+    else {
+
+    }
   } else return false;
 }
 
