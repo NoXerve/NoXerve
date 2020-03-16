@@ -110,7 +110,7 @@ ActivityOfServiceHandler.prototype.handle = function(error, activity_of_service,
     // Start communication with service.
     activity_of_service.on('service-function-call',
       (service_function_name, service_function_argument, service_function_callback) => {
-        const service_function_callback_id = Utils.random4bytes();
+        const service_function_callback_id = Utils.random4Bytes();
 
         // Register callback with callback id locally.
         service_function_callback_dict[service_function_callback_id.toString('base64')] = service_function_callback;
@@ -130,7 +130,7 @@ ActivityOfServiceHandler.prototype.handle = function(error, activity_of_service,
 
     // Start communication with service.
     activity_of_service.on('yielding-start', (field_name, yielding_start_argument, yielding_start_callback) => {
-      const yielding_id = Utils.random4bytes();
+      const yielding_id = Utils.random4Bytes();
 
       // Register callback with callback id locally.
       yielding_start_callback_dict[yielding_id.toString('base64')] = yielding_start_callback;

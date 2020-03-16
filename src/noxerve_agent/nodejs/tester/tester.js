@@ -35,16 +35,19 @@ let Node = new(require('../node'))();
 let Node2 = new(require('../node'))();
 let Activity = new(require('../service/activity'))();
 let Service = new(require('../service/service'))();
+let Worker = new(require('../worker'))();
+
 let Protocol = new(require('../protocol'))({
   modules: {
     activity: Activity,
-    service: Service
+    service: Service,
+    worker: Worker
   },
   node_module: Node2
 });
 let Utils = require('../utils');
 
-console.log('[Utils module] random8bytes ', Utils.random8bytes());
+console.log('[Utils module] random8Bytes ', Utils.random8Bytes());
 console.log('[NSDT module] ', NSDT.decode(NSDT.encode({
   host: '0.0.0.0',
   port: 12345
@@ -126,6 +129,13 @@ Node.createInterface('WebSocket', {
 Protocol.start();
 // **** Protocol Module Test End ****
 
+// **** Worker Module Test Start ****
+Worker.importWorkerAuthenticityData(1, 'whatsoever', ()=> {
+  Worker.importResourceList(['A', 'B', 'C'], ()=> {
+
+  });
+});
+// **** Worker Module Test End ****
 
 // **** Service Module Test Start ****
 Service.on('connect', (service_of_activity) => {
@@ -147,7 +157,7 @@ Service.on('connect', (service_of_activity) => {
     console.log('[Service module] Parameters value: ', service_function_parameter);
     // service_of_activity.close();
     yield_data({bar: 13579});
-    yield_data(Utils.random8bytes());
+    yield_data(Utils.random8Bytes());
     yield_data(Buffer.from([1, 2, 3, 4, 5]));
     return_data({bar: 'last round'});
     finish('service_function_test');

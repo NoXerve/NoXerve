@@ -202,18 +202,18 @@ Resource.prototype.define = function(resource_function_name, resource_function) 
 }
 
 // [Flag] Unfinished annotation.
-Resource.prototype.defineConcurrently = function(resource_function_name, resource_function) {
+Resource.prototype.defineConcurrently = function(resource_function_name, resource_function_do, resource_function_undo) {
   resource_function(resource_function_parameter, scope_name, finish, yield_data, is_master);
 }
 
 // [Flag] Unfinished annotation.
-Resource.prototype.handleYielding = function(field_name, resource_function) {
+Resource.prototype.handleYielding = function(field_name, yielding_start_callback) {
   resource_function(resource_function_parameter, scope_name, finish, yield_data);
   result_callback();
 }
 
 // [Flag] Unfinished annotation.
-Resource.prototype.handleYieldingConcurrently = function(field_name, resource_function) {
+Resource.prototype.handleYieldingConcurrently = function(field_name, yielding_start_callback, yielding_start_undo_callback) {
   resource_function(resource_function_parameter, scope_name, finish, yield_data, is_master);
 }
 
@@ -234,7 +234,7 @@ Resource.prototype.call = function(resource_function_name, resource_function_arg
 }
 
 // [Flag] Unfinished annotation. Non-blocking task.
-Resource.prototype.callConcurrently = function(resource_function_name, resource_function_argument, scope_name, resource_function_callback) {
+Resource.prototype.callConcurrently = function(resource_function_name, resource_function_argument, scope_name, least_synced_scope_percent,  resource_function_callback) {
   this._event_listeners['']();
 }
 
@@ -243,7 +243,7 @@ Resource.prototype.startYielding = function(field_name, yielding_start_argument,
 }
 
 // [Flag] Unfinished annotation. Non-blocking task.
-Resource.prototype.startYieldingConcurrently = function(field_name, yielding_start_argument, scope_name, yielding_start_callback) {
+Resource.prototype.startYieldingConcurrently = function(field_name, yielding_start_argument, scope_name, least_synced_scope_percent, yielding_start_callback) {
   this._event_listeners['']();
 }
 

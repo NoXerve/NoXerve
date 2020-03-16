@@ -13,6 +13,7 @@
 
 const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
+const Utils = require('../../../utils');
 const ActivityOfServiceHandler = require('./activity_of_service_handler');
 
 
@@ -62,25 +63,7 @@ function ActivityProtocol(settings) {
  * @description Reference: https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array.
  * For clientside loadbalancing.
  */
-ActivityProtocol.prototype._shuffleArray = function(array) {
-  let current_index = array.length,
-    temporary_value, random_index;
 
-  // While there remain elements to shuffle...
-  while (0 !== current_index) {
-
-    // Pick a remaining element...
-    random_index = Math.floor(Math.random() * current_index);
-    current_index -= 1;
-
-    // And swap it with the current element.
-    temporary_value = array[current_index];
-    array[current_index] = array[random_index];
-    array[random_index] = temporary_value;
-  }
-
-  return array;
-}
 
 /**
  * @callback module:ActivityProtocol~callback_of_start
@@ -97,7 +80,7 @@ ActivityProtocol.prototype.start = function(callback) {
   this._activity_module.on('activity-create', (interface_connect_settings_list, create_activity_callback) => {
 
     // Shuffle for clientwise loadbalancing.
-    let shuffled_interface_connect_settings_list = this._shuffleArray(interface_connect_settings_list);
+    let shuffled_interface_connect_settings_list = Utils.shuffleArray(interface_connect_settings_list);
 
     // Get activity_id from synchronize_acknowledgement_information;
     let activity_id;

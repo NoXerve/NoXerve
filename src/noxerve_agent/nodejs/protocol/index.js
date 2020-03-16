@@ -254,6 +254,9 @@ Protocol.prototype.start = function(callback) {
                 tunnel.close();
                 synchronization_error_handler(error, data);
               }
+
+              // Handled by a protocol. Stop loop.
+              break;
             } else {
               // Reset handlers.
               synchronization_error_handler = null;

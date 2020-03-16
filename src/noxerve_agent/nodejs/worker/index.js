@@ -38,15 +38,41 @@ function Worker(settings) {
    * @type {object}
    * @private
    */
-   this._event_listeners = {
-     'ready': (resource_name_to_resource_object_dict) => {
+  this._event_listeners = {
+    'ready': (resource_name_to_resource_object_dict) => {
 
-     },
-     'worker-authenticication': (worker_authenticity_information) => {
-       return worker_id;
-     },
-   };
+    },
+    'worker-authenticication': (worker_authenticity_information) => {
+      return worker_id;
+    },
+  };
 };
+
+/**
+ * @callback module:Worker~callback_of_start
+ * @param {error} error
+ */
+/**
+ * @memberof module:Worker
+ * @param {module:Worker~callback_of_start} callback
+ * @description Start the worker module.
+ */
+Worker.prototype.start = function(callback) {
+
+}
+
+/**
+ * @callback module:Worker~callback_of_close
+ * @param {error} error
+ */
+/**
+ * @memberof module:Worker
+ * @param {module:Worker~callback_of_close} callback
+ * @description Close the worker module.
+ */
+Worker.prototype.close = function(callback) {
+
+}
 
 /**
  * @callback module:Worker~callback_of_
@@ -88,8 +114,8 @@ Worker.prototype.importResourceList = function(resource_name_list, callback) {
  * @description Handle the resource this service worker have. And connect to
  * other workers(peers) that handle the same resource.
  */
-Worker.prototype.handleResource = function(resource_name, worker_id_to_interfaces_dict, callback) {
-  this._event_listeners['resource-handle'](resource_name, worker_id_to_interfaces_dict, callback);
+Worker.prototype.handleResource = function(resource_name, worker_id_to_interfaces_dict, least_connection_percent, callback) {
+  this._event_listeners['resource-handle'](resource_name, worker_id_to_interfaces_dict, least_connection_percent, callback);
 }
 
 /**
@@ -112,17 +138,17 @@ Worker.prototype.requestResource = function(resource_name, worker_id_to_interfac
 /**
  * @callback module:Worker~callback_of_on
  * @param {error} error
- * @param {}
+ * @description Parameters depends.
  */
 /**
  * @memberof module:Worker
  * @param {string} event_name - "ready" "error" "close"
- * @param {module:Worker~callback_of_on} callback
+ * @param {module:Worker~callback_of_on} listener
  * @description Worker events. "ready" triggered if worker fullfill adequate
  * resources condition. Which needs to be completed by adding connections.
  */
-Worker.prototype.on = function(event_name, callback) {
-
+Worker.prototype.on = function(event_name, listener) {
+  this._event_listeners[event_name] = listener;
 }
 
 module.exports = Worker;

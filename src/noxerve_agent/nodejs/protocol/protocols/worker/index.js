@@ -59,31 +59,31 @@ function WorkerProtocol(settings) {
    */
   this._worker_authenticity_data = null;
 
-  /**
-   * @memberof module:WorkerProtocol
-   * @type {object}
-   * @private
-   * @description WorkerId as key tunnel as value dictionary.
-   */
-  this._worker_id_to_tunnel_dict = {};
+  // /**
+  //  * @memberof module:WorkerProtocol
+  //  * @type {object}
+  //  * @private
+  //  * @description WorkerId as key tunnel as value dictionary.
+  //  */
+  // this._worker_id_to_tunnel_dict = {};
+  //
 
   /**
    * @memberof module:WorkerProtocol
    * @type {array}
    * @private
    * @description Resource name list. Resource names that the service needed.
-   * With name as key, ready, worker_id as value.
    */
-  this._resource_dict = [];
-
-  /**
-   * @memberof module:WorkerProtocol
-   * @type {object}
-   * @private
-   * @description Resource name list. Resource names of resources that this service worker have.
-   * With name as key, ready, resource_peers as value.
-   */
-  this._resource_handle_dict = {};
+  this._resource_list = [];
+  //
+  // /**
+  //  * @memberof module:WorkerProtocol
+  //  * @type {object}
+  //  * @private
+  //  * @description Resource name list. Resource names of resources that this service worker have.
+  //  * With name as key, ready, resource_peers as value.
+  //  */
+  // this._resource_handle_dict = {};
 }
 
 /**
@@ -98,18 +98,33 @@ function WorkerProtocol(settings) {
 WorkerProtocol.prototype.start = function(callback) {
   if(callback) callback(false);
   this._worker_module.on('worker-authenticity-data-import', (worker_id, worker_authenticity_information, callback) => {
-
+    this._worker_id = worker_id;
+    this._worker_authenticity_data = worker_authenticity_information;
+    if(worker_id) callback(false);
+    // [Flag] Uncatogorized error.
+    else callback(true);
   });
 
   this._worker_module.on('resource-list-import', (resource_name_list, callback) => {
-
+    if(typeof(resource_name_list) === 'array') {
+      this._resource_list = resource_name_list;
+       callback(false);
+    }
+    // [Flag] Uncatogorized error.
+    else callback(true);
   });
 
-  this._worker_module.on('resource-handle', (resource_name, worker_id_to_interface_dict, callback) => {
-
+  this._worker_module.on('resource-handle', (resource_name, worker_id_to_interfaces_dict, least_connection_percent, callback) => {
+    const worker_id_list = Object.keys(worker_id_to_interfaces_dict);
+    const least_connection_count = Math.ceil((worker_id_list.length * least_connection_percent) / 100);
+    let connection_count = 0;
+    // Create worker peers checksum.
+    // for() {
+    //
+    // }
   });
 
-  this._worker_module.on('resource-request', (resource_name, worker_id_to_interface_dict, callback) => {
+  this._worker_module.on('resource-request', (resource_name, worker_id_to_interfaces_dict, callback) => {
 
   });
 
@@ -164,5 +179,5 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
 module.exports = {
   protocol_name: 'worker',
   related_module_name: 'worker',
-  module: function() {}
+  module: WorkerProtocol
 };

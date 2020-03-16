@@ -94,7 +94,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
   // 0x01
 
   if (synchronize_information.length === 1 && synchronize_information[0] === 1) {
-    const generated_activity_id = Utils.random8bytes();
+    const generated_activity_id = Utils.random8Bytes();
     const generated_activity_id_base64 = generated_activity_id.toString('base64');
 
     onError((error) => {
