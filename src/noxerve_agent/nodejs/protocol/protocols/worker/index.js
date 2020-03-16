@@ -59,6 +59,14 @@ function WorkerProtocol(settings) {
    */
   this._worker_authenticity_data = null;
 
+  /**
+   * @memberof module:WorkerProtocol
+   * @type {buffer}
+   * @private
+   * @description Worker authenticity data. Avoid being hacked. Provide in handshake communication.
+   */
+  this._resource_list_hash;
+
   // /**
   //  * @memberof module:WorkerProtocol
   //  * @type {object}
@@ -84,6 +92,46 @@ function WorkerProtocol(settings) {
   //  * With name as key, ready, resource_peers as value.
   //  */
   // this._resource_handle_dict = {};
+  /**
+   * @memberof module:WorkerProtocol
+   * @type {object}
+   * @private
+   */
+  this._string_to_hash = {};
+
+  /**
+   * @memberof module:WorkerProtocol
+   * @type {object}
+   * @private
+   */
+  this._hash_to_string = {};
+}
+
+/**
+ * @memberof module:WorkerProtocol
+ * @param {string} string
+ * @private
+ */
+WorkerProtocol.prototype._hash_string_4bytes = function(string) {
+  let result = this._string_to_hash[string];
+  if (!result) {
+    const hash_sha256 = Crypto.createHash('md5');
+    hash_sha256.update(string);
+    result = hash_sha256.digest().slice(0, 4);
+    this._string_to_hash[string] = result;
+    this._hash_to_string[result.toString('base64')] = string;
+  }
+
+  return result;
+}
+
+/**
+ * @memberof module:WorkerProtocol
+ * @param {buffer} _4bytes_hash
+ * @private
+ */
+WorkerProtocol.prototype._stringify_4bytes_hash = function(_4bytes_hash) {
+  return this._hash_to_string[_4bytes_hash.toString('base64')];
 }
 
 /**
@@ -106,7 +154,7 @@ WorkerProtocol.prototype.start = function(callback) {
   });
 
   this._worker_module.on('resource-list-import', (resource_name_list, callback) => {
-    if(typeof(resource_name_list) === 'array') {
+    if(Array.isArray(resource_name_list)) {
       this._resource_list = resource_name_list;
        callback(false);
     }
@@ -115,13 +163,44 @@ WorkerProtocol.prototype.start = function(callback) {
   });
 
   this._worker_module.on('resource-handle', (resource_name, worker_id_to_interfaces_dict, least_connection_percent, callback) => {
-    const worker_id_list = Object.keys(worker_id_to_interfaces_dict);
+    if(this._worker_id === 0) {
+      // [Flag] Uncatogorized error
+      callback(1);
+      return;
+    }
+    else if(!this._resource_list.includes(resource_name)) {
+      console.log(this._resource_list, resource_name);
+      // [Flag] Uncatogorized error
+      callback(2);
+      return;
+    }
+
+    const worker_id_list = Utils.shuffleArray(Object.keys(worker_id_to_interfaces_dict));
     const least_connection_count = Math.ceil((worker_id_list.length * least_connection_percent) / 100);
-    let connection_count = 0;
+
+    // Including yourself.
+    let connection_count = 1;
     // Create worker peers checksum.
-    // for() {
-    //
-    // }
+    for(const index in worker_id_list) {
+      const worker_id = worker_id_list[index];
+      const interfaces = worker_id_to_interfaces_dict[worker_id];
+
+      let loop_index = 0;
+
+      const next_loop = ()=> {
+
+      };
+
+      const loop_over_interfaces = ()=> {
+        const interface_name = interfaces[loop_index].interface_name;
+        const interface_connect_settings = interfaces[loop_index].interface_connect_settings;
+        const synchronize_information = Buf.from([2]);;
+        const acknowledge_synchronization = () => {};
+        const finish_handshake = () => {};
+        this._open_handshake_function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
+      };
+
+      loop_over_interfaces();    }
   });
 
   this._worker_module.on('resource-request', (resource_name, worker_id_to_interfaces_dict, callback) => {

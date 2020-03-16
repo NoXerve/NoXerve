@@ -89,11 +89,11 @@ ActivityProtocol.prototype.start = function(callback) {
     // Format:
     // service-activity byte
     // 0x01
-    let synchronize_information = Buf.from([1]);;
+    const synchronize_information = Buf.from([1]);;
 
     // Proceed tunnel creations loop.
     let index = 0;
-    let loop = ()=> {
+    const loop = ()=> {
       const interface_name = shuffled_interface_connect_settings_list[index].interface_name;
       const interface_connect_settings = shuffled_interface_connect_settings_list[index].interface_connect_settings;
 

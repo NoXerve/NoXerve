@@ -132,7 +132,9 @@ Protocol.start();
 // **** Worker Module Test Start ****
 Worker.importWorkerAuthenticityData(1, 'whatsoever', ()=> {
   Worker.importResourceList(['A', 'B', 'C'], ()=> {
+    Worker.handleResource('A', {2: [{}]}, ()=> {
 
+    });
   });
 });
 // **** Worker Module Test End ****

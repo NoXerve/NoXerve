@@ -45,24 +45,24 @@ function ServiceOfActivityHandler(settings) {
    * @private
    */
   this._hash_to_string = {};
-
-  /**
-   * @memberof module:ServiceOfActivityHandler
-   * @type {object}
-   * @private
-   */
-  this._protocol_codes = {
-    service_function_call: Buf.from([0x01]),
-    service_function_call_data: Buf.from([0x02]),
-    service_function_call_data_eof: Buf.from([0x03]),
-    service_function_call_error: Buf.from([0x04]),
-    yielding_start: Buf.from([0x05]),
-    yielding_start_acknowledge: Buf.from([0x06]),
-    yielding_data: Buf.from([0x07]),
-    yielding_data_eof: Buf.from([0x08]),
-    yielding_error: Buf.from([0x09]),
-  };
 }
+
+/**
+ * @memberof module:ServiceOfActivityHandler
+ * @type {object}
+ * @private
+ */
+ServiceOfActivityHandler.prototype._protocol_codes = {
+  service_function_call: Buf.from([0x01]),
+  service_function_call_data: Buf.from([0x02]),
+  service_function_call_data_eof: Buf.from([0x03]),
+  service_function_call_error: Buf.from([0x04]),
+  yielding_start: Buf.from([0x05]),
+  yielding_start_acknowledge: Buf.from([0x06]),
+  yielding_data: Buf.from([0x07]),
+  yielding_data_eof: Buf.from([0x08]),
+  yielding_error: Buf.from([0x09]),
+};
 
 /**
  * @memberof module:ServiceOfActivityHandler
