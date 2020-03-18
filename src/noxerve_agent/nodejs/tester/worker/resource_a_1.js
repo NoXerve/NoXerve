@@ -31,6 +31,10 @@ Node.createInterface('WebSocket', {
   })
 })
 
+Worker.on('worker-authenticication', (worker_authenticity_information)=> {
+  console.log('worker_authenticity_information', worker_authenticity_information);
+  return true;
+});
 Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', ()=> {
   Worker.on('ready', (resources) => {
     resources.FileSystemGroupA.defineConcurrently('read', ()=> {

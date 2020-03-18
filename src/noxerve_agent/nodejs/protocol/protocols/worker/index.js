@@ -364,7 +364,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
         // Check peers_worker_id_checksum is equal. Second byte.
         this._peers_worker_id_checksum%256 === synchronize_information[14]
       ){
-        const synchronize_acknowledgement_information = this._worker_module.emitEventListener('worker-authenticication', NSDT.decode(synchronize_information.slice(7)));
+        const synchronize_acknowledgement_information = this._worker_module.emitEventListener('worker-authenticication', NSDT.decode(synchronize_information.slice(15)));
         if(synchronize_acknowledgement_information) {
           console.log(resource_name);
           return Buf.concat([Buf.from([0x01]), NSDT.encode(synchronize_acknowledgement_information)]);
