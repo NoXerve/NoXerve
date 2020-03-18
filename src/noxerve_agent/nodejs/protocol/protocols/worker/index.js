@@ -16,6 +16,7 @@ const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
 const Crypto = require('crypto');
 const NSDT = require('../../../nsdt');
+const ResourceProtocol = require('./resource');
 
 /**
  * @constructor module:WorkerProtocol
@@ -193,8 +194,20 @@ WorkerProtocol.prototype.start = function(callback) {
       // Create _resource_list_hash_4bytes.
       let resource_name_concat_string = '';
       for(const index in resource_name_list) {
-        resource_name_concat_string += resource_name_list[index];
-        this._resource_name_to_detail_dict[resource_name_list[index]] = {ready: false};
+        const resource_name = resource_name_list[index];
+
+        resource_name_concat_string += resource_name;
+
+        // Initialize dictionary.
+        this._worker_module.emitEventListener('resource-of-worker-request', (error, resource) => {
+          this._resource_name_to_detail_dict[resource_name] = {
+            ready: false,
+            is_claimed: false,
+            resource_protocol_module: new ResourceProtocol({
+              resource_module: resource
+            })
+          };
+        });
       }
       // console.log(resource_name_concat_string);
       this._resource_list_hash_4bytes = this._hash_string_4bytes(resource_name_concat_string);
@@ -219,9 +232,13 @@ WorkerProtocol.prototype.start = function(callback) {
 
     delete peers_worker_id_to_interfaces_dict[this._worker_id];
 
+    const resource_name_hash_4bytes = this._hash_string_4bytes(resource_name);
     const peers_worker_id_list_shuffled = Utils.shuffleArray(Object.keys(peers_worker_id_to_interfaces_dict));
     const least_connection_count = Math.ceil((peers_worker_id_list_shuffled.length * least_connection_percent) / 100);
 
+
+    // Register resource as claimed.
+    this._resource_name_to_detail_dict[resource_name].is_claimed = true;
     // For authenticity.
     let peers_worker_id_checksum = this._update_peers_worker_id_checksum(peers_worker_id_list_shuffled);
 
@@ -229,6 +246,7 @@ WorkerProtocol.prototype.start = function(callback) {
     let connection_count = 1;
     // Create worker peers checksum.
     for(const index in peers_worker_id_list_shuffled) {
+      // Get worker id and it's interfaces from peer list.
       const worker_id = peers_worker_id_list_shuffled[index];
       const interfaces = peers_worker_id_to_interfaces_dict[worker_id];
 
@@ -241,12 +259,15 @@ WorkerProtocol.prototype.start = function(callback) {
         }
       };
 
+      // Check every interface of this worker has until connected or looped to end.
       const loop_over_interfaces = ()=> {
         const interface_name = interfaces[loop_index].interface_name;
         const interface_connect_settings = interfaces[loop_index].interface_connect_settings;
 
         const synchronize_information = Buf.concat([
           Buf.from([2]),
+          Buf.encodeUInt32BE(this._worker_id),
+          resource_name_hash_4bytes,
           this._resource_list_hash_4bytes,
           Buf.from([Math.floor(this._peers_worker_id_checksum/256), this._peers_worker_id_checksum%256]),
           this._worker_authenticity_data_buffer
@@ -261,12 +282,14 @@ WorkerProtocol.prototype.start = function(callback) {
         };
 
         const finish_handshake = (error, tunnel) => {
+          this._resource_name_to_detail_dict[resource_name].resource_protocol_module.handleTunnel(worker_id, tunnel);
           console.log(error, tunnel);
         };
 
         this._open_handshake_function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
       };
 
+      // Start looping.
       loop_over_interfaces();
     }
   });
@@ -303,15 +326,21 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
   // Synchronize information for handshake
   // Format:
   // worker byte
-  // 0x02
+  // 0x02 handle-resource
+  // 0x03 request-resource
 
   if (synchronize_information[0] === 0x02 || synchronize_information[0] === 0x03) {
+    const worker_id = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
+    const resource_name = this._stringify_4bytes_hash(synchronize_information.slice(5, 9));
+
     onError((error) => {
       return false;
     });
 
     onAcknowledge((acknowledge_information, tunnel) => {
       if (acknowledge_information[0] === 0x01) {
+        console.log(this._resource_name_to_detail_dict[resource_name]);
+        this._resource_name_to_detail_dict[resource_name].resource_protocol_module.handleTunnel(worker_id, tunnel);
         console.log('acknowledge_information', acknowledge_information);
       } else {
         return false;
@@ -323,14 +352,21 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
       console.log('synchronize_information', synchronize_information);
 
       if(
-        Utils.areBuffersEqual(synchronize_information.slice(1, 5), this._resource_list_hash_4bytes.slice(0, 4))
+        // Resource name exists.
+        resource_name
         &&
-        Math.floor(this._peers_worker_id_checksum/256) === synchronize_information[5]
+        // Check resource_list_hash_4bytes is equal.
+        Utils.areBuffersEqual(synchronize_information.slice(9, 13), this._resource_list_hash_4bytes.slice(0, 4))
         &&
-        this._peers_worker_id_checksum%256 === synchronize_information[6]
+        // Check peers_worker_id_checksum is equal. First byte.
+        Math.floor(this._peers_worker_id_checksum/256) === synchronize_information[13]
+        &&
+        // Check peers_worker_id_checksum is equal. Second byte.
+        this._peers_worker_id_checksum%256 === synchronize_information[14]
       ){
         const synchronize_acknowledgement_information = this._worker_module.emitEventListener('worker-authenticication', NSDT.decode(synchronize_information.slice(7)));
         if(synchronize_acknowledgement_information) {
+          console.log(resource_name);
           return Buf.concat([Buf.from([0x01]), NSDT.encode(synchronize_acknowledgement_information)]);
 
         }

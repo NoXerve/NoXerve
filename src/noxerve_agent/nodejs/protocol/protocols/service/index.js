@@ -14,7 +14,7 @@
 const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
-const ServiceOfActivityHandler = require('./service_of_activity_handler');
+const ServiceOfActivityProtocol = require('./service_of_activity');
 
 
 /**
@@ -50,9 +50,9 @@ function ServiceProtocol(settings) {
    * @memberof module:ServiceProtocol
    * @type {object}
    * @private
-   * @description ServiceOfActivityHandler submodule.
+   * @description ServiceOfActivityProtocol submodule.
    */
-  this._service_of_activity_handler_module = new ServiceOfActivityHandler();
+  this._service_of_activity_protocol = new ServiceOfActivityProtocol();
 }
 
 /**
@@ -103,9 +103,9 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
 
     onAcknowledge((acknowledge_information, tunnel) => {
       if (acknowledge_information[0] === 0x01) {
-        this._service_module.emit('service-of-activity-request', (error, service_of_activity) => {
-          this._service_of_activity_handler_module.handle(error, service_of_activity, tunnel);
-          this._service_module.emit('service-of-activity-ready', service_of_activity)
+        this._service_module.emitEventListener('service-of-activity-request', (error, service_of_activity) => {
+          this._service_of_activity_protocol.handleTunnel(error, service_of_activity, tunnel);
+          this._service_module.emitEventListener('service-of-activity-ready', service_of_activity)
         });
       } else {
         return false;

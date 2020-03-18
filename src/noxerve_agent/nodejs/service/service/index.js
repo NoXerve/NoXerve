@@ -69,7 +69,7 @@ Service.prototype.on = function(event_name, listener) {
  * @param {string} event_name
  * @description Service events emitter.
  */
-Service.prototype.emit = function(event_name, ...params) {
+Service.prototype.emitEventListener = function(event_name, ...params) {
   this._event_listeners[event_name].apply(null, params);
 }
 

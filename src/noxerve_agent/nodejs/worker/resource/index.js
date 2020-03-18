@@ -262,3 +262,5 @@ Resource.prototype.startYieldingConcurrently = function(field_name, yielding_sta
 Resource.prototype.on = function(event_name, callback) {
 
 }
+
+module.exports = Resource;

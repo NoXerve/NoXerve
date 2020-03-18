@@ -8,7 +8,7 @@
 'use strict';
 
 /**
- * @module ServiceOfActivityHandler
+ * @module ServiceOfActivityProtocol
  * @description Service has properties to be take advantage of, by using prototype.
  * They can share hash results. etc.
  */
@@ -19,28 +19,28 @@ const NSDT = require('../../../nsdt');
 const Crypto = require('crypto');
 
 /**
- * @constructor module:ServiceOfActivityHandler
+ * @constructor module:ServiceOfActivityProtocol
  * @param {object} settings
  * @description Service has properties to be take advantage of, by using prototype.
  * They can share hash results. etc.
  */
-function ServiceOfActivityHandler(settings) {
+function ServiceOfActivityProtocol(settings) {
   /**
-   * @memberof module:ServiceOfActivityHandler
+   * @memberof module:ServiceOfActivityProtocol
    * @type {object}
    * @private
    */
   this._settings = settings;
 
   /**
-   * @memberof module:ServiceOfActivityHandler
+   * @memberof module:ServiceOfActivityProtocol
    * @type {object}
    * @private
    */
   this._string_to_hash = {};
 
   /**
-   * @memberof module:ServiceOfActivityHandler
+   * @memberof module:ServiceOfActivityProtocol
    * @type {object}
    * @private
    */
@@ -48,11 +48,11 @@ function ServiceOfActivityHandler(settings) {
 }
 
 /**
- * @memberof module:ServiceOfActivityHandler
+ * @memberof module:ServiceOfActivityProtocol
  * @type {object}
  * @private
  */
-ServiceOfActivityHandler.prototype._protocol_codes = {
+ServiceOfActivityProtocol.prototype._protocol_codes = {
   service_function_call: Buf.from([0x01]),
   service_function_call_data: Buf.from([0x02]),
   service_function_call_data_eof: Buf.from([0x03]),
@@ -65,12 +65,12 @@ ServiceOfActivityHandler.prototype._protocol_codes = {
 };
 
 /**
- * @memberof module:ServiceOfActivityHandler
+ * @memberof module:ServiceOfActivityProtocol
  * @param {string} string
  * @private
  * @description For service function call.
  */
-ServiceOfActivityHandler.prototype._hash_string_4bytes = function(string) {
+ServiceOfActivityProtocol.prototype._hash_string_4bytes = function(string) {
   let result = this._string_to_hash[string];
   if (!result) {
     const hash_sha256 = Crypto.createHash('md5');
@@ -84,23 +84,24 @@ ServiceOfActivityHandler.prototype._hash_string_4bytes = function(string) {
 }
 
 /**
- * @memberof module:ServiceOfActivityHandler
+ * @memberof module:ServiceOfActivityProtocol
  * @param {buffer} _4bytes_hash
  * @private
  * @description For service function call.
  */
-ServiceOfActivityHandler.prototype._stringify_4bytes_hash = function(_4bytes_hash) {
+ServiceOfActivityProtocol.prototype._stringify_4bytes_hash = function(_4bytes_hash) {
   return this._hash_to_string[_4bytes_hash.toString('base64')];
 }
 
+// [Flag] Need to be rewrited.
 /**
- * @memberof module:ServiceOfActivityHandler
+ * @memberof module:ServiceOfActivityProtocol
  * @param {error} error - If service module create service_of_activity failed or not.
  * @param {object} service_of_activity
  * @param {tunnel} tunnel
  * @description Method that handle service of activity protocol from service protocol module.
  */
-ServiceOfActivityHandler.prototype.handle = function(error, service_of_activity, tunnel) {
+ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_activity, tunnel) {
   if (error) tunnel.close();
   else {
     let yielding_handler_dict = {};
@@ -241,4 +242,4 @@ ServiceOfActivityHandler.prototype.handle = function(error, service_of_activity,
   }
 }
 
-module.exports = ServiceOfActivityHandler;
+module.exports = ServiceOfActivityProtocol;

@@ -14,7 +14,7 @@
 const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
-const ActivityOfServiceHandler = require('./activity_of_service_handler');
+const ActivityOfServiceProtocol = require('./activity_of_service');
 
 
 /**
@@ -50,9 +50,9 @@ function ActivityProtocol(settings) {
    * @memberof module:ActivityProtocol
    * @type {object}
    * @private
-   * @description ActivityOfServiceHandler submodule.
+   * @description ActivityOfServiceProtocol submodule.
    */
-  this._activity_of_service_handler_module = new ActivityOfServiceHandler();
+  this._activity_of_service_protocol = new ActivityOfServiceProtocol();
 }
 
 /**
@@ -149,7 +149,7 @@ ActivityProtocol.prototype.start = function(callback) {
         }
         else {
           create_activity_callback(false, (error, activity_of_service)=> {
-            this._activity_of_service_handler_module.handle(error, activity_of_service, tunnel);
+            this._activity_of_service_protocol.handleTunnel(error, activity_of_service, tunnel);
           });
         }
       }

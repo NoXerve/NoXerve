@@ -18,6 +18,16 @@ module.exports = {
     return Buffer.from.apply(null, args);
   },
 
+  encodeUInt32BE: (integer) => {
+    const buf = Buffer.allocUnsafe(4);
+    buf.writeUInt32BE(integer, 0);
+    return buf;
+  },
+
+  decodeUInt32BE: (buf) => {
+    return buf.readUInt32BE(0);
+  },
+
   alloc: (...args) => {
     return Buffer.alloc.apply(null, args);
   },

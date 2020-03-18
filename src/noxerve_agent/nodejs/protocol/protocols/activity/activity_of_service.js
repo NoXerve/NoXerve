@@ -8,7 +8,7 @@
 'use strict';
 
 /**
- * @module ActivityOfServiceHandler
+ * @module ActivityOfServiceProtocol
  * @description Description.
  */
 
@@ -18,27 +18,27 @@ const NSDT = require('../../../nsdt');
 const Crypto = require('crypto');
 
 /**
- * @constructor module:ActivityOfServiceHandler
+ * @constructor module:ActivityOfServiceProtocol
  * @param {object} settings
- * @description ActivityOfServiceHandler module. SubModule of ActivityProtocol.
+ * @description ActivityOfServiceProtocol module. SubModule of ActivityProtocol.
  */
-function ActivityOfServiceHandler(settings) {
+function ActivityOfServiceProtocol(settings) {
   /**
-   * @memberof module:ActivityOfServiceHandler
+   * @memberof module:ActivityOfServiceProtocol
    * @type {object}
    * @private
    */
   this._settings = settings;
 
   /**
-   * @memberof module:ActivityOfServiceHandler
+   * @memberof module:ActivityOfServiceProtocol
    * @type {object}
    * @private
    */
   this._string_to_hash = {};
 
   /**
-   * @memberof module:ActivityOfServiceHandler
+   * @memberof module:ActivityOfServiceProtocol
    * @type {object}
    * @private
    */
@@ -46,11 +46,11 @@ function ActivityOfServiceHandler(settings) {
 }
 
 /**
- * @memberof module:ActivityOfServiceHandler
+ * @memberof module:ActivityOfServiceProtocol
  * @type {object}
  * @private
  */
-ActivityOfServiceHandler.prototype._protocol_codes = {
+ActivityOfServiceProtocol.prototype._protocol_codes = {
   service_function_call: Buf.from([0x01]),
   service_function_call_data: Buf.from([0x02]),
   service_function_call_data_eof: Buf.from([0x03]),
@@ -63,12 +63,12 @@ ActivityOfServiceHandler.prototype._protocol_codes = {
 };
 
 /**
- * @memberof module:ActivityOfServiceHandler
+ * @memberof module:ActivityOfServiceProtocol
  * @param {string} string
  * @private
  * @description For service function call.
  */
-ActivityOfServiceHandler.prototype._hash_string_4bytes = function(string) {
+ActivityOfServiceProtocol.prototype._hash_string_4bytes = function(string) {
   let result = this._string_to_hash[string];
   if (!result) {
     const hash_sha256 = Crypto.createHash('md5');
@@ -82,23 +82,23 @@ ActivityOfServiceHandler.prototype._hash_string_4bytes = function(string) {
 }
 
 /**
- * @memberof module:ActivityOfServiceHandler
+ * @memberof module:ActivityOfServiceProtocol
  * @param {buffer} _4bytes_hash
  * @private
  * @description For service function call.
  */
-ActivityOfServiceHandler.prototype._stringify_4bytes_hash = function(_4bytes_hash) {
+ActivityOfServiceProtocol.prototype._stringify_4bytes_hash = function(_4bytes_hash) {
   return this._hash_to_string[_4bytes_hash.toString('base64')];
 }
 
 /**
- * @memberof module:ServiceOfActivityHandler
+ * @memberof module:ServiceOfActivityProtocol
  * @param {error} error - If service module create service_of_activity failed or not.
  * @param {object} service_of_activity
  * @param {tunnel} tunnel
  * @description Method that handle service of activity protocol from service protocol module.
  */
-ActivityOfServiceHandler.prototype.handle = function(error, activity_of_service, tunnel) {
+ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_service, tunnel) {
   if (error) tunnel.close();
   else {
     // For "service-function-call" event.
@@ -258,4 +258,4 @@ ActivityOfServiceHandler.prototype.handle = function(error, activity_of_service,
   }
 }
 
-module.exports = ActivityOfServiceHandler;
+module.exports = ActivityOfServiceProtocol;

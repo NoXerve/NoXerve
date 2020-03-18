@@ -12,6 +12,7 @@
  */
 
 const Errors = require('../errors');
+const Resource = require('./resource');
 
 /**
  * @constructor module:Worker
@@ -39,6 +40,16 @@ function Worker(settings) {
    * @private
    */
   this._event_listeners = {
+    // Internal private default events.
+    'resource-of-worker-request': (callback) => {
+      try {
+        const resource = new Resource();
+        callback(false, resource);
+      } catch (error) {
+        console.log(error);
+        callback(error);
+      }
+    },
     'ready': (resource_name_to_resource_object_dict) => {
 
     },
