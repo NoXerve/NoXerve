@@ -1,4 +1,4 @@
-![NoXerve](/imgs/NoXerve.png)
+![NoXerve](/imgs/NoXerveDark.png)
 # NoXerve
 > nooxy-object id: nooxy.org.codes.noxerve
 
