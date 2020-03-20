@@ -32,25 +32,25 @@ Node.createInterface('WebSocket', {
 })
 
 Worker.importWorkerAuthenticityData(2, 'whatsoever_auth', ()=> {
-  Worker.on('ready', (resources) => {
-    resources.FileSystemGroupA.defineConcurrently('read', ()=> {
+  Worker.on('ready', (non_uniforms) => {
+    non_uniforms.FileSystemGroupA.defineConcurrently('read', ()=> {
 
     });
-    resources.FileSystemGroupA.handleYieldingConcurrently('write', ()=> {
+    non_uniforms.FileSystemGroupA.handleYieldingConcurrently('write', ()=> {
 
     });
-    resources.FileSystemGroupA.defineConcurrently('delete', ()=> {
+    non_uniforms.FileSystemGroupA.defineConcurrently('delete', ()=> {
 
     });
   });
-  Worker.importResourceList([
+  Worker.importNonUniformList([
     'FileSystemGroupA',
     'FileSystemGroupB',
     'FileSystemGroupC',
     'FileSystemGroupD',
     'FileSystemGroupE'],
     ()=> {
-      Worker.handleResource('FileSystemGroupA', {
+      Worker.handleNonUniform('FileSystemGroupA', {
         1: [{
           interface_name: 'websocket',
           interface_connect_settings: {
@@ -65,9 +65,9 @@ Worker.importWorkerAuthenticityData(2, 'whatsoever_auth', ()=> {
           }
         }]
       }, 100, (error)=> {
-        if(error)  console.log('[Worker module] Handle resource error.', error);
+        if(error)  console.log('[Worker module] Handle non_uniform error.', error);
       });
-      Worker.requestResource('FileSystemGroupB', {}, () => {
+      Worker.requestNonUniform('FileSystemGroupB', {}, () => {
 
       });
     }

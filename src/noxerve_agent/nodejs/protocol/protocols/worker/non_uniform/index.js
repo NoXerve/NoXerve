@@ -1,5 +1,5 @@
 /**
- * @file NoXerveAgent resource protocol index file. [resource_handler.js]
+ * @file NoXerveAgent non_uniform protocol index file. [non_uniform_handler.js]
  * @author NOOXY <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
  * @copyright 2019-2020 NOOXY. All Rights Reserved.
@@ -8,7 +8,7 @@
 'use strict';
 
 /**
- * @module ResourceProtocol
+ * @module NonUniformProtocol
  * @description Subprotocol of worker.
  */
 
@@ -18,34 +18,34 @@ const NSDT = require('../../../../nsdt');
 const Crypto = require('crypto');
 
 /**
- * @constructor module:ResourceProtocol
+ * @constructor module:NonUniformProtocol
  * @param {object} settings
  */
 
-function ResourceProtocol(settings) {
+function NonUniformProtocol(settings) {
   /**
-   * @memberof module:ResourceProtocol
+   * @memberof module:NonUniformProtocol
    * @type {object}
    * @private
    */
   this._settings = settings;
 
   /**
-   * @memberof module:ResourceProtocol
+   * @memberof module:NonUniformProtocol
    * @type {object}
    * @private
    */
-  this._resource_module = settings.resource_module;
+  this._non_uniform_module = settings.non_uniform_module;
 
   /**
-   * @memberof module:ResourceProtocol
+   * @memberof module:NonUniformProtocol
    * @type {object}
    * @private
    */
   this._string_to_hash = {};
 
   /**
-   * @memberof module:ResourceProtocol
+   * @memberof module:NonUniformProtocol
    * @type {object}
    * @private
    */
@@ -54,20 +54,20 @@ function ResourceProtocol(settings) {
 
 
 /**
- * @memberof module:ResourceProtocol
+ * @memberof module:NonUniformProtocol
  * @type {object}
  * @private
  */
-ResourceProtocol.prototype._protocol_codes = {
+NonUniformProtocol.prototype._protocol_codes = {
 };
 
 /**
- * @memberof module:ResourceProtocol
+ * @memberof module:NonUniformProtocol
  * @param {string} string
  * @private
  * @description For service function call.
  */
-ResourceProtocol.prototype._hash_string_4bytes = function(string) {
+NonUniformProtocol.prototype._hash_string_4bytes = function(string) {
   let result = this._string_to_hash[string];
   if (!result) {
     const hash_sha256 = Crypto.createHash('md5');
@@ -81,24 +81,24 @@ ResourceProtocol.prototype._hash_string_4bytes = function(string) {
 }
 
 /**
- * @memberof module:ResourceProtocol
+ * @memberof module:NonUniformProtocol
  * @param {buffer} _4bytes_hash
  * @private
  * @description For service function call.
  */
-ResourceProtocol.prototype._stringify_4bytes_hash = function(_4bytes_hash) {
+NonUniformProtocol.prototype._stringify_4bytes_hash = function(_4bytes_hash) {
   return this._hash_to_string[_4bytes_hash.toString('base64')];
 }
 
 /**
- * @memberof module:ResourceProtocol
- * @param {error} error - If service module create resource failed or not.
- * @param {object} resource
+ * @memberof module:NonUniformProtocol
+ * @param {error} error - If service module create non_uniform failed or not.
+ * @param {object} non_uniform
  * @param {tunnel} tunnel
  * @description Method that handle service of activity protocol from service protocol module.
  */
-ResourceProtocol.prototype.handleTunnel = function(remote_worker_id, tunnel) {
+NonUniformProtocol.prototype.handleTunnel = function(remote_worker_id, tunnel) {
   console.log('remote_worker_id', remote_worker_id);
 }
 
-module.exports = ResourceProtocol;
+module.exports = NonUniformProtocol;

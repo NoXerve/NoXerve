@@ -12,7 +12,7 @@
  */
 
 const Errors = require('../errors');
-const Resource = require('./resource');
+const NonUniform = require('./non_uniform');
 
 /**
  * @constructor module:Worker
@@ -32,7 +32,7 @@ function Worker(settings) {
    * @type {bool}
    * @private
    */
-  this._is_resource_list_fulfilled = false;
+  this._is_non_uniform_list_fulfilled = false;
 
   /**
    * @memberof module:Worker
@@ -41,16 +41,16 @@ function Worker(settings) {
    */
   this._event_listeners = {
     // Internal private default events.
-    'resource-of-worker-request': (callback) => {
+    'non_uniform-of-worker-request': (callback) => {
       try {
-        const resource = new Resource();
-        callback(false, resource);
+        const non_uniform = new NonUniform();
+        callback(false, non_uniform);
       } catch (error) {
         console.log(error);
         callback(error);
       }
     },
-    'ready': (resource_name_to_resource_object_dict) => {
+    'ready': (non_uniform_name_to_non_uniform_object_dict) => {
 
     },
     'worker-authenticication': (worker_authenticity_information) => {
@@ -101,49 +101,49 @@ Worker.prototype.importWorkerAuthenticityData = function(worker_id, worker_authe
 }
 
 /**
- * @callback module:Worker~callback_of_import_resource_list
+ * @callback module:Worker~callback_of_import_non_uniform_list
  * @param {error} error
  */
 /**
  * @memberof module:Worker
- * @param {array} resource_name_list
- * @param {module:Worker~callback_of_import_resource_list} callback
- * @description Import all resource names that the service needed.
+ * @param {array} non_uniform_name_list
+ * @param {module:Worker~callback_of_import_non_uniform_list} callback
+ * @description Import all non_uniform names that the service needed.
  */
-Worker.prototype.importResourceList = function(resource_name_list, callback) {
-  this._event_listeners['resource-list-import'](resource_name_list, callback);
+Worker.prototype.importNonUniformList = function(non_uniform_name_list, callback) {
+  this._event_listeners['non_uniform-list-import'](non_uniform_name_list, callback);
 }
 
 /**
- * @callback module:Worker~callback_of_handle_resource
+ * @callback module:Worker~callback_of_handle_non_uniform
  * @param {error} error
  */
 /**
  * @memberof module:Worker
- * @param {string} resource_name
+ * @param {string} non_uniform_name
  * @param {array} worker_id_to_interfaces_dict
- * @param {module:Worker~callback_of_handle_resource} callback
- * @description Handle the resource this service worker have. And connect to
- * other workers(peers) that handle the same resource.
+ * @param {module:Worker~callback_of_handle_non_uniform} callback
+ * @description Handle the non_uniform this service worker have. And connect to
+ * other workers(peers) that handle the same non_uniform.
  */
-Worker.prototype.handleResource = function(resource_name, worker_id_to_interfaces_dict, least_connection_percent, callback) {
-  this._event_listeners['resource-handle'](resource_name, worker_id_to_interfaces_dict, least_connection_percent, callback);
+Worker.prototype.handleNonUniform = function(non_uniform_name, worker_id_to_interfaces_dict, least_connection_percent, callback) {
+  this._event_listeners['non_uniform-handle'](non_uniform_name, worker_id_to_interfaces_dict, least_connection_percent, callback);
 }
 
 /**
- * @callback module:Worker~callback_of_request_resource
+ * @callback module:Worker~callback_of_request_non_uniform
  * @param {error} error
  */
 /**
  * @memberof module:Worker
- * @param {string} resource_name
+ * @param {string} non_uniform_name
  * @param {array} worker_id_to_interfaces_dict
- * @param {module:Worker~callback_of_handle_resource} callback
- * @description Handle the resource this service worker have. And connect to
- * other worker that handle the same resource.
+ * @param {module:Worker~callback_of_handle_non_uniform} callback
+ * @description Handle the non_uniform this service worker have. And connect to
+ * other worker that handle the same non_uniform.
  */
-Worker.prototype.requestResource = function(resource_name, worker_id_to_interfaces_dict, callback) {
-  this._event_listeners['resource-request'](resource_name, worker_id_to_interfaces_dict, callback);
+Worker.prototype.requestNonUniform = function(non_uniform_name, worker_id_to_interfaces_dict, callback) {
+  this._event_listeners['non_uniform-request'](non_uniform_name, worker_id_to_interfaces_dict, callback);
 }
 
 
@@ -157,7 +157,7 @@ Worker.prototype.requestResource = function(resource_name, worker_id_to_interfac
  * @param {string} event_name - "ready" "error" "close"
  * @param {module:Worker~callback_of_on} listener
  * @description Worker events. "ready" triggered if worker fullfill adequate
- * resources condition. Which needs to be completed by adding connections.
+ * non_uniforms condition. Which needs to be completed by adding connections.
  */
 Worker.prototype.on = function(event_name, listener) {
   this._event_listeners[event_name] = listener;

@@ -16,7 +16,7 @@ const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
 const Crypto = require('crypto');
 const NSDT = require('../../../nsdt');
-const ResourceProtocol = require('./resource');
+const NonUniformProtocol = require('./non_uniform');
 
 /**
  * @constructor module:WorkerProtocol
@@ -68,7 +68,7 @@ function WorkerProtocol(settings) {
    * @private
    * @description Worker authenticity data. Avoid being hacked. Provide in handshake communication.
    */
-  this._resource_list_hash_4bytes;
+  this._non_uniform_list_hash_4bytes;
 
   // /**
   //  * @memberof module:WorkerProtocol
@@ -83,26 +83,26 @@ function WorkerProtocol(settings) {
    * @memberof module:WorkerProtocol
    * @type {array}
    * @private
-   * @description Resource name list. Resource names that the service needed.
+   * @description NonUniform name list. NonUniform names that the service needed.
    */
-  this._resource_list = [];
+  this._non_uniform_list = [];
 
   /**
    * @memberof module:WorkerProtocol
    * @type {array}
    * @private
-   * @description Resource name dictionary.
+   * @description NonUniform name dictionary.
    */
-  this._resource_name_to_detail_dict = {};
+  this._non_uniform_name_to_detail_dict = {};
   //
   // /**
   //  * @memberof module:WorkerProtocol
   //  * @type {object}
   //  * @private
-  //  * @description Resource name list. Resource names of resources that this service worker have.
-  //  * With name as key, ready, resource_peers as value.
+  //  * @description NonUniform name list. NonUniform names of non_uniforms that this service worker have.
+  //  * With name as key, ready, non_uniform_peers as value.
   //  */
-  // this._resource_handle_dict = {};
+  // this._non_uniform_handle_dict = {};
   /**
    * @memberof module:WorkerProtocol
    * @type {object}
@@ -186,31 +186,31 @@ WorkerProtocol.prototype.start = function(callback) {
     else callback(true);
   });
 
-  this._worker_module.on('resource-list-import', (resource_name_list, callback) => {
-    resource_name_list.sort();
-    if(Array.isArray(resource_name_list)) {
-      this._resource_list = resource_name_list;
+  this._worker_module.on('non_uniform-list-import', (non_uniform_name_list, callback) => {
+    non_uniform_name_list.sort();
+    if(Array.isArray(non_uniform_name_list)) {
+      this._non_uniform_list = non_uniform_name_list;
 
-      // Create _resource_list_hash_4bytes.
-      let resource_name_concat_string = '';
-      for(const index in resource_name_list) {
-        const resource_name = resource_name_list[index];
+      // Create _non_uniform_list_hash_4bytes.
+      let non_uniform_name_concat_string = '';
+      for(const index in non_uniform_name_list) {
+        const non_uniform_name = non_uniform_name_list[index];
 
-        resource_name_concat_string += resource_name;
+        non_uniform_name_concat_string += non_uniform_name;
 
         // Initialize dictionary.
-        this._worker_module.emitEventListener('resource-of-worker-request', (error, resource) => {
-          this._resource_name_to_detail_dict[resource_name] = {
+        this._worker_module.emitEventListener('non_uniform-of-worker-request', (error, non_uniform) => {
+          this._non_uniform_name_to_detail_dict[non_uniform_name] = {
             ready: false,
             is_claimed: false,
-            resource_protocol_module: new ResourceProtocol({
-              resource_module: resource
+            non_uniform_protocol_module: new NonUniformProtocol({
+              non_uniform_module: non_uniform
             })
           };
         });
       }
-      // console.log(resource_name_concat_string);
-      this._resource_list_hash_4bytes = this._hash_string_4bytes(resource_name_concat_string);
+      // console.log(non_uniform_name_concat_string);
+      this._non_uniform_list_hash_4bytes = this._hash_string_4bytes(non_uniform_name_concat_string);
 
       callback(false);
     }
@@ -218,13 +218,13 @@ WorkerProtocol.prototype.start = function(callback) {
     else callback(true);
   });
 
-  this._worker_module.on('resource-handle', (resource_name, peers_worker_id_to_interfaces_dict, least_connection_percent, callback) => {
+  this._worker_module.on('non_uniform-handle', (non_uniform_name, peers_worker_id_to_interfaces_dict, least_connection_percent, callback) => {
     if(this._worker_id === 0) {
       // [Flag] Uncatogorized error
       callback(1);
       return;
     }
-    else if(!this._resource_list.includes(resource_name)) {
+    else if(!this._non_uniform_list.includes(non_uniform_name)) {
       // [Flag] Uncatogorized error
       callback(2);
       return;
@@ -232,13 +232,13 @@ WorkerProtocol.prototype.start = function(callback) {
 
     delete peers_worker_id_to_interfaces_dict[this._worker_id];
 
-    const resource_name_hash_4bytes = this._hash_string_4bytes(resource_name);
+    const non_uniform_name_hash_4bytes = this._hash_string_4bytes(non_uniform_name);
     const peers_worker_id_list_shuffled = Utils.shuffleArray(Object.keys(peers_worker_id_to_interfaces_dict));
     const least_connection_count = Math.ceil((peers_worker_id_list_shuffled.length * least_connection_percent) / 100);
 
 
-    // Register resource as claimed.
-    this._resource_name_to_detail_dict[resource_name].is_claimed = true;
+    // Register non_uniform as claimed.
+    this._non_uniform_name_to_detail_dict[non_uniform_name].is_claimed = true;
     // For authenticity.
     let peers_worker_id_checksum = this._update_peers_worker_id_checksum(peers_worker_id_list_shuffled);
 
@@ -267,8 +267,8 @@ WorkerProtocol.prototype.start = function(callback) {
         const synchronize_information = Buf.concat([
           Buf.from([2]),
           Buf.encodeUInt32BE(this._worker_id),
-          resource_name_hash_4bytes,
-          this._resource_list_hash_4bytes,
+          non_uniform_name_hash_4bytes,
+          this._non_uniform_list_hash_4bytes,
           Buf.from([Math.floor(this._peers_worker_id_checksum/256), this._peers_worker_id_checksum%256]),
           this._worker_authenticity_data_buffer
         ]);
@@ -282,7 +282,7 @@ WorkerProtocol.prototype.start = function(callback) {
         };
 
         const finish_handshake = (error, tunnel) => {
-          this._resource_name_to_detail_dict[resource_name].resource_protocol_module.handleTunnel(worker_id, tunnel);
+          this._non_uniform_name_to_detail_dict[non_uniform_name].non_uniform_protocol_module.handleTunnel(worker_id, tunnel);
           console.log(error, tunnel);
         };
 
@@ -294,11 +294,11 @@ WorkerProtocol.prototype.start = function(callback) {
     }
   });
 
-  this._worker_module.on('resource-request', (resource_name, peers_worker_id_to_interfaces_dict, callback) => {
+  this._worker_module.on('non_uniform-request', (non_uniform_name, peers_worker_id_to_interfaces_dict, callback) => {
 
   });
 
-  // this._worker_module.on('resources-list-fulfill', (resource_name_to_intefaces_dict, callback) => {
+  // this._worker_module.on('non_uniforms-list-fulfill', (non_uniform_name_to_intefaces_dict, callback) => {
   //
   // });
 }
@@ -326,12 +326,12 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
   // Synchronize information for handshake
   // Format:
   // worker byte
-  // 0x02 handle-resource
-  // 0x03 request-resource
+  // 0x02 handle-non_uniform
+  // 0x03 request-non_uniform
 
   if (synchronize_information[0] === 0x02 || synchronize_information[0] === 0x03) {
     const worker_id = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
-    const resource_name = this._stringify_4bytes_hash(synchronize_information.slice(5, 9));
+    const non_uniform_name = this._stringify_4bytes_hash(synchronize_information.slice(5, 9));
 
     onError((error) => {
       return false;
@@ -339,8 +339,8 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
 
     onAcknowledge((acknowledge_information, tunnel) => {
       if (acknowledge_information[0] === 0x01) {
-        console.log(this._resource_name_to_detail_dict[resource_name]);
-        this._resource_name_to_detail_dict[resource_name].resource_protocol_module.handleTunnel(worker_id, tunnel);
+        console.log(this._non_uniform_name_to_detail_dict[non_uniform_name]);
+        this._non_uniform_name_to_detail_dict[non_uniform_name].non_uniform_protocol_module.handleTunnel(worker_id, tunnel);
         console.log('acknowledge_information', acknowledge_information);
       } else {
         return false;
@@ -348,15 +348,15 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
     });
 
     if(synchronize_information[0] === 0x02) {
-      // Check resource_list_hash_4bytes match.
+      // Check non_uniform_list_hash_4bytes match.
       console.log('synchronize_information', synchronize_information);
 
       if(
-        // Resource name exists.
-        resource_name
+        // NonUniform name exists.
+        non_uniform_name
         &&
-        // Check resource_list_hash_4bytes is equal.
-        Utils.areBuffersEqual(synchronize_information.slice(9, 13), this._resource_list_hash_4bytes.slice(0, 4))
+        // Check non_uniform_list_hash_4bytes is equal.
+        Utils.areBuffersEqual(synchronize_information.slice(9, 13), this._non_uniform_list_hash_4bytes.slice(0, 4))
         &&
         // Check peers_worker_id_checksum is equal. First byte.
         Math.floor(this._peers_worker_id_checksum/256) === synchronize_information[13]
@@ -366,7 +366,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
       ){
         const synchronize_acknowledgement_information = this._worker_module.emitEventListener('worker-authenticication', NSDT.decode(synchronize_information.slice(15)));
         if(synchronize_acknowledgement_information) {
-          console.log(resource_name);
+          console.log(non_uniform_name);
           return Buf.concat([Buf.from([0x01]), NSDT.encode(synchronize_acknowledgement_information)]);
 
         }
