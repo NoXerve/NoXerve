@@ -148,9 +148,9 @@ WorkerProtocol.prototype._update_peers_worker_id_checksum = function(worker_id_l
 WorkerProtocol.prototype._hash_string_4bytes = function(string) {
   let result = this._string_to_hash[string];
   if (!result) {
-    const hash_sha256 = Crypto.createHash('md5');
-    hash_sha256.update(string);
-    result = hash_sha256.digest().slice(0, 4);
+    const hash_of_the_string = Crypto.createHash('md5');
+    hash_of_the_string.update(string);
+    result = hash_of_the_string.digest().slice(0, 4);
     this._string_to_hash[string] = result;
     this._hash_to_string[result.toString('base64')] = string;
   }
@@ -326,8 +326,8 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
   // Synchronize information for handshake
   // Format:
   // worker byte
-  // 0x02 handle-non_uniform
-  // 0x03 request-non_uniform
+  // 0x02 handle-non-uniform
+  // 0x03 request-non-uniform
 
   if (synchronize_information[0] === 0x02 || synchronize_information[0] === 0x03) {
     const worker_id = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));

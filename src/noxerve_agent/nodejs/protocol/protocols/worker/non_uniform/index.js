@@ -70,9 +70,9 @@ NonUniformProtocol.prototype._protocol_codes = {
 NonUniformProtocol.prototype._hash_string_4bytes = function(string) {
   let result = this._string_to_hash[string];
   if (!result) {
-    const hash_sha256 = Crypto.createHash('md5');
-    hash_sha256.update(string);
-    result = hash_sha256.digest().slice(0, 4);
+    const hash_of_the_string = Crypto.createHash('md5');
+    hash_of_the_string.update(string);
+    result = hash_of_the_string.digest().slice(0, 4);
     this._string_to_hash[string] = result;
     this._hash_to_string[result.toString('base64')] = string;
   }
