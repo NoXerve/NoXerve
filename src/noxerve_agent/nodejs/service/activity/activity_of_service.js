@@ -33,9 +33,6 @@ function ActivityOfService(settings) {
    * @private
    */
   this._event_listeners = {
-    'actvity-event-emit': ()=> {
-
-    },
     'passively-close': ()=> {
       this._closed = true;
       const close_handler = this._event_listeners['close'];
