@@ -82,10 +82,12 @@ function Interface(settings, new_tunnel) {
  * @description Start running interface.
  */
 Interface.prototype.start = function(callback) {
+  let called_callback = false;
   // Catch error.
   try {
     if (this._started || this._closed) {
       // [Flag] Uncatogorized Error.
+      called_callback = true;
       callback(true);
     } else {
       this._server = new Websocket.Server({
@@ -96,8 +98,8 @@ Interface.prototype.start = function(callback) {
         // Call new_tunnel() function aquired from constructor(injected by node module).
         this._new_tunnel_function(
           // Wrapped send fucntion.
-          (data, callback) => {
-            ws.send(data, callback);
+          (data, send_callback) => {
+            ws.send(data, send_callback);
           },
           // Wrapped close fucntion.
           () => {
@@ -125,10 +127,12 @@ Interface.prototype.start = function(callback) {
           });
       });
       this._started = true;
+      called_callback = true;
       callback(false);
     }
   } catch (error) {
-    callback(error);
+    if(called_callback) throw error;
+    else callback(error);
   }
 }
 
@@ -142,19 +146,23 @@ Interface.prototype.start = function(callback) {
  * @description Destroy interface.
  */
 Interface.prototype.destroy = function(callback) {
+  let called_callback = false;
   // Catch error.
   try {
     // Close Websocket Server.
     this._server.close((error) => {
       if (error) {
+        called_callback = true;
         callback(error);
       } else {
         this._closed = true;
+        called_callback = true;
         callback(false);
       }
     });
   } catch (error) {
-    callback(error);
+    if(called_callback) throw error;
+    else callback(error);
   }
 }
 

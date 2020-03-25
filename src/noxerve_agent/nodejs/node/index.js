@@ -225,7 +225,6 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
       }
     });
   } catch (error) {
-    console.log(error);
     if(called_callback) throw error;
     else callback(error);
   }
