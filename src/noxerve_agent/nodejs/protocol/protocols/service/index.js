@@ -52,7 +52,7 @@ function ServiceProtocol(settings) {
    * @private
    * @description ServiceOfActivityProtocol submodule.
    */
-  this._service_of_activity_protocol = new ServiceOfActivityProtocol();
+  this._service_of_activity_protocol = new ServiceOfActivityProtocol({hash_manager: settings.hash_manager});
 }
 
 /**

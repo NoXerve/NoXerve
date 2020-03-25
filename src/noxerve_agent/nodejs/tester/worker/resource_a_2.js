@@ -32,44 +32,4 @@ Node.createInterface('WebSocket', {
 })
 
 Worker.importWorkerAuthenticityData(2, 'whatsoever_auth', ()=> {
-  Worker.on('ready', (non_uniforms) => {
-    non_uniforms.FileSystemGroupA.defineConcurrently('read', ()=> {
-
-    });
-    non_uniforms.FileSystemGroupA.handleYieldingConcurrently('write', ()=> {
-
-    });
-    non_uniforms.FileSystemGroupA.defineConcurrently('delete', ()=> {
-
-    });
-  });
-  Worker.importNonUniformList([
-    'FileSystemGroupA',
-    'FileSystemGroupB',
-    'FileSystemGroupC',
-    'FileSystemGroupD',
-    'FileSystemGroupE'],
-    ()=> {
-      Worker.handleNonUniform('FileSystemGroupA', {
-        1: [{
-          interface_name: 'websocket',
-          interface_connect_settings: {
-            host: '0.0.0.0',
-            port: 9991
-          }
-        }, {
-          interface_name: 'websocket',
-          interface_connect_settings: {
-            host: '0.0.0.0',
-            port: 6661
-          }
-        }]
-      }, 100, (error)=> {
-        if(error)  console.log('[Worker module] Handle non_uniform error.', error);
-      });
-      Worker.requestNonUniform('FileSystemGroupB', {}, () => {
-
-      });
-    }
-  );
 });

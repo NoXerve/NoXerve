@@ -31,49 +31,47 @@ Node.createInterface('WebSocket', {
   })
 })
 
-Worker.on('worker-authenticication', (worker_authenticity_information)=> {
+
+Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', ()=> {
+  Worker.importWorkerIdToInterfacesMapping();
+  Worker.createWorkerSocket('purpose 1', remote_worker_id, (error, worker_socket)=> {
+
+  });
+});
+
+Worker.on('worker-authenticication', (worker_id, worker_authenticity_information)=> {
+  if(worker_id === 0) {
+    // Initailize new worker.
+  }
   console.log('worker_authenticity_information', worker_authenticity_information);
   return true;
 });
-Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', ()=> {
-  Worker.on('ready', (non_uniforms) => {
-    non_uniforms.FileSystemGroupA.defineConcurrently('read', ()=> {
 
-    });
-    non_uniforms.FileSystemGroupA.handleYieldingConcurrently('write', ()=> {
+const interfaces = [];
+Worker.joinMe(interfaces, 'whatsoever_auth', (error, my_worker_id)=> {
 
-    });
-    non_uniforms.FileSystemGroupA.defineConcurrently('delete', ()=> {
+});
 
-    });
-  });
-  Worker.importNonUniformList([
-    'FileSystemGroupA',
-    'FileSystemGroupB',
-    'FileSystemGroupC',
-    'FileSystemGroupD',
-    'FileSystemGroupE'],
-    ()=> {
-      Worker.handleNonUniform('FileSystemGroupA', {
-        2: [{
-          interface_name: 'websocket',
-          interface_connect_settings: {
-            host: '0.0.0.0',
-            port: 9992
-          }
-        }, {
-          interface_name: 'websocket',
-          interface_connect_settings: {
-            host: '0.0.0.0',
-            port: 6662
-          }
-        }]
-      }, 100, (error)=> {
-        if(error)  console.log('[Worker module] Handle non_uniform error.', error);
-      });
-      Worker.requestNonUniform('FileSystemGroupB', {}, () => {
+Worker.updateMe(interfaces, (error, my_worker_id)=> {
 
-      });
-    }
-  );
+});
+
+Worker.leaveMe(interfaces, (error, my_worker_id)=> {
+
+});
+
+Worker.on('worker-join', (remote_worker_id, worker_interfaces)=> {
+
+});
+
+Worker.on('worker-update', (remote_worker_id, worker_interfaces)=> {
+
+});
+
+Worker.on('worker-leave', (remote_worker_id, worker_interfaces)=> {
+
+});
+
+Worker.onWorkerSocketCreate('purpose 1', (remote_worker_id, worker_socket)=> {
+
 });

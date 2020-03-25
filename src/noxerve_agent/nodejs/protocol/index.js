@@ -12,6 +12,7 @@
  */
 
 const Errors = require('../errors');
+const HashManager = require('./hash_manager');
 
 // Initial supported protocols detail.
 const SupportedProtocolsPath = require("path").join(__dirname, "./protocols");
@@ -53,6 +54,13 @@ function Protocol(settings) {
    * @private
    */
   this._node_module = settings.node_module;
+
+  /**
+   * @memberof module:Protocol
+   * @type {object}
+   * @private
+   */
+  this._hash_manager = new HashManager();
 
   /**
    * Handshake routine:
@@ -172,7 +180,8 @@ function Protocol(settings) {
 
       this._protocol_modules[Protocol.protocol_name] = new(Protocol.module)({
         related_module: this._imported_modules[Protocol.related_module_name],
-        open_handshake: this._openHandshake
+        open_handshake: this._openHandshake,
+        hash_manager: this._hash_manager
       });
     }
   }

@@ -131,11 +131,6 @@ Protocol.start();
 
 // **** Worker Module Test Start ****
 Worker.importWorkerAuthenticityData(1, 'whatsoever', ()=> {
-  Worker.importNonUniformList(['A', 'B', 'C'], ()=> {
-    Worker.handleNonUniform('A', {2: [{}]}, ()=> {
-
-    });
-  });
 });
 // **** Worker Module Test End ****
 

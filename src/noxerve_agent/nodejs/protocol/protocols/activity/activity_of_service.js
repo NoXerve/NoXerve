@@ -15,7 +15,6 @@
 const Utils = require('../../../utils');
 const Buf = require('../../../buffer');
 const NSDT = require('../../../nsdt');
-const Crypto = require('crypto');
 
 /**
  * @constructor module:ActivityOfServiceProtocol
@@ -35,14 +34,7 @@ function ActivityOfServiceProtocol(settings) {
    * @type {object}
    * @private
    */
-  this._string_to_hash = {};
-
-  /**
-   * @memberof module:ActivityOfServiceProtocol
-   * @type {object}
-   * @private
-   */
-  this._hash_to_string = {};
+  this._hash_manager = settings.hash_manager;
 }
 
 /**
@@ -61,35 +53,6 @@ ActivityOfServiceProtocol.prototype._protocol_codes = {
   yielding_data_eof: Buf.from([0x08]),
   yielding_error: Buf.from([0x09]),
 };
-
-/**
- * @memberof module:ActivityOfServiceProtocol
- * @param {string} string
- * @private
- * @description For service function call.
- */
-ActivityOfServiceProtocol.prototype._hash_string_4bytes = function(string) {
-  let result = this._string_to_hash[string];
-  if (!result) {
-    const hash_of_the_string = Crypto.createHash('md5');
-    hash_of_the_string.update(string);
-    result = hash_of_the_string.digest().slice(0, 4);
-    this._string_to_hash[string] = result;
-    this._hash_to_string[result.toString('base64')] = string;
-  }
-
-  return result;
-}
-
-/**
- * @memberof module:ActivityOfServiceProtocol
- * @param {buffer} _4bytes_hash
- * @private
- * @description For service function call.
- */
-ActivityOfServiceProtocol.prototype._stringify_4bytes_hash = function(_4bytes_hash) {
-  return this._hash_to_string[_4bytes_hash.toString('base64')];
-}
 
 /**
  * @memberof module:ServiceOfActivityProtocol
@@ -120,7 +83,7 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
         // protocol_code, service_function_name, service_function_callback_id, NSDT_encoded
         tunnel.send(Buf.concat([
           this._protocol_codes.service_function_call,
-          this._hash_string_4bytes(service_function_name),
+          this._hash_manager.hashString4Bytes(service_function_name),
           service_function_callback_id,
           NSDT.encode(service_function_argument)
         ]));
@@ -140,7 +103,7 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
       // protocol_code, field_name, yielding_id, NSDT_encoded
       tunnel.send(Buf.concat([
         this._protocol_codes.yielding_start,
-        this._hash_string_4bytes(field_name),
+        this._hash_manager.hashString4Bytes(field_name),
         yielding_id,
         NSDT.encode(yielding_start_argument)
       ]));

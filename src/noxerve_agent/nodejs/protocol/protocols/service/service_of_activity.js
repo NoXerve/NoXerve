@@ -16,7 +16,6 @@
 const Utils = require('../../../utils');
 const Buf = require('../../../buffer');
 const NSDT = require('../../../nsdt');
-const Crypto = require('crypto');
 
 /**
  * @constructor module:ServiceOfActivityProtocol
@@ -37,14 +36,7 @@ function ServiceOfActivityProtocol(settings) {
    * @type {object}
    * @private
    */
-  this._string_to_hash = {};
-
-  /**
-   * @memberof module:ServiceOfActivityProtocol
-   * @type {object}
-   * @private
-   */
-  this._hash_to_string = {};
+  this._hash_manager = settings.hash_manager;
 }
 
 /**
@@ -64,35 +56,6 @@ ServiceOfActivityProtocol.prototype._protocol_codes = {
   yielding_error: Buf.from([0x09]),
 };
 
-/**
- * @memberof module:ServiceOfActivityProtocol
- * @param {string} string
- * @private
- * @description For service function call.
- */
-ServiceOfActivityProtocol.prototype._hash_string_4bytes = function(string) {
-  let result = this._string_to_hash[string];
-  if (!result) {
-    const hash_of_the_string = Crypto.createHash('md5');
-    hash_of_the_string.update(string);
-    result = hash_of_the_string.digest().slice(0, 4);
-    this._string_to_hash[string] = result;
-    this._hash_to_string[result.toString('base64')] = string;
-  }
-
-  return result;
-}
-
-/**
- * @memberof module:ServiceOfActivityProtocol
- * @param {buffer} _4bytes_hash
- * @private
- * @description For service function call.
- */
-ServiceOfActivityProtocol.prototype._stringify_4bytes_hash = function(_4bytes_hash) {
-  return this._hash_to_string[_4bytes_hash.toString('base64')];
-}
-
 // [Flag] Need to be rewrited.
 /**
  * @memberof module:ServiceOfActivityProtocol
@@ -107,12 +70,12 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
     let yielding_handler_dict = {};
     // Hash service function name.
     service_of_activity.on('service-function-define', (service_function_name) => {
-      this._hash_string_4bytes(service_function_name);
+      this._hash_manager.hashString4Bytes(service_function_name);
     });
 
     // Hash service function name.
     service_of_activity.on('yielding-handle', (field_name) => {
-      this._hash_string_4bytes(field_name);
+      this._hash_manager.hashString4Bytes(field_name);
     });
 
     // Close communication with activity.
@@ -138,7 +101,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
         } catch (e) {}
         // Catch error.
         try {
-          const service_function_name = this._stringify_4bytes_hash(data.slice(0, 4));
+          const service_function_name = this._hash_manager.stringify4BytesHash(data.slice(0, 4));
           const service_function_parameter = NSDT.decode(data.slice(8));
 
           const return_function = (data) => {
@@ -186,7 +149,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
         // Catch error.
         try {
           const yielding_id_base64 = yielding_id.toString('base64');
-          const field_name = this._stringify_4bytes_hash(data.slice(0, 4));
+          const field_name = this._hash_manager.stringify4BytesHash(data.slice(0, 4));
           const yielding_handler_parameter = NSDT.decode(data.slice(8));
 
           service_of_activity.emitEventListener('yielding-start', field_name, yielding_handler_parameter, (yielding_handler_argument, yielding_handler) => {
