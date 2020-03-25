@@ -9,6 +9,9 @@
 let Node = new(require('../../node'))();
 let Worker = new(require('../../worker'))();
 
+const worker_detail = {
+  name: 'worker 1'
+};
 const interfaces = [{
   interface_name: 'WebSocket',
   interface_settings: {
@@ -22,8 +25,24 @@ const interfaces = [{
     host: '0.0.0.0',
     port: 6661
   }
-}
-];
+}];
+
+let worker_id_to_interfaces_dict = {
+  1: [{
+    interface_name: 'WebSocket',
+    interface_settings: {
+      host: '0.0.0.0',
+      port: 9991
+    }
+  },
+  {
+    interface_name: 'WebSocket',
+    interface_settings: {
+      host: '0.0.0.0',
+      port: 6661
+    }
+  }]
+};
 
 let index = 0;
 
@@ -57,18 +76,15 @@ loop(()=> {
 
   Protocol.start();
 
-
-
-
   Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', ()=> {
-    Worker.importWorkerIdToInterfacesMapping();
+    Worker.importWorkerIdToInterfacesMapping(worker_id_to_interfaces_dict, () => {
+      Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
 
-    Worker.onWorkerSocketCreate('purpose 1', (remote_worker_id, worker_socket)=> {
+      });
 
-    });
+      Worker.createWorkerSocket('purpose 1', parameters, remote_worker_id, (error, worker_socket)=> {
 
-    Worker.createWorkerSocket('purpose 1', remote_worker_id, (error, worker_socket)=> {
-
+      });
     });
   });
 
@@ -79,8 +95,6 @@ loop(()=> {
     console.log('worker_authenticity_information', worker_authenticity_information);
     return true;
   });
-
-  const worker_detail = {name: 'worker A1'};
 
   Worker.joinMe(interfaces, worker_detail, 'whatsoever_auth', (error, my_worker_id)=> {
 
