@@ -35,7 +35,17 @@ function Activity(settings) {
    * @type {object}
    * @private
    */
-   this._event_listeners = {};
+   this._event_listeners = {
+     // Internal private default events.
+     'activity-of-service-request': (callback) => {
+       try {
+         const activity_of_service = new ActivityOfService();
+         callback(false, activity_of_service);
+       } catch (error) {
+         callback(error);
+       }
+     },
+   };
 }
 
 /**
@@ -64,26 +74,16 @@ Activity.prototype.on = function(event_name, listener) {
  * @description Activity events registeration.
  */
 Activity.prototype.createActivity = function(interface_connect_settings_list, callback) {
-  this._event_listeners['activity-create'](interface_connect_settings_list, (error, activity_of_service_handler)=> {
-    if(error) {
-      callback(error);
-    }
-    else {
-      try {
-        let activity_of_service = new ActivityOfService();
+  this._event_listeners['activity-create'](interface_connect_settings_list, callback);
+}
 
-        // Setup service api.
-        activity_of_service_handler(false, activity_of_service);
-
-        // Finish up withour problem.
-        callback(false, activity_of_service);
-      }
-      catch(error) {
-        activity_of_service_handler(true);
-        callback(error);
-      }
-    }
-  });
+/**
+ * @memberof module:Activity
+ * @param {string} event_name
+ * @description Activity events emitter.
+ */
+Activity.prototype.emitEventListener = function(event_name, ...params) {
+  this._event_listeners[event_name].apply(null, params);
 }
 
 module.exports = Activity;

@@ -52,18 +52,19 @@ function ActivityProtocol(settings) {
    * @private
    * @description ActivityOfServiceProtocol submodule.
    */
-  this._activity_of_service_protocol = new ActivityOfServiceProtocol({hash_manager: settings.hash_manager});
+  this._activity_of_service_protocol = new ActivityOfServiceProtocol({
+    hash_manager: settings.hash_manager
+  });
 }
 
 /**
  * @memberof module:ActivityProtocol
- * @param {array} array
- * @return array
+ * @type {object}
  * @private
- * @description Reference: https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array.
- * For clientside loadbalancing.
  */
-
+ActivityProtocol.prototype._ProtocolCodes = {
+  service_and_activity_protocol: Buf.from([0x01])
+}
 
 /**
  * @callback module:ActivityProtocol~callback_of_start
@@ -89,36 +90,34 @@ ActivityProtocol.prototype.start = function(callback) {
     // Format:
     // service-activity byte
     // 0x01
-    const synchronize_information = Buf.from([1]);;
+    const synchronize_information = this._ProtocolCodes.service_and_activity_protocol;
 
     // Proceed tunnel creations loop.
     let index = 0;
-    const loop = ()=> {
+    // Loop loop() with condition.
+    const loop_next = () => {
+      index++;
+      if (index < shuffled_interface_connect_settings_list.length) {
+        loop();
+      }
+      // No more next loop. Exit.
+      else {
+        // [Flag] Uncatogorized error.
+        create_activity_callback(true);
+      }
+    };
+    const loop = () => {
       const interface_name = shuffled_interface_connect_settings_list[index].interface_name;
       const interface_connect_settings = shuffled_interface_connect_settings_list[index].interface_connect_settings;
 
-      // Loop loop() with condition.
-      const next_loop = ()=> {
-        index++;
-        if(index < shuffled_interface_connect_settings_list.length) {
-          loop();
-        }
-        // No more next loop. Exit.
-        else {
-          // [Flag] Uncatogorized error.
-          create_activity_callback(true);
-        }
-      };
-
-      const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information)=> {
-        if(open_handshanke_error) {
+      const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information) => {
+        if (open_handshanke_error) {
           // Unable to open handshake. Next loop.
-          next_loop();
+          loop_next();
 
           // Return acknowledge_information(not acknowledge).
           return false;
-        }
-        else {
+        } else {
           // Handshake opened. Check if synchronize_acknowledgement_information valid.
           try {
             activity_id = synchronize_acknowledgement_information;
@@ -127,14 +126,13 @@ ActivityProtocol.prototype.start = function(callback) {
             // acknowledge byte
             // 0x01(ok)
             // 0x00(not ok)
-            const acknowledge_information = Buf.from([0x01]);
+            const acknowledge_information = this._ProtocolCodes.service_and_activity_protocol;
 
             // Return acknowledge binary.
             return acknowledge_information;
-          }
-          catch(error) {
+          } catch (error) {
             // Unable to open handshake. Next loop.
-            next_loop();
+            loop_next();
 
             // Return acknowledge_information(not acknowledge).
             return false;
@@ -142,14 +140,14 @@ ActivityProtocol.prototype.start = function(callback) {
         }
       };
 
-      const finish_handshake = (error, tunnel)=> {
-        if(error) {
+      const finish_handshake = (error, tunnel) => {
+        if (error) {
           // Unable to open handshake. Next loop.
-          next_loop();
-        }
-        else {
-          create_activity_callback(false, (error, activity_of_service)=> {
+          loop_next();
+        } else {
+          this._activity_module.emitEventListener('activity-of-service-request', (error, activity_of_service) => {
             this._activity_of_service_protocol.handleTunnel(error, activity_of_service, tunnel);
+            create_activity_callback(error, activity_of_service);
           });
         }
       }
@@ -159,7 +157,7 @@ ActivityProtocol.prototype.start = function(callback) {
     };
     loop();
   });
-  if(callback) callback(false);
+  if (callback) callback(false);
 }
 
 /**
@@ -172,7 +170,7 @@ ActivityProtocol.prototype.start = function(callback) {
  * @description Close the module.
  */
 ActivityProtocol.prototype.close = function(callback) {
-  if(callback) callback(false);
+  if (callback) callback(false);
 }
 
 /**

@@ -44,7 +44,7 @@ function ServiceOfActivityProtocol(settings) {
  * @type {object}
  * @private
  */
-ServiceOfActivityProtocol.prototype._protocol_codes = {
+ServiceOfActivityProtocol.prototype._ProtocolCodes = {
   service_function_call: Buf.from([0x01]),
   service_function_call_data: Buf.from([0x02]),
   service_function_call_data_eof: Buf.from([0x03]),
@@ -93,7 +93,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
       // format:
       // +1 | +4 | +4 | ~
       // protocol_code, service_function_name, service_function_callback_id, NSDT_encoded
-      if (protocol_code === this._protocol_codes.service_function_call[0]) {
+      if (protocol_code === this._ProtocolCodes.service_function_call[0]) {
         let service_function_callback_id;
         // Important value. Calculate first.
         try {
@@ -111,7 +111,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
             // service_function_call_data, service_function_callback_id, NSDT_encoded
 
             tunnel.send(Buf.concat([
-              this._protocol_codes.service_function_call_data_eof,
+              this._ProtocolCodes.service_function_call_data_eof,
               service_function_callback_id, NSDT.encode(data)
             ]));
           };
@@ -123,7 +123,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
             // service_function_call_data, service_function_callback_id, NSDT_encoded
 
             tunnel.send(Buf.concat([
-              this._protocol_codes.service_function_call_data,
+              this._ProtocolCodes.service_function_call_data,
               service_function_callback_id, NSDT.encode(data)
             ]));
           };
@@ -136,11 +136,11 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
           );
         } catch (error) {
           tunnel.send(Buf.concat([
-            this._protocol_codes.service_function_call_error,
+            this._ProtocolCodes.service_function_call_error,
             service_function_callback_id
           ]));
         }
-      } else if (protocol_code === this._protocol_codes.yielding_start[0]) {
+      } else if (protocol_code === this._ProtocolCodes.yielding_start[0]) {
         let yielding_id;
         // Important value. Calculate first.
         try {
@@ -160,23 +160,23 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
             // service_function_call_data, service_function_callback_id, NSDT_encoded
 
             tunnel.send(Buf.concat([
-              this._protocol_codes.yielding_start_acknowledge,
+              this._ProtocolCodes.yielding_start_acknowledge,
               yielding_id,
               NSDT.encode(yielding_handler_argument)
             ]));
           });
         } catch (error) {
           tunnel.send(Buf.concat([
-            this._protocol_codes.yielding_error,
+            this._ProtocolCodes.yielding_error,
             yielding_id
           ]));
         }
-      } else if (protocol_code === this._protocol_codes.yielding_data[0]) {
+      } else if (protocol_code === this._ProtocolCodes.yielding_data[0]) {
         const yielding_id = data.slice(0, 4);
         const yielded_data = NSDT.decode(data.slice(4));
 
         yielding_handler_dict[yielding_id.toString('base64')](false, yielded_data, false);
-      } else if (protocol_code === this._protocol_codes.yielding_data_eof[0]) {
+      } else if (protocol_code === this._ProtocolCodes.yielding_data_eof[0]) {
         const yielding_id = data.slice(0, 4);
         const yielding_id_base64 = data.slice(0, 4).toString('base64');
         const yielded_data = NSDT.decode(data.slice(4));
@@ -184,7 +184,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
         yielding_handler_dict[yielding_id_base64](false, yielded_data, true);
         // EOF, delete the callback no longer useful.
         delete yielding_handler_dict[yielding_id_base64];
-      } else if (protocol_code === this._protocol_codes.yielding_error[0]) {
+      } else if (protocol_code === this._ProtocolCodes.yielding_error[0]) {
         const yielding_id = data.slice(0, 4);
         const yielding_id_base64 = yielding_id.toString('base64');
 

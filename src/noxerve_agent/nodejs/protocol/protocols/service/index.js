@@ -52,7 +52,18 @@ function ServiceProtocol(settings) {
    * @private
    * @description ServiceOfActivityProtocol submodule.
    */
-  this._service_of_activity_protocol = new ServiceOfActivityProtocol({hash_manager: settings.hash_manager});
+  this._service_of_activity_protocol = new ServiceOfActivityProtocol({
+    hash_manager: settings.hash_manager
+  });
+}
+
+/**
+ * @memberof module:ActivityProtocol
+ * @type {object}
+ * @private
+ */
+ServiceProtocol.prototype._ProtocolCodes = {
+  service_and_activity_protocol: Buf.from([0x01])
 }
 
 /**
@@ -65,7 +76,7 @@ function ServiceProtocol(settings) {
  * @description Start running ServiceProtocol.
  */
 ServiceProtocol.prototype.start = function(callback) {
-  if(callback) callback(false);
+  if (callback) callback(false);
 }
 
 /**
@@ -78,7 +89,7 @@ ServiceProtocol.prototype.start = function(callback) {
  * @description Close the module.
  */
 ServiceProtocol.prototype.close = function(callback) {
-  if(callback) callback(false);
+  if (callback) callback(false);
 }
 
 /**
@@ -93,7 +104,9 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
   // service-activity byte
   // 0x01
 
-  if (synchronize_information.length === 1 && synchronize_information[0] === 1) {
+  if (synchronize_information.length === 1 &&
+    synchronize_information[0] === this._ProtocolCodes.service_and_activity_protocol[0]
+  ) {
     const generated_activity_id = Utils.random8Bytes();
     const generated_activity_id_base64 = generated_activity_id.toString('base64');
 
@@ -102,7 +115,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
     });
 
     onAcknowledge((acknowledge_information, tunnel) => {
-      if (acknowledge_information[0] === 0x01) {
+      if (acknowledge_information[0] === this._ProtocolCodes.service_and_activity_protocol[0]) {
         this._service_module.emitEventListener('service-of-activity-request', (error, service_of_activity) => {
           this._service_of_activity_protocol.handleTunnel(error, service_of_activity, tunnel);
           this._service_module.emitEventListener('service-of-activity-ready', service_of_activity)

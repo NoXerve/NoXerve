@@ -28,7 +28,7 @@ const interfaces = [{
   }
 ];
 
-let worker_id_to_interfaces_dict = {};
+let workers_settings = {};
 
 let index = 0;
 
@@ -62,7 +62,7 @@ loop(() => {
   Protocol.start();
 
   Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', ()=> {
-    Worker.importWorkerIdToInterfacesMapping(worker_id_to_interfaces_dict, () => {
+    Worker.importWorkersSettings(workers_settings, () => {
       Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
 
       });
@@ -96,7 +96,7 @@ loop(() => {
   Worker.on('worker-update', (remote_worker_id, worker_interfaces, worker_detail) => {
 
   });
-  
+
   Worker.leaveMe((error) => {
 
   });

@@ -29,27 +29,6 @@ function WorkerSocketProtocol(settings) {
    * @private
    */
   this._settings = settings;
-
-  /**
-   * @memberof module:WorkerSocketProtocol
-   * @type {object}
-   * @private
-   */
-  this._worker_socket_module = settings.worker_socket_module;
-
-  /**
-   * @memberof module:WorkerSocketProtocol
-   * @type {object}
-   * @private
-   */
-  this._string_to_hash = {};
-
-  /**
-   * @memberof module:WorkerSocketProtocol
-   * @type {object}
-   * @private
-   */
-  this._hash_to_string = {};
 }
 
 
@@ -58,37 +37,8 @@ function WorkerSocketProtocol(settings) {
  * @type {object}
  * @private
  */
-WorkerSocketProtocol.prototype._protocol_codes = {
+WorkerSocketProtocol.prototype._ProtocolCodes = {
 };
-
-/**
- * @memberof module:WorkerSocketProtocol
- * @param {string} string
- * @private
- * @description For service function call.
- */
-WorkerSocketProtocol.prototype._hash_string_4bytes = function(string) {
-  let result = this._string_to_hash[string];
-  if (!result) {
-
-    hash_of_the_string.update(string);
-    result = hash_of_the_string.digest().slice(0, 4);
-    this._string_to_hash[string] = result;
-    this._hash_to_string[result.toString('base64')] = string;
-  }
-
-  return result;
-}
-
-/**
- * @memberof module:WorkerSocketProtocol
- * @param {buffer} _4bytes_hash
- * @private
- * @description For service function call.
- */
-WorkerSocketProtocol.prototype._stringify_4bytes_hash = function(_4bytes_hash) {
-  return this._hash_to_string[_4bytes_hash.toString('base64')];
-}
 
 /**
  * @memberof module:WorkerSocketProtocol

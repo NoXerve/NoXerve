@@ -27,21 +27,24 @@ const interfaces = [{
   }
 }];
 
-let worker_id_to_interfaces_dict = {
-  1: [{
-    interface_name: 'WebSocket',
-    interface_settings: {
-      host: '0.0.0.0',
-      port: 9991
-    }
-  },
-  {
-    interface_name: 'WebSocket',
-    interface_settings: {
-      host: '0.0.0.0',
-      port: 6661
-    }
-  }]
+let workers_settings = {
+  1: {
+    interfaces: [{
+      interface_name: 'WebSocket',
+      interface_connect_settings: {
+        host: '0.0.0.0',
+        port: 9991
+      }
+    },
+    {
+      interface_name: 'WebSocket',
+      interface_connect_settings: {
+        host: '0.0.0.0',
+        port: 6661
+      }
+    }],
+    detail: {}
+  }
 };
 
 let index = 0;
@@ -77,7 +80,8 @@ loop(()=> {
   Protocol.start();
 
   Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', ()=> {
-    Worker.importWorkerIdToInterfacesMapping(worker_id_to_interfaces_dict, () => {
+    Worker.importWorkersSettings(workers_settings, (error) => {
+      if (error) console.log('[Worker module] importWorkersSettings error.', error);
       Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
 
       });
@@ -100,7 +104,7 @@ loop(()=> {
 
   });
 
-  Worker.on('worker-join', (remote_worker_id, worker_interfaces, worker_detail)=> {
+  Worker.on('worker-join', (remote_worker_id, worker_interfaces, worker_detail, on_undo)=> {
 
   });
 
@@ -108,7 +112,7 @@ loop(()=> {
 
   });
 
-  Worker.on('worker-update', (remote_worker_id, worker_interfaces, worker_detail)=> {
+  Worker.on('worker-update', (remote_worker_id, worker_interfaces, worker_detail, on_undo)=> {
 
   });
 
@@ -117,7 +121,7 @@ loop(()=> {
   });
 
 
-  Worker.on('worker-leave', (remote_worker_id)=> {
+  Worker.on('worker-leave', (remote_worker_id, on_undo)=> {
 
   });
 });
