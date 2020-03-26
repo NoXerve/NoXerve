@@ -47,8 +47,8 @@ WorkerSocketProtocol.prototype._ProtocolCodes = {
  * @param {tunnel} tunnel
  * @description Method that handle service of activity protocol from service protocol module.
  */
-WorkerSocketProtocol.prototype.handleTunnel = function(remote_worker_id, tunnel) {
-  console.log('remote_worker_id', remote_worker_id);
+WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tunnel) {
+  console.log('handleTunnel', error, worker_socket, tunnel);
 }
 
 module.exports = WorkerSocketProtocol;

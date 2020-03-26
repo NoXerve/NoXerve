@@ -14,6 +14,7 @@ let Tests = [
   'activity_test',
   'service_function_test',
   'service_yield_test',
+  'worker_test',
   'other_test'
 ];
 
@@ -129,45 +130,81 @@ Node.createInterface('WebSocket', {
 Protocol.start();
 // **** Protocol Module Test End ****
 
-// **** Worker Module Test Start ****
-Worker.importWorkerAuthenticityData(1, 'whatsoever', ()=> {
-});
-// **** Worker Module Test End ****
-
-// **** Service Module Test Start ****
-Service.on('connect', (service_of_activity) => {
-  console.log('[Service module] Activity created.');
-  service_of_activity.on('close', ()=> {
-    console.log('[Service module] Service closed.');
-  });
-  service_of_activity.handleYielding('field1', (yielding_handler_parameter, ready_yielding) => {
-    console.log('[Service module] Service handleYielding started.');
-    console.log('[Service module] Parameters value: ', yielding_handler_parameter);
-    ready_yielding('service ok for yielding.', (error, data, eof)=> {
-      if(error) console.log('[Service module] Yielding error.', error);
-      console.log('[Service module] Yielded value: ', data);
-      if(eof) finish('service_yield_test');
-    });
-  });
-  service_of_activity.define('test_func', (service_function_parameter, return_data, yield_data) => {
-    console.log('[Service module] Service function called.');
-    console.log('[Service module] Parameters value: ', service_function_parameter);
-    // service_of_activity.close();
-    yield_data({bar: 13579});
-    yield_data(Utils.random8Bytes());
-    yield_data(Buffer.from([1, 2, 3, 4, 5]));
-    return_data({bar: 'last round'});
-    finish('service_function_test');
-  });
-});
-// **** Service Module Test End ****
-
 
 Node2.createInterface('WebSocket', {
   host: '0.0.0.0',
   port: 12345
 }, (err, id) => {
   if (err) console.log('[Node2 module] Create interface error.', err);
+
+  // **** Worker Module Test Start ****
+
+  let workers_settings = {
+    1: {
+      interfaces: [{
+        interface_name: 'WebSocket',
+        interface_connect_settings: {
+          host: '0.0.0.0',
+          port: 12345
+        }
+      }],
+      detail: {}
+    }
+  };
+
+  Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', (error)=> {
+    if (error) console.log('[Worker module] importWorkerAuthenticityData error.', error);
+    Worker.importWorkersSettings(workers_settings, (error)=> {
+      if (error) console.log('[Worker module] importWorkersSettings error.', error);
+      Worker.on('worker-authenticication', (worker_id, worker_authenticity_information)=> {
+        if(worker_id === 0) {
+          // Initailize new worker.
+        }
+        console.log('[Worker module] "worker-authenticication" event. ', worker_id, worker_authenticity_information);
+        return true;
+      });
+
+      Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
+
+        console.log(parameters, remote_worker_id, worker_socket);
+      });
+
+      Worker.createWorkerSocket('purpose 1', {p: 1}, 1, (error, worker_socket)=> {
+        if (error) console.log('[Worker module] createWorkerSocket error.', error);
+        finish('worker_test');
+      });
+    });
+  });
+
+  // **** Worker Module Test End ****
+
+  // **** Service Module Test Start ****
+  Service.on('connect', (service_of_activity) => {
+    console.log('[Service module] Activity created.');
+    service_of_activity.on('close', ()=> {
+      console.log('[Service module] Service closed.');
+    });
+    service_of_activity.handleYielding('field1', (yielding_handler_parameter, ready_yielding) => {
+      console.log('[Service module] Service handleYielding started.');
+      console.log('[Service module] Parameters value: ', yielding_handler_parameter);
+      ready_yielding('service ok for yielding.', (error, data, eof)=> {
+        if(error) console.log('[Service module] Yielding error.', error);
+        console.log('[Service module] Yielded value: ', data);
+        if(eof) finish('service_yield_test');
+      });
+    });
+    service_of_activity.define('test_func', (service_function_parameter, return_data, yield_data) => {
+      console.log('[Service module] Service function called.');
+      console.log('[Service module] Parameters value: ', service_function_parameter);
+      // service_of_activity.close();
+      yield_data({bar: 13579});
+      yield_data(Utils.random8Bytes());
+      yield_data(Buffer.from([1, 2, 3, 4, 5]));
+      return_data({bar: 'last round'});
+      finish('service_function_test');
+    });
+  });
+  // **** Service Module Test End ****
 
   console.log('[Activity module] Activity create test.');
 

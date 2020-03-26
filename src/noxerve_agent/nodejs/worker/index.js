@@ -43,10 +43,13 @@ function Worker(settings) {
         callback(error);
       }
     },
-    'worker-authenticication': (worker_authenticity_information) => {
+    'worker-authenticication': (remote_worker_id, worker_authenticity_information) => {
       console.log(worker_authenticity_information);
       return true;
     },
+    'worker-socket-ready': (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, worker_socket) => {
+      this._event_listeners['worker-socket-create-' + worker_socket_purpose_name](worker_socket_purpose_parameter, remote_worker_id, worker_socket);
+    }
   };
 };
 
@@ -112,18 +115,18 @@ Worker.prototype.importWorkersSettings = function(workers_settings, callback) {
 /**
  * @memberof module:Worker
  * @param {string} worker_socket_purpose_name - The purpose for this worker socket.
- * @param {noxerve_supported_data_type} worker_socket_purpose_parameters - The purpose for this worker socket. Along with it's parameter.
+ * @param {noxerve_supported_data_type} worker_socket_purpose_parameter - The purpose for this worker socket. Along with it's parameter.
  * @param {integer} remote_worker_id - The worker that you want to communicate with.
  * @param {module:Worker~callback_of_create_worker_socket} callback
  * @description Create a worker socket in order to communicate with another worker.
  */
-Worker.prototype.createWorkerSocket = function(worker_socket_purpose_name, worker_socket_purpose_parameters, remote_worker_id, callback) {
-  this._event_listeners['worker-socket-create'](worker_socket_purpose_name, worker_socket_purpose_parameters, remote_worker_id, callback);
+Worker.prototype.createWorkerSocket = function(worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, callback) {
+  this._event_listeners['worker-socket-create'](worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, callback);
 }
 
 /**
  * @callback module:Worker~callback_of_on_worker_socket_create
- * @param {noxerve_supported_data_type} worker_socket_purpose_parameters - The purpose for this worker socket. Along with it's parameter.
+ * @param {noxerve_supported_data_type} worker_socket_purpose_parameter - The purpose for this worker socket. Along with it's parameter.
  * @param {integer} remote_worker_id - The worker that you want to communicate with.
  * @param {object} worker_socket
  */
@@ -135,6 +138,7 @@ Worker.prototype.createWorkerSocket = function(worker_socket_purpose_name, worke
  */
 Worker.prototype.onWorkerSocketCreate = function(worker_socket_purpose_name, listener) {
   this._event_listeners['worker-socket-create-' + worker_socket_purpose_name] = listener;
+  this._event_listeners['hash-string-request'](worker_socket_purpose_name);
 }
 
 /**

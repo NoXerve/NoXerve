@@ -80,13 +80,15 @@ loop(()=> {
   Protocol.start();
 
   Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', ()=> {
+    if (error) console.log('[Worker module] importWorkerAuthenticityData error.', error);
     Worker.importWorkersSettings(workers_settings, (error) => {
       if (error) console.log('[Worker module] importWorkersSettings error.', error);
       Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
-
+        console.log(parameters, remote_worker_id, worker_socket);
       });
 
-      Worker.createWorkerSocket('purpose 1', parameters, remote_worker_id, (error, worker_socket)=> {
+      Worker.createWorkerSocket('purpose 1', {p: 1}, 1, (error, worker_socket)=> {
+        if (error) console.log('[Worker module] createWorkerSocket error.', error);
 
       });
     });
@@ -96,7 +98,7 @@ loop(()=> {
     if(worker_id === 0) {
       // Initailize new worker.
     }
-    console.log('worker_authenticity_information', worker_authenticity_information);
+    console.log('[Worker module] "worker-authenticication" event. ', worker_id, worker_authenticity_information);
     return true;
   });
 
