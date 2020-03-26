@@ -89,6 +89,16 @@ function WorkerProtocol(settings) {
    * @memberof module:WorkerProtocol
    * @type {object}
    * @private
+   * @description WorkerSocketProtocol submodule.
+   */
+  this._worker_socket_protocol = new WorkerSocketProtocol({
+    hash_manager: settings.hash_manager
+  });
+
+  /**
+   * @memberof module:WorkerProtocol
+   * @type {object}
+   * @private
    */
   this._hash_manager = settings.hash_manager;
 }
@@ -254,7 +264,9 @@ WorkerProtocol.prototype.start = function(callback) {
       const synchronize_information = Buf.concat([
         this._ProtocolCodes.worker_socket,
         worker_socket_purpose_name_4bytes,
-        worker_socket_purpose_parameters_encoded
+        Buf.encodeUInt32BE(worker_socket_purpose_parameters_encoded.length),
+        worker_socket_purpose_parameters_encoded,
+        this._my_worker_authenticity_data_bytes
       ]);
 
       const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information)=> {
@@ -270,12 +282,12 @@ WorkerProtocol.prototype.start = function(callback) {
           callback(error);
         } else {
           this._worker_module.emitEventListener('worker-socket-request', (error, worker_socket)=> {
-
+            this._worker_socket_protocol.handleTunnel(error, worker_socket, tunnel);
           });
         }
       };
 
-      this._open_handshake_from_worker_id(remote_worker_id);
+      this._open_handshake_from_worker_id(remote_worker_id, synchronize_information, acknowledge_synchronization, finish_handshake);
     });
 
   this._worker_module.on('me-join', () => {});
@@ -342,7 +354,6 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
       ) {
         const synchronize_acknowledgement_information = this._worker_module.emitEventListener('worker-authenticication', NSDT.decode(synchronize_information.slice(15)));
         if (synchronize_acknowledgement_information) {
-          console.log(worker_socket_name);
           return Buf.concat([Buf.from([0x01]), NSDT.encode(synchronize_acknowledgement_information)]);
 
         } else {

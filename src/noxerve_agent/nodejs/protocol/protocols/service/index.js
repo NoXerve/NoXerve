@@ -121,12 +121,16 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
           this._service_module.emitEventListener('service-of-activity-ready', service_of_activity)
         });
       } else {
+        tunnel.close();
         return false;
       }
     });
 
     // Send 8 bytes id;
-    return generated_activity_id;
+    return Buf.concat([
+      this._ProtocolCodes.service_and_activity_protocol,
+      generated_activity_id]);
+
   } else return false;
 }
 

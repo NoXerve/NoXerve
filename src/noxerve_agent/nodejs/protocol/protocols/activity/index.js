@@ -120,16 +120,25 @@ ActivityProtocol.prototype.start = function(callback) {
         } else {
           // Handshake opened. Check if synchronize_acknowledgement_information valid.
           try {
-            activity_id = synchronize_acknowledgement_information;
-            // Acknowledgement information for handshake
-            // Format:
-            // acknowledge byte
-            // 0x01(ok)
-            // 0x00(not ok)
-            const acknowledge_information = this._ProtocolCodes.service_and_activity_protocol;
+            if(synchronize_acknowledgement_information[0] === this._ProtocolCodes.service_and_activity_protocol[0]) {
+              activity_id = synchronize_acknowledgement_information;
+              console.log(activity_id);
+              // Acknowledgement information for handshake
+              // Format:
+              // acknowledge byte
+              // 0x01(ok)
+              // 0x00(not ok)
+              const acknowledge_information = this._ProtocolCodes.service_and_activity_protocol;
 
-            // Return acknowledge binary.
-            return acknowledge_information;
+              // Return acknowledge binary.
+              return acknowledge_information;
+            }
+            else {
+              loop_next();
+
+              // Return acknowledge_information(not acknowledge).
+              return false;
+            }
           } catch (error) {
             // Unable to open handshake. Next loop.
             loop_next();
@@ -141,6 +150,7 @@ ActivityProtocol.prototype.start = function(callback) {
       };
 
       const finish_handshake = (error, tunnel) => {
+        console.log(error)
         if (error) {
           // Unable to open handshake. Next loop.
           loop_next();

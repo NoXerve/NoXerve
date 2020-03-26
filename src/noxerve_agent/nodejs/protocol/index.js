@@ -108,23 +108,26 @@ function Protocol(settings) {
             try {
               if (acknowledge_information === false) {
                 // [Flag] Uncatogorized error.
-                throw true;
+                stage = -1;
+                tunnel.close();
               }
-              tunnel.send(acknowledge_information, (error) => {
-                if (error) {
-                  stage = -1;
-                  tunnel.close();
-                  finish_handshake(error);
-                } else {
-                  // Reset events.
-                  tunnel.on('ready', () => {});
-                  tunnel.on('data', () => {});
-                  tunnel.on('error', () => {});
+              else {
+                tunnel.send(acknowledge_information, (error) => {
+                  if (error) {
+                    stage = -1;
+                    tunnel.close();
+                    finish_handshake(error);
+                  } else {
+                    // Reset events.
+                    tunnel.on('ready', () => {});
+                    tunnel.on('data', () => {});
+                    tunnel.on('error', () => {});
 
-                  // Finish up
-                  finish_handshake(error, tunnel);
-                }
-              });
+                    // Finish up
+                    finish_handshake(error, tunnel);
+                  }
+                });
+              }
             } catch (error) {
               stage = -1;
               tunnel.close();
@@ -145,7 +148,7 @@ function Protocol(settings) {
             // [Flag] Uncatogorized error.
             stage = -1;
             tunnel.close();
-            finish_handshake(true);
+            finish_handshake(error);
           }
         });
 

@@ -180,7 +180,7 @@ Node2.createInterface('WebSocket', {
     }
   }], (error, activity_of_service) => {
 
-    if (error) console.log(error);
+    if (error) console.log('[Activity module] Activity create error.', error);
     else {
       console.log('[Activity module] Activity created.');
       activity_of_service.on('close', () => {
