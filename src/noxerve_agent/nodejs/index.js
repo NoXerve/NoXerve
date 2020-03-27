@@ -12,9 +12,11 @@
  */
 
 const Errors = require('./errors');
-let Worker = require('./worker');
-let Service = require('./service/service');
-let Node = require('./node');
+const Worker = require('./worker');
+const Service = require('./service/service');
+const Activity = require('./service/activity');
+const Protocol = require('./protocol');
+const Node = require('./node');
 // let SecuredNode = require('./node/secured_node');
 
 
@@ -53,6 +55,15 @@ function NoXerveAgent(settings) {
   /**
    * @memberof module:NoXerveAgent
    * @type {object}
+   * @see module:Activity
+   * @private
+   * @description API intended to provide functions for the role of service.
+   */
+  this._activity_module = new Activity();
+
+  /**
+   * @memberof module:NoXerveAgent
+   * @type {object}
    * @see module:Node
    * @private
    * @description Module for tunneling.
@@ -62,11 +73,42 @@ function NoXerveAgent(settings) {
   /**
    * @memberof module:NoXerveAgent
    * @type {object}
+   * @see module:Node
+   * @private
+   * @description Module for protocols.
+   */
+  this._protocol_module = new Protocol({
+    modules: {
+      activity: this._activity_module,
+      service: this._service_module,
+      worker: this._worker_module
+    },
+    node_module: this._node_module
+  });
+
+
+  /**
+   * @memberof module:NoXerveAgent
+   * @type {object}
    * @see module:Worker
    * @description API intended to provide functions for the role of worker.
    */
   this.Worker = {
-
+    importWorkerAuthenticityData: (worker_id, worker_authenticity_information, callback) => {
+      this._worker_module.importWorkerAuthenticityData(worker_id, worker_authenticity_information, callback);
+    },
+    importWorkerPeersSettings: (worker_peers_settings, callback) => {
+      this._worker_module.importWorkerPeersSettings(worker_peers_settings, callback);
+    },
+    createWorkerSocket: (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, callback) => {
+      this._worker_module.createWorkerSocket(worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, callback);
+    },
+    onWorkerSocketCreate: (worker_socket_purpose_name, listener) => {
+      this._worker_module.onWorkerSocketCreate(worker_socket_purpose_name, listener);
+    },
+    on: (event_name, listener) => {
+      this._worker_module.on(event_name, listener);
+    }
   };
 
   /**
@@ -76,7 +118,21 @@ function NoXerveAgent(settings) {
    * @description API intended to provide functions for the role of service.
    */
   this.Service = {
+    on: (event_name, listener) => {
+      this._service_module.on(event_name, listener);
+    }
+  };
 
+  /**
+   * @memberof module:NoXerveAgent
+   * @type {object}
+   * @see module:Service
+   * @description API intended to provide functions for the role of activity.
+   */
+  this.Activity = {
+    createActivity: (interface_connect_settings_list, callback) => {
+      this._activity_module.createActivity(interface_connect_settings_list, callback);
+    }
   };
 };
 
@@ -84,7 +140,7 @@ function NoXerveAgent(settings) {
  * @callback module:NoXerveAgent~callback_of_create_interface
  * @param {int} interface_id
  * @param {error} error
-*/
+ */
 /**
  * @memberof module:NoXerveAgent
  * @param {string} interface_name - 'TCP', 'Websocket', etc
@@ -99,7 +155,7 @@ NoXerveAgent.prototype.createInterface = function(interface_name, interface_sett
 /**
  * @callback module:NoXerveAgent~callback_of_destroy_interface
  * @param {error} error
-*/
+ */
 /**
  * @memberof module:NoXerveAgent
  * @param {int} interface_id
@@ -111,19 +167,36 @@ NoXerveAgent.prototype.destroyInterface = function(interface_id, callback) {
 }
 
 /**
+ * @callback module:NoXerveAgent~callback_of_start
+ * @param {error} error
+ */
+/**
+ * @memberof module:NoXerveAgent
+ * @param {module:NoXerveAgent~callback_of_start} callback
+ * @description Start NoXerveAgent.
+ */
+NoXerveAgent.prototype.start = function(callback) {
+  this._protocol_module.start();
+  this._node_module.start(() => {
+
+  });
+  callback(false);
+}
+
+/**
  * @callback module:NoXerveAgent~callback_of_close
  * @param {error} error
-*/
+ */
 /**
  * @memberof module:NoXerveAgent
  * @param {module:NoXerveAgent~callback_of_close} callback
  * @description Gracefully close NoXerveAgent.
  */
-NoXerveAgent.prototype.close = function(interface_id, callback) {
+NoXerveAgent.prototype.close = function(callback) {
   // Close tunnels first
-  this._node_module.close(()=> {
+  this._node_module.close(() => {
 
   });
 }
 
-module.exports =  NoXerveAgent;
+module.exports = NoXerveAgent;

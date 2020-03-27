@@ -110,6 +110,10 @@ function WorkerProtocol(settings) {
  */
 WorkerProtocol.prototype._ProtocolCodes = {
   worker_affairs: Buf.from([0x02]),
+  worker_affairs_worker_join_request_respond: Buf.from([0x01]),
+  worker_affairs_worker_join_broadcast: Buf.from([0x01]),
+  worker_affairs_worker_update_broadcast: Buf.from([0x01]),
+  worker_affairs_worker_leave_broadcast: Buf.from([0x01]),
   worker_socket: Buf.from([0x03])
 }
 
