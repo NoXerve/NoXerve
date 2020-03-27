@@ -351,8 +351,7 @@ Node.prototype.on = function(event_name, callback) {
  * @description Start running node.
  */
  Node.prototype.start = function(callback) {
-   // Catch error.
-   try {} catch (error) {}
+   if(callback) callback(false);
  }
 
 /**
@@ -365,7 +364,6 @@ Node.prototype.on = function(event_name, callback) {
  * @description Close module.
  */
 Node.prototype.close = function(interface_id, callback) {
-  // Catch error.
-  try {} catch (error) {}
+  if(callback) callback(false);
 }
 module.exports = Node;

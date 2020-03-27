@@ -62,7 +62,7 @@ function Worker(settings) {
  * @description Start the worker module.
  */
 Worker.prototype.start = function(callback) {
-
+  if(callback) callback(false);
 }
 
 /**
@@ -75,7 +75,7 @@ Worker.prototype.start = function(callback) {
  * @description Close the worker module.
  */
 Worker.prototype.close = function(callback) {
-
+  if(callback) callback(false);
 }
 
 /**

@@ -201,8 +201,6 @@ WorkerProtocol.prototype._open_handshake_from_worker_id = function(
  * @description Start running WorkerProtocol.
  */
 WorkerProtocol.prototype.start = function(callback) {
-  if (callback) callback(false);
-
   this._worker_module.on('worker-authenticity-data-import', (worker_id, worker_authenticity_information, callback) => {
     if (worker_id) {
       this._my_worker_id = worker_id;
@@ -362,7 +360,7 @@ WorkerProtocol.prototype.start = function(callback) {
   this._worker_module.on('by-worker-id-leave', () => {});
 
   // this._worker_module.on('', () => {});
-
+  if (callback) callback(false);
 }
 
 /**

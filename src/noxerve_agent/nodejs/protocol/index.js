@@ -199,124 +199,149 @@ function Protocol(settings) {
  * @param {module:Protocol~callback_of_start} callback
  */
 Protocol.prototype.start = function(callback) {
-  for (const module_name in this._protocol_modules) {
-    // [Flag] Dirty code.
-    this._protocol_modules[module_name].start(() => {});
-  }
-  // Handle tunnel create event from node module.
-  // Specificlly speaking, use handshake to identify which module does tunnel belong to.
-  this._node_module.on('tunnel-create', (tunnel) => {
-    // Check is passive. Since following patterns are designed only for the role of passive.
-    if (tunnel.returnValue('from_connector')) {
-      tunnel.close()
-    } else {
+  const module_name_list = Object.keys(this._protocol_modules);
+  let index = 0;
 
-      // Use stage variable to identify current handshake progress.
-      // Avoiding proccess executed wrongly.
-      // stage -1 => Emitted error.
-      // Tunnel created => stage 0
-      // stage 0 => waiting to synchronize.
-      // Error => call nothing.
-      // stage 1 => waiting to acknowledge.
-      // Error => call synchronization_error_handler.
-      let stage = 0;
+  const loop = () => {
+    const module_name = module_name_list[index];
+    console.log(module_name, this._protocol_modules[module_name]);
+    this._protocol_modules[module_name].start((error) => {
+      if(error) {
+        if(callback) callback(error);
+      }
+      else {
+        loop_next();
+      }
+    });
+  };
 
-      let ready_state = false;
-      let related_module = null;
+  const loop_next = () => {
+    index++;
+    if(index < module_name_list.length) {
+      loop();
+    }
+    else {
+      // Handle tunnel create event from node module.
+      // Specificlly speaking, use handshake to identify which module does tunnel belong to.
+      this._node_module.on('tunnel-create', (tunnel) => {
+        // Check is passive. Since following patterns are designed only for the role of passive.
+        if (tunnel.returnValue('from_connector')) {
+          tunnel.close()
+        } else {
 
-      let synchronization_error_handler;
-      let acknowledge_handler;
+          // Use stage variable to identify current handshake progress.
+          // Avoiding proccess executed wrongly.
+          // stage -1 => Emitted error.
+          // Tunnel created => stage 0
+          // stage 0 => waiting to synchronize.
+          // Error => call nothing.
+          // stage 1 => waiting to acknowledge.
+          // Error => call synchronization_error_handler.
+          let stage = 0;
 
-      const onSynchronizationError = (callback) => {
-        synchronization_error_handler = callback;
-      };
-      const onAcknowledge = (callback) => {
-        acknowledge_handler = callback;
-      };
+          let ready_state = false;
+          let related_module = null;
 
-      tunnel.on('ready', () => {
-        ready_state = true;
-      });
-      tunnel.on('data', (data) => {
-        if (stage === 0) {
-          // Check if any protocol module synchronize with the data or not.
-          for (const protocol_name in this._protocol_modules) {
-            // Call synchronize function. Check will it respond with data or not.
-            let synchronize_returned_data = this._protocol_modules[protocol_name].synchronize(data, onSynchronizationError, onAcknowledge);
+          let synchronization_error_handler;
+          let acknowledge_handler;
 
-            // If responded then finish up.
-            if (synchronize_returned_data !== false && synchronize_returned_data !== null) {
+          const onSynchronizationError = (callback) => {
+            synchronization_error_handler = callback;
+          };
+          const onAcknowledge = (callback) => {
+            acknowledge_handler = callback;
+          };
 
-              // Associate protocol module and send data to remote.
-              related_module = this._protocol_modules[protocol_name];
+          tunnel.on('ready', () => {
+            ready_state = true;
+          });
+          tunnel.on('data', (data) => {
+            if (stage === 0) {
+              // Check if any protocol module synchronize with the data or not.
+              for (const protocol_name in this._protocol_modules) {
+                // Call synchronize function. Check will it respond with data or not.
+                let synchronize_returned_data = this._protocol_modules[protocol_name].synchronize(data, onSynchronizationError, onAcknowledge);
 
-              stage = 1;
+                // If responded then finish up.
+                if (synchronize_returned_data !== false && synchronize_returned_data !== null) {
 
-              // Send synchronize() return value to remote.
-              try {
-                tunnel.send(synchronize_returned_data, (error) => {
-                  if (error) {
+                  // Associate protocol module and send data to remote.
+                  related_module = this._protocol_modules[protocol_name];
+
+                  stage = 1;
+
+                  // Send synchronize() return value to remote.
+                  try {
+                    tunnel.send(synchronize_returned_data, (error) => {
+                      if (error) {
+                        stage = -1;
+                        tunnel.close();
+                        synchronization_error_handler(error, data);
+                      }
+                    });
+                  } catch (error) {
                     stage = -1;
                     tunnel.close();
                     synchronization_error_handler(error, data);
                   }
-                });
-              } catch (error) {
-                stage = -1;
-                tunnel.close();
-                synchronization_error_handler(error, data);
+
+                  // Handled by a protocol. Stop loop.
+                  break;
+                } else {
+                  // Reset handlers.
+                  synchronization_error_handler = null;
+                  acknowledge_handler = null;
+                }
               }
 
-              // Handled by a protocol. Stop loop.
-              break;
-            } else {
-              // Reset handlers.
-              synchronization_error_handler = null;
-              acknowledge_handler = null;
+              // If no protocol module synchronize with the data. Close tunnel.
+              if (related_module === null) {
+                tunnel.close()
+              }
+            } else if (stage === 1) {
+              // Reset events.
+              tunnel.on('ready', () => {});
+              tunnel.on('data', () => {});
+              tunnel.on('error', () => {});
+
+              // Finished handshake. Transfer tunnel ownership.
+              acknowledge_handler(data, tunnel);
             }
-          }
+          });
 
-          // If no protocol module synchronize with the data. Close tunnel.
-          if (related_module === null) {
-            tunnel.close()
-          }
-        } else if (stage === 1) {
-          // Reset events.
-          tunnel.on('ready', () => {});
-          tunnel.on('data', () => {});
-          tunnel.on('error', () => {});
+          tunnel.on('error', (error) => {
+            if (ready_state) {
+              if (stage === 0) {
+                // Happened error even not synchronize at all. Abort opreation without any further actions.
+                stage = -1;
+                tunnel.close();
+              } else if (stage === 1) {
+                stage = -1;
+                tunnel.close();
+                synchronization_error_handler(error);
+              }
+            } else {
+              // Happened error even not ready at all. Abort opreation without any further actions.
+              stage = -1;
+              tunnel.close();
+            }
+          });
 
-          // Finished handshake. Transfer tunnel ownership.
-          acknowledge_handler(data, tunnel);
+          tunnel.on('close', () => {
+            if (stage === 1) {
+              // [Flag] Uncatogorized error.
+              synchronization_error_handler(true);
+            }
+          });
         }
       });
 
-      tunnel.on('error', (error) => {
-        if (ready_state) {
-          if (stage === 0) {
-            // Happened error even not synchronize at all. Abort opreation without any further actions.
-            stage = -1;
-            tunnel.close();
-          } else if (stage === 1) {
-            stage = -1;
-            tunnel.close();
-            synchronization_error_handler(error);
-          }
-        } else {
-          // Happened error even not ready at all. Abort opreation without any further actions.
-          stage = -1;
-          tunnel.close();
-        }
-      });
-
-      tunnel.on('close', () => {
-        if (stage === 1) {
-          // [Flag] Uncatogorized error.
-          synchronization_error_handler(true);
-        }
-      });
+      if(callback) callback(false);
     }
-  });
+  };
+
+  // Start loop through protocols.
+  loop();
 }
 
 /**

@@ -176,11 +176,40 @@ NoXerveAgent.prototype.destroyInterface = function(interface_id, callback) {
  * @description Start NoXerveAgent.
  */
 NoXerveAgent.prototype.start = function(callback) {
-  this._protocol_module.start();
-  this._node_module.start(() => {
-
+  // Start all modules.
+  this._worker_module.start((error) => {
+    if(error) {
+      console.log(error);
+      callback(error);
+      return;
+    };
+    // console.log(1);
+    this._activity_module.start((error) => {
+      if(error) {
+        console.log(error);
+        callback(error);
+        return;
+      };
+      // console.log(2);
+      this._service_module.start((error) => {
+        if(error) {
+          console.log(error);
+          callback(error);
+          return;
+        };
+        // console.log(3);
+        this._protocol_module.start((error) => {
+          if(error) {
+            console.log(error);
+            callback(error);
+            return;
+          };
+          // console.log(4);
+          this._node_module.start(callback);
+        });
+      });
+    });
   });
-  callback(false);
 }
 
 /**

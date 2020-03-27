@@ -50,8 +50,33 @@ function Service(settings) {
 };
 
 /**
+ * @callback module:Service~callback_of_start
+ * @param {error} error
+ */
+/**
+ * @memberof module:Service
+ * @param {module:Service~callback_of_start} callback
+ * @description Start the service module.
+ */
+Service.prototype.start = function(callback) {
+  if(callback) callback(false);
+}
+
+/**
+ * @callback module:Service~callback_of_close
+ * @param {error} error
+ */
+/**
+ * @memberof module:Service
+ * @param {module:Service~callback_of_close} callback
+ * @description Close the service module.
+ */
+Service.prototype.close = function(callback) {
+  if(callback) callback(false);
+}
+
+/**
  * @callback module:Service~callback_of_on
- * @param {integer} activity_id
  * @param {error} error - Only exists with "error" event.
  */
 /**

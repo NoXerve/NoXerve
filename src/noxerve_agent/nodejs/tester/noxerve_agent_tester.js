@@ -35,6 +35,7 @@ let Utils = require('../utils');
 let NoXerveAgent = new(require('../index'))({});
 
 NoXerveAgent.start((error)=> {
+  if (error) console.log('[NoXerveAgent] start error.', error);
   NoXerveAgent.createInterface('WebSocket', {
     host: '0.0.0.0',
     port: 12345
@@ -58,6 +59,7 @@ NoXerveAgent.start((error)=> {
 
     NoXerveAgent.Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', (error)=> {
       if (error) console.log('[Worker module] importWorkerAuthenticityData error.', error);
+
       NoXerveAgent.Worker.importWorkerPeersSettings(worker_peers_settings, (error)=> {
         if (error) console.log('[Worker module] importWorkerPeersSettings error.', error);
         NoXerveAgent.Worker.on('worker-authenticication', (worker_id, worker_authenticity_information)=> {
@@ -155,7 +157,7 @@ NoXerveAgent.start((error)=> {
     });
 
     // **** Worker Module Test End ****
-
+    
     // **** Service Module Test Start ****
     NoXerveAgent.Service.on('connect', (service_of_activity) => {
       console.log('[Service module] Activity created.');
@@ -194,7 +196,6 @@ NoXerveAgent.start((error)=> {
         port: 12345
       }
     }], (error, activity_of_service) => {
-
       if (error) console.log('[Activity module] Activity create error.', error);
       else {
         console.log('[Activity module] Activity created.');

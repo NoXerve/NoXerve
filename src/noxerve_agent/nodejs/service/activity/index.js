@@ -49,6 +49,32 @@ function Activity(settings) {
 }
 
 /**
+ * @callback module:Activity~callback_of_start
+ * @param {error} error
+ */
+/**
+ * @memberof module:Activity
+ * @param {module:Activity~callback_of_start} callback
+ * @description Start the activity module.
+ */
+Activity.prototype.start = function(callback) {
+  if(callback) callback(false);
+}
+
+/**
+ * @callback module:Activity~callback_of_close
+ * @param {error} error
+ */
+/**
+ * @memberof module:Activity
+ * @param {module:Activity~callback_of_close} callback
+ * @description Close the activity module.
+ */
+Activity.prototype.close = function(callback) {
+  if(callback) callback(false);
+}
+
+/**
  * @callback module:Activity~callback_of_on
  * @description callback parameter based on event's type.
  */
