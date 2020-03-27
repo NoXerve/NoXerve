@@ -44,6 +44,8 @@ NoXerveAgent.start((error)=> {
 
     // **** Worker Module Test Start ****
 
+
+    // Only myself one worker. For multiple worker test got worker directory.
     let worker_peers_settings = {
       1: {
         interfaces: [{
@@ -157,7 +159,7 @@ NoXerveAgent.start((error)=> {
     });
 
     // **** Worker Module Test End ****
-    
+
     // **** Service Module Test Start ****
     NoXerveAgent.Service.on('connect', (service_of_activity) => {
       console.log('[Service module] Activity created.');
