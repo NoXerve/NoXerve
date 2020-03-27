@@ -1,8 +1,8 @@
 /**
  * @file NoXerveAgent worker index file. [index.js]
- * @author NOOXY <thenooxy@gmail.com>
+ * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
- * @copyright 2019-2020 NOOXY. All Rights Reserved.
+ * @copyright 2019-2020 nooxy. All Rights Reserved.
  */
 
 'use strict';
@@ -153,8 +153,8 @@ Worker.prototype.onWorkerSocketCreate = function(worker_socket_purpose_name, lis
  * @param {module:Worker~callback_of_join_me} callback
  * @description Join myself into workers cluster.
  */
-Worker.prototype.joinMe = function(my_worker_interfaces, my_worker_detail, my_worker_authenticication_data, callback) {
-  this._event_listeners['me-join'](my_worker_interfaces, my_worker_detail, my_worker_authenticication_data, callback);
+Worker.prototype.joinMe = function(remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authenticication_data, callback) {
+  this._event_listeners['me-join'](remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authenticication_data, callback);
 }
 
 /**

@@ -1,8 +1,8 @@
 /**
  * @file NoXerveAgent tester file. [tester.js]
- * @author NOOXY <thenooxy@gmail.com>
+ * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
- * @copyright 2019-2020 NOOXY. All Rights Reserved.
+ * @copyright 2019-2020 nooxy. All Rights Reserved.
  * @description Start testing by enter command "node tester.js".
  */
 

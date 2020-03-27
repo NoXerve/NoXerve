@@ -1,8 +1,8 @@
 /**
  * @file NoXerveAgent activity NoXerve Supported Data Type index file. [index.js]
- * @author NOOXY <thenooxy@gmail.com>
+ * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
- * @copyright 2019-2020 NOOXY. All Rights Reserved.
+ * @copyright 2019-2020 nooxy. All Rights Reserved.
  */
 
 

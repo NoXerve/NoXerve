@@ -1,8 +1,8 @@
 /**
  * @file NoXerveAgent worker protocol index file. [index.js]
- * @author NOOXY <thenooxy@gmail.com>
+ * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
- * @copyright 2019-2020 NOOXY. All Rights Reserved.
+ * @copyright 2019-2020 nooxy. All Rights Reserved.
  */
 
 'use strict';
@@ -16,11 +16,12 @@ const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
 const NSDT = require('../../../nsdt');
 const WorkerSocketProtocol = require('./non_uniform/worker_socket');
+const WorkerAffairsProtocol = require('./non_uniform/worker_affairs');
 
 /**
  * @constructor module:WorkerProtocol
  * @param {object} settings
- * @description NoXerve Agent ServiceProtocol Object. Protocols of service module.
+ * @description NoXerve Agent WorkerProtocol Object. Protocols of worker module.
  */
 function WorkerProtocol(settings) {
   /**
@@ -94,6 +95,17 @@ function WorkerProtocol(settings) {
   this._worker_socket_protocol = new WorkerSocketProtocol({
     hash_manager: settings.hash_manager
   });
+
+  /**
+   * @memberof module:WorkerProtocol
+   * @type {object}
+   * @private
+   * @description WorkerAffairsProtocol submodule.
+   */
+  this._worker_affairs_protocol = new WorkerAffairsProtocol({
+    hash_manager: settings.hash_manager
+  });
+
 
   /**
    * @memberof module:WorkerProtocol
@@ -344,7 +356,7 @@ WorkerProtocol.prototype.start = function(callback) {
     this._hash_manager.hashString4Bytes(worker_socket_purpose_name);
   });
 
-  this._worker_module.on('me-join', () => {
+  this._worker_module.on('me-join', (remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authenticication_data, callback) => {
     if(this._my_worker_id === null || this._my_worker_id === 0) {
 
     }

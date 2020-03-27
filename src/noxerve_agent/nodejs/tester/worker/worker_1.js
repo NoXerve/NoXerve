@@ -1,8 +1,8 @@
 /**
  * @file NoXerveAgent tester file. [tester.js]
- * @author NOOXY <thenooxy@gmail.com>
+ * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
- * @copyright 2019-2020 NOOXY. All Rights Reserved.
+ * @copyright 2019-2020 nooxy. All Rights Reserved.
  * @description Start testing by enter command "node tester.js".
  */
 
@@ -107,7 +107,9 @@ loop(()=> {
   });
 
   Worker.on('worker-join', (remote_worker_id, worker_interfaces, worker_detail, on_undo)=> {
+    on_undo(()=> {
 
+    });
   });
 
   Worker.updateMe(interfaces, worker_detail, (error, my_worker_id)=> {
@@ -115,7 +117,9 @@ loop(()=> {
   });
 
   Worker.on('worker-update', (remote_worker_id, worker_interfaces, worker_detail, on_undo)=> {
+    on_undo(()=> {
 
+    });
   });
 
   Worker.leaveMe((error, my_worker_id)=> {
@@ -124,6 +128,8 @@ loop(()=> {
 
 
   Worker.on('worker-leave', (remote_worker_id, on_undo)=> {
+    on_undo(()=> {
 
+    });
   });
 });
