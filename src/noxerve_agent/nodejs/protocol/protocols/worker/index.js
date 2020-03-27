@@ -410,6 +410,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
           acknowledge_information[1] === 0x01
         ) {
           this._worker_module.emitEventListener('worker-socket-request', (error, worker_socket) => {
+            this._worker_socket_protocol.handleTunnel(error, worker_socket, tunnel);
             this._worker_module.emitEventListener('worker-socket-ready', worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, worker_socket);
           });
         } else {

@@ -128,7 +128,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
             ]));
           };
 
-          service_of_activity.emitEventListener('service-function-call',
+          service_of_activity.emitEventListener('service-function-call-request',
             service_function_name,
             service_function_parameter,
             return_function,
@@ -152,7 +152,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
           const field_name = this._hash_manager.stringify4BytesHash(data.slice(0, 4));
           const yielding_handler_parameter = NSDT.decode(data.slice(8));
 
-          service_of_activity.emitEventListener('yielding-start', field_name, yielding_handler_parameter, (yielding_handler_argument, yielding_handler) => {
+          service_of_activity.emitEventListener('yielding-start-request', field_name, yielding_handler_parameter, (yielding_handler_argument, yielding_handler) => {
             yielding_handler_dict[yielding_id_base64] = yielding_handler;
             // Service Protocol type "yielding_start_acknowledge"
             // format:

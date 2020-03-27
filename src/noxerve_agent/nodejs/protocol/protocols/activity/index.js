@@ -122,7 +122,6 @@ ActivityProtocol.prototype.start = function(callback) {
           try {
             if(synchronize_acknowledgement_information[0] === this._ProtocolCodes.service_and_activity_protocol[0]) {
               activity_id = synchronize_acknowledgement_information;
-              console.log(activity_id);
               // Acknowledgement information for handshake
               // Format:
               // acknowledge byte
@@ -150,7 +149,6 @@ ActivityProtocol.prototype.start = function(callback) {
       };
 
       const finish_handshake = (error, tunnel) => {
-        console.log(error)
         if (error) {
           // Unable to open handshake. Next loop.
           loop_next();

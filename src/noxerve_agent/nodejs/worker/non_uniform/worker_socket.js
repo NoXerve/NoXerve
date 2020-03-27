@@ -40,7 +40,7 @@ function WorkerSocket(settings) {
    * @private
    */
   this._event_listeners = {
-    'worker-socket-function-call': (worker_socket_function_name, worker_socket_function_parameter, return_value, yield_value)=> {
+    'function-call-request': (worker_socket_function_name, worker_socket_function_parameter, return_value, yield_value)=> {
       // return_value(error, NSDT), yield(NSDT)
       this._worker_socket_functions[worker_socket_function_name](worker_socket_function_parameter, return_value, yield_value);
     },
@@ -49,7 +49,7 @@ function WorkerSocket(settings) {
       const close_handler = this._event_listeners['close'];
       if(close_handler) close_handler();
     },
-    'yielding-start': (field_name, yielding_handler_parameter, ready_yielding)=> {
+    'yielding-start-request': (field_name, yielding_handler_parameter, ready_yielding)=> {
       this._yielding_handlers[field_name](yielding_handler_parameter, ready_yielding);
     }
   };
@@ -135,7 +135,7 @@ WorkerSocket.prototype.handleYielding = function(field_name, yielding_handler) {
  */
 WorkerSocket.prototype.define = function(worker_socket_function_name, worker_socket_function) {
   this._worker_socket_functions[worker_socket_function_name] = worker_socket_function;
-  this._event_listeners['worker-socket-function-define'](worker_socket_function_name);
+  this._event_listeners['function-define'](worker_socket_function_name);
 }
 
 
@@ -172,7 +172,7 @@ WorkerSocket.prototype.startYielding = function(field_name, yielding_start_argum
  * @description WorkerSocket call. Call worker-socket function defined from another worker.
  */
 WorkerSocket.prototype.call = function(worker_socket_function_name, worker_socket_function_argument, worker_socket_function_callback) {
-  this._event_listeners['worker-socket-function-call'](worker_socket_function_name, worker_socket_function_argument, worker_socket_function_callback);
+  this._event_listeners['function-call'](worker_socket_function_name, worker_socket_function_argument, worker_socket_function_callback);
 }
 
 /**

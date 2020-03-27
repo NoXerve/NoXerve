@@ -44,8 +44,7 @@ function Worker(settings) {
       }
     },
     'worker-authenticication': (remote_worker_id, worker_authenticity_information) => {
-      console.log(worker_authenticity_information);
-      return true;
+      return false;
     },
     'worker-socket-ready': (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, worker_socket) => {
       this._event_listeners['worker-socket-create-' + worker_socket_purpose_name](worker_socket_purpose_parameter, remote_worker_id, worker_socket);
