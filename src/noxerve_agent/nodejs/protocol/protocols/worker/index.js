@@ -83,7 +83,7 @@ function WorkerProtocol(settings) {
    * @private
    * @description Dictionary from worker id to interfaces and details.
    */
-  this._workers_settings = {};
+  this._worker_peers_settings = {};
 
   /**
    * @memberof module:WorkerProtocol
@@ -134,7 +134,7 @@ WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_wo
  */
 WorkerProtocol.prototype._open_handshake_from_worker_id = function(
   worker_id, synchronize_information, acknowledge_synchronization, finish_handshake) {
-  const interfaces = this._workers_settings[worker_id].interfaces;
+  const interfaces = this._worker_peers_settings[worker_id].interfaces;
 
   // Stage 0: If loop to the end call acknowledge_synchronization with error.
   // Stage 1: If next_loop then call finish_handshake with error.
@@ -210,22 +210,22 @@ WorkerProtocol.prototype.start = function(callback) {
     else callback(true);
   });
 
-  this._worker_module.on('workers-settings-import', (workers_settings, callback) => {
+  this._worker_module.on('workers-settings-import', (worker_peers_settings, callback) => {
     if (this._my_worker_id === null) {
       // [Flag] Uncatogorized error.
       callback('You have to import auth data first.');
       return;
     }
 
-    // Check the validability of imported workers_settings.
+    // Check the validability of imported worker_peers_settings.
     const required_fields = ['interfaces', 'detail'];
     let worker_peers_ids_checksum = 0;
     let include_myself = false;
     // Loop over all workers.
-    for (const index in workers_settings) {
+    for (const index in worker_peers_settings) {
 
       // Obtain keys from specified worker.
-      const keys = Object.keys(workers_settings[index]);
+      const keys = Object.keys(worker_peers_settings[index]);
       const worker_id = parseInt(index);
       worker_peers_ids_checksum += worker_id;
       if (worker_id === this._my_worker_id) include_myself = true;
@@ -251,7 +251,7 @@ WorkerProtocol.prototype.start = function(callback) {
       callback(this._my_worker_id);
       return;
     }
-    this._workers_settings = workers_settings;
+    this._worker_peers_settings = worker_peers_settings;
     this._worker_peers_ids_checksum_4bytes = Buf.encodeUInt32BE(worker_peers_ids_checksum);
     // Peacefully finish the job.
     callback(false);
@@ -342,7 +342,14 @@ WorkerProtocol.prototype.start = function(callback) {
     this._hash_manager.hashString4Bytes(worker_socket_purpose_name);
   });
 
-  this._worker_module.on('me-join', () => {});
+  this._worker_module.on('me-join', () => {
+    if(this._my_worker_id === null || this._my_worker_id === 0) {
+
+    }
+    else {
+
+    }
+  });
 
   this._worker_module.on('me-update', () => {});
 
@@ -350,11 +357,8 @@ WorkerProtocol.prototype.start = function(callback) {
 
   this._worker_module.on('by-worker-id-leave', () => {});
 
-  this._worker_module.on('', () => {});
+  // this._worker_module.on('', () => {});
 
-  // this._worker_module.on('worker_sockets-list-fulfill', (worker_socket_name_to_intefaces_dict, callback) => {
-  //
-  // });
 }
 
 /**

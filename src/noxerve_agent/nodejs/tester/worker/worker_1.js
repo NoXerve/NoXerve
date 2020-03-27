@@ -27,7 +27,7 @@ const interfaces = [{
   }
 }];
 
-let workers_settings = {
+let worker_peers_settings = {
   1: {
     interfaces: [{
       interface_name: 'WebSocket',
@@ -81,8 +81,8 @@ loop(()=> {
 
   Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', ()=> {
     if (error) console.log('[Worker module] importWorkerAuthenticityData error.', error);
-    Worker.importWorkersSettings(workers_settings, (error) => {
-      if (error) console.log('[Worker module] importWorkersSettings error.', error);
+    Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
+      if (error) console.log('[Worker module] importWorkerPeersSettings error.', error);
       Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
         console.log(parameters, remote_worker_id, worker_socket);
       });
@@ -102,7 +102,7 @@ loop(()=> {
     return true;
   });
 
-  Worker.joinMe(interfaces, worker_detail, 'whatsoever_auth', (error, my_worker_id)=> {
+  Worker.joinMe(remote_worker_interfaces, my_interfaces, worker_detail, 'whatsoever_auth', (error, my_worker_id, worker_peers_settings)=> {
 
   });
 

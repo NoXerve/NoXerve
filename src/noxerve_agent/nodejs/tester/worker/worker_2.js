@@ -28,7 +28,7 @@ const interfaces = [{
   }
 ];
 
-let workers_settings = {};
+let worker_peers_settings = {};
 
 let index = 0;
 
@@ -62,7 +62,7 @@ loop(() => {
   Protocol.start();
 
   Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', ()=> {
-    Worker.importWorkersSettings(workers_settings, () => {
+    Worker.importWorkerPeersSettings(worker_peers_settings, () => {
       Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
 
       });

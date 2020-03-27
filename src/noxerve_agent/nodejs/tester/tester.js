@@ -143,7 +143,7 @@ Node2.createInterface('WebSocket', {
 
   // **** Worker Module Test Start ****
 
-  let workers_settings = {
+  let worker_peers_settings = {
     1: {
       interfaces: [{
         interface_name: 'WebSocket',
@@ -158,8 +158,8 @@ Node2.createInterface('WebSocket', {
 
   Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', (error)=> {
     if (error) console.log('[Worker module] importWorkerAuthenticityData error.', error);
-    Worker.importWorkersSettings(workers_settings, (error)=> {
-      if (error) console.log('[Worker module] importWorkersSettings error.', error);
+    Worker.importWorkerPeersSettings(worker_peers_settings, (error)=> {
+      if (error) console.log('[Worker module] importWorkerPeersSettings error.', error);
       Worker.on('worker-authenticication', (worker_id, worker_authenticity_information)=> {
         if(worker_id === 0) {
           // Initailize new worker.
