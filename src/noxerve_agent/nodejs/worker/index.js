@@ -142,8 +142,9 @@ Worker.prototype.onWorkerSocketCreate = function(worker_socket_purpose_name, lis
 
 /**
  * @callback module:Worker~callback_of_join_me
- * @param {integer} worker_id
  * @param {error} error
+ * @param {integer} worker_id
+ * @param {object} worker_peers_settings
  */
 /**
  * @memberof module:Worker

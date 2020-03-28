@@ -125,14 +125,14 @@ function WorkerProtocol(settings) {
  * @private
  */
 WorkerProtocol.prototype._ProtocolCodes = {
-  worker_affairs: Buf.from([0x02]),
+  worker_affairs: Buf.from([0x01]),
   worker_affairs_worker_join_request_respond: Buf.from([0x01]),
   worker_affairs_worker_update_request_respond: Buf.from([0x02]),
   worker_affairs_worker_leave_request_respond: Buf.from([0x03]),
   worker_affairs_worker_join_broadcast: Buf.from([0x04]),
   worker_affairs_worker_update_broadcast: Buf.from([0x05]),
   worker_affairs_worker_leave_broadcast: Buf.from([0x06]),
-  worker_socket: Buf.from([0x03])
+  worker_socket: Buf.from([0x02])
 }
 
 /**
@@ -231,13 +231,13 @@ WorkerProtocol.prototype._encodeAuthenticityBytes = function() {
 WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authenticity_bytes, callback) {
   const remote_worker_id = Buf.decodeUInt32BE(remote_authenticity_bytes.slice(0, 4));
   const remote_worker_peers_ids_checksum_4bytes = remote_authenticity_bytes.slice(4, 8);
-  const remote_worker_authenticity_bytes = NSDT.decode(remote_authenticity_bytes.slice(8));
+  const remote_worker_authenticity_data = NSDT.decode(remote_authenticity_bytes.slice(8));
 
   // Check worker_peers_ids_checksum_4bytes.
   if(Utils.areBuffersEqual(this._worker_peers_ids_checksum_4bytes, remote_worker_peers_ids_checksum_4bytes)) {
     try {
       // Emit worker authentication from worker module.
-      this._worker_module.emitEventListener('worker-authentication', remote_worker_id, remote_worker_authenticity_bytes, (is_authenticity_valid_validated) => {
+      this._worker_module.emitEventListener('worker-authentication', remote_worker_id, remote_worker_authenticity_data, (is_authenticity_valid_validated) => {
         if(is_authenticity_valid_validated) {
           callback(false, true, remote_worker_id);
         }
@@ -310,6 +310,9 @@ WorkerProtocol.prototype.start = function(callback) {
             return;
           }
         }
+
+        // For worker-join worker-update worker-leave.
+        worker_peers_settings[index]['worker_affairs_locked'] = false;
       }
     }
     if (!include_myself) {
@@ -318,6 +321,7 @@ WorkerProtocol.prototype.start = function(callback) {
       return;
     }
     this._worker_peers_settings = worker_peers_settings;
+    // console.log(worker_peers_settings);
     this._worker_peers_ids_checksum_4bytes = Buf.encodeUInt32BE(worker_peers_ids_checksum);
     // Peacefully finish the job.
     callback(false);
@@ -326,15 +330,15 @@ WorkerProtocol.prototype.start = function(callback) {
   this._worker_module.on('worker-socket-create',
     (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, callback) => {
       const worker_socket_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_socket_purpose_name);
-      const worker_socket_purpose_parameter_encoded = NSDT.encode(worker_socket_purpose_parameter);
-      const authenticity_bytes = this._encodeAuthenticityBytes();
+      const worker_socket_purpose_parameter_bytes = NSDT.encode(worker_socket_purpose_parameter);
+      const worker_authenticity_bytes = this._encodeAuthenticityBytes();
 
       const synchronize_information = Buf.concat([
         this._ProtocolCodes.worker_socket,
-        Buf.encodeUInt32BE(authenticity_bytes.length),
-        authenticity_bytes,
+        Buf.encodeUInt32BE(worker_authenticity_bytes.length),
+        worker_authenticity_bytes,
         worker_socket_purpose_name_4bytes,
-        worker_socket_purpose_parameter_encoded
+        worker_socket_purpose_parameter_bytes
       ]);
 
       let _is_authenticity_valid = false;
@@ -413,15 +417,18 @@ WorkerProtocol.prototype.start = function(callback) {
       // Shuffle for clientwise loadbalancing.
       const shuffled_interface_connect_settings_list = Utils.shuffleArray(remote_worker_interfaces);
 
-      const my_worker_interfaces_encoded = NSDT.encode(my_worker_interfaces);
-      const my_worker_detail_encoded = NSDT.encode(my_worker_detail);
+      const my_worker_authentication_data_bytes = NSDT.encode(my_worker_authentication_data);
+      const my_worker_interfaces_bytes = NSDT.encode(my_worker_interfaces);
+      const my_worker_detail_bytes = NSDT.encode(my_worker_detail);
 
       const synchronize_information = Buf.concat([
         this._ProtocolCodes.worker_affairs,
         this._ProtocolCodes.worker_affairs_worker_join_request_respond,
-        Buf.encodeUInt32BE(my_worker_interfaces_encoded.length),
-        my_worker_interfaces_encoded,
-        my_worker_detail_encoded
+        Buf.encodeUInt32BE(my_worker_authentication_data_bytes.length),
+        my_worker_authentication_data_bytes,
+        Buf.encodeUInt32BE(my_worker_interfaces_bytes.length),
+        my_worker_interfaces_bytes,
+        my_worker_detail_bytes
       ]);
 
       // Proceed tunnel creations loop.
@@ -435,7 +442,7 @@ WorkerProtocol.prototype.start = function(callback) {
         // No more next loop. Exit.
         else {
           // [Flag] Uncatogorized error.
-          me_join_callback(true);
+          me_join_callback('looped over interfaces but no success.');
         }
       };
 
@@ -446,6 +453,7 @@ WorkerProtocol.prototype.start = function(callback) {
         const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
           if (open_handshanke_error) {
             // Unable to open handshake. Next loop.
+            console.log(open_handshanke_error);
             loop_next();
 
             // Return acknowledge_information(not acknowledge).
@@ -539,7 +547,51 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
   // worker byte
   // 0x02 worker-affairs
   // 0x03 worker-socket
-  if (synchronize_information[0] === this._ProtocolCodes.worker_socket[0]) {
+  if (synchronize_information[0] === this._ProtocolCodes.worker_affairs[0]) {
+    onError(() => {
+
+    });
+
+    if(synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_join_request_respond[0]) {
+      const remote_worker_authentication_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
+      const remote_worker_authentication_data = NSDT.decode(synchronize_information.slice(6, 6 + remote_worker_authentication_bytes_length));
+      try {
+        // Emit worker authentication from worker module.
+        this._worker_module.emitEventListener('worker-authentication', 0, remote_worker_authentication_data, (is_authenticity_valid_validated) => {
+          if(is_authenticity_valid_validated) {
+            // Broadcast worker join.
+            const bytes_offset_length = 6 + remote_worker_authentication_bytes_length;
+            const remote_worker_interfaces_bytes_length =  Buf.decodeUInt32BE(synchronize_information.slice(bytes_offset_length, bytes_offset_length + 4));
+            const remote_worker_interfaces = NSDT.decode(synchronize_information.slice(bytes_offset_length + 4, bytes_offset_length + 4 + remote_worker_interfaces_bytes_length));
+            const remote_worker_detail = NSDT.decode(synchronize_information.slice(bytes_offset_length + 4 + remote_worker_interfaces_bytes_length));
+            console.log(remote_worker_interfaces, remote_worker_detail);
+
+            // Broadcast worker join start.
+            // max concurrent connections.
+            const max_connections_count = 1;
+          }
+          else {
+            next(Buf.concat([
+              this._ProtocolCodes.worker_affairs,
+              this._ProtocolCodes.worker_affairs_worker_join_request_respond,
+              Buf.from([0x00]), // Reject
+              Buf.from([0x00])
+            ]));
+          }
+        });
+      }
+      catch(error) {
+        console.log(error);
+        next(Buf.concat([
+          this._ProtocolCodes.worker_affairs,
+          this._ProtocolCodes.worker_affairs_worker_join_request_respond,
+          Buf.from([0x00]), // Reject
+          Buf.from([0x00])
+        ]));
+      }
+    }
+  }
+  else if (synchronize_information[0] === this._ProtocolCodes.worker_socket[0]) {
     const worker_id = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
     const remote_worker_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
     onError((error) => {

@@ -54,6 +54,23 @@ let worker_peers_settings = {
       }
     }],
     detail: {}
+  },
+  2: {
+    interfaces: [{
+      interface_name: 'WebSocket',
+      interface_connect_settings: {
+        host: '0.0.0.0',
+        port: 9992
+      }
+    },
+    {
+      interface_name: 'WebSocket',
+      interface_connect_settings: {
+        host: '0.0.0.0',
+        port: 6662
+      }
+    }],
+    detail: {}
   }
 };
 
@@ -91,12 +108,18 @@ initialize_interfaces(()=> {
 
   Protocol.start();
 
-  Worker.on('worker-authentication', (worker_id, worker_authenticity_information, next)=> {
-    if(worker_id === 0) {
-      // Initailize new worker.
-    }
+  Worker.on('worker-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
     console.log('[Worker ' + my_worker_id + '] "worker-authentication" event. ', worker_id, worker_authenticity_information);
-    next(true);
+    if(worker_id === 0 && worker_authenticity_information === 'join_me_auth') {
+      // Initailize new worker.
+      is_valid(true);
+    }
+    else if(worker_authenticity_information === 'whatsoever_auth'+worker_id) {
+      is_valid(true);
+    }
+    else {
+      is_valid(false);
+    }
   });
 
   Worker.on('worker-join', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo)=> {
@@ -117,13 +140,55 @@ initialize_interfaces(()=> {
     });
   });
 
-  Worker.importWorkerAuthenticityData(my_worker_id, 'whatsoever_auth', (error)=> {
+  Worker.importWorkerAuthenticityData(my_worker_id, 'whatsoever_auth1', (error)=> {
     if (error) console.log('[Worker ' + my_worker_id + '] importWorkerAuthenticityData error.', error);
     Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
       if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
 
       rl.question('Waiting for other workers. If workers are ready then input any thing to continue tesing.', ()=> {
+        Worker.createWorkerSocket('purpose 1', {p: 1}, 2, (error, worker_socket)=> {
+          if (error) {
+            console.log('[Worker module] createWorkerSocket error.', error);
+          }
+          else {
+            worker_socket.on('close', () => {
+              console.log('[Worker module] WorkerSocket from createWorkerSocket closed.');
+            });
+            worker_socket.define('func1', (service_function_parameter, return_data, yield_data) => {
+              console.log('[Worker module] WorkerSocket function on createWorkerSocket called.');
+              yield_data(123);
+              yield_data({foo: 123});
+              yield_data(Buffer.from([5, 4, 3, 2, 1]));
+              return_data('haha');
+            });
+            worker_socket.call('func2', {foo: 'call from createWorkerSocket'}, (err, data, eof)=> {
+              console.log('[Worker module] "func2" Return value: ', data);
+              if(eof) console.log('finished worker_func2_call_test');
+            });
+            worker_socket.handleYielding('field1', (yielding_handler_parameter, ready_yielding) => {
+              console.log('[Worker module] "field1" handleYielding started.');
+              console.log('[Worker module] Parameters value: ', yielding_handler_parameter);
+              ready_yielding('"field1" ok for yielding.', (error, data, eof)=> {
+                if(error) console.log('[Worker module] "field1" Yielding error.', error);
+                console.log('[Worker module] "field1" Yielded value: ', data);
+                if(eof) {
+                  console.log('finished worker_field1_yield_test');
+                  setTimeout(()=>{worker_socket.close()}, 1500);
+                };
+              });
+            });
+            worker_socket.startYielding('field2', 'yield from createWorkerSocket', (error, yielding_start_parameter, finish_yield, yield_data) => {
+              if (error) console.log('[Worker module] "field2" Yield error.', error);
+              console.log('[Worker module] "field2" yielding_start_parameter value: ', yielding_start_parameter);
 
+              yield_data(123);
+              yield_data({foo: 123});
+              yield_data(Buffer.from([5, 4, 3, 2, 1]));
+              finish_yield('haha');
+            });
+            console.log('[Worker module] createWorkerSocket OK.', worker_socket);
+          }
+        });
       });
     });
   });
