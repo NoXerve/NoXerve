@@ -31,4 +31,14 @@ const NSDT = require('../../../nsdt');
    this._settings = settings;
  }
 
+ /**
+  * @memberof module:WorkerAffairsProtocol
+  * @param {buffer} synchronize_information
+  * @return {buffer} synchronize_acknowledgement_information
+  * @description Synchronize handshake from remote emitter.
+  */
+ WorkerAffairsProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge) {
+
+ }
+
 module.exports = WorkerAffairsProtocol;

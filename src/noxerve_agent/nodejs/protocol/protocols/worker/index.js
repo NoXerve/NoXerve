@@ -16,7 +16,7 @@ const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
 const NSDT = require('../../../nsdt');
 const WorkerSocketProtocol = require('./non_uniform/worker_socket');
-const WorkerAffairsProtocol = require('./non_uniform/worker_affairs');
+const WorkerAffairsProtocol = require('./worker_affairs');
 
 /**
  * @constructor module:WorkerProtocol
@@ -148,7 +148,7 @@ WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_wo
  * @type {object}
  * @private
  */
-WorkerProtocol.prototype._open_handshake_from_worker_id = function(
+WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
   worker_id, synchronize_information, acknowledge_synchronization, finish_handshake) {
   const interfaces = this._worker_peers_settings[worker_id].interfaces;
 
@@ -203,6 +203,42 @@ WorkerProtocol.prototype._open_handshake_from_worker_id = function(
   loop();
 }
 
+
+/**
+ * @memberof module:WorkerProtocol
+ * @type {object}
+ * @private
+ */
+WorkerProtocol.prototype._encodeAuthenticity = function() {
+  return Buf.concat([
+    this._my_worker_id_4bytes,
+    this._worker_peers_ids_checksum_4bytes,
+    this._my_worker_authenticity_data_bytes
+  ]);
+}
+
+/**
+ * @memberof module:WorkerProtocol
+ * @type {object}
+ * @private
+ */
+WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authenticity_bytes) {
+  const remote_worker_id = Buf.decodeUInt32BE(remote_authenticity_bytes.slice(0, 4));
+  const remote_worker_peers_ids_checksum_4bytes = remote_authenticity_bytes.slice(4, 8);
+  const remote_worker_authenticity_bytes = NSDT.decode(remote_authenticity_bytes.slice(8));
+  if(Utils.areBuffersEqual(this._worker_peers_ids_checksum_4bytes, remote_worker_peers_ids_checksum_4bytes)) {
+    const is_auth_validated = this._worker_module.emitEventListener('worker-authenticication', remote_worker_id, remote_worker_authenticity_bytes);
+    if(is_auth_validated) {
+      return remote_worker_id;
+    }
+    else {
+      return null;
+    }
+  }
+  else {
+    return null;
+  }
+}
 /**
  * @callback module:WorkerProtocol~callback_of_start
  * @param {error} error
@@ -275,12 +311,12 @@ WorkerProtocol.prototype.start = function(callback) {
     (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, callback) => {
       const worker_socket_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_socket_purpose_name);
       const worker_socket_purpose_parameter_encoded = NSDT.encode(worker_socket_purpose_parameter);
+      const authenticity_bytes = this._encodeAuthenticity();
 
       const synchronize_information = Buf.concat([
         this._ProtocolCodes.worker_socket,
-        this._my_worker_id_4bytes,
-        Buf.encodeUInt32BE(this._my_worker_authenticity_data_bytes.length),
-        this._my_worker_authenticity_data_bytes,
+        Buf.encodeUInt32BE(authenticity_bytes.length),
+        authenticity_bytes,
         worker_socket_purpose_name_4bytes,
         worker_socket_purpose_parameter_encoded
       ]);
@@ -293,12 +329,13 @@ WorkerProtocol.prototype.start = function(callback) {
         } else if (synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_socket[0] &&
           synchronize_acknowledgement_information[1] === 0x01
         ) {
-          const remote_worker_authenticity_data = NSDT.decode(synchronize_acknowledgement_information.slice(2));
+          const remote_worker_authenticity_bytes = synchronize_acknowledgement_information.slice(2);
           // Auth remote worker.
-          const is_auth_passed = this._worker_module.emitEventListener('worker-authenticication', remote_worker_id, remote_worker_authenticity_data);
-          remote_authenticication_passed = is_auth_passed;
+          const remote_worker_id = this._validateAuthenticityBytes(remote_worker_authenticity_bytes);
 
-          if (is_auth_passed) {
+          remote_authenticication_passed = remote_worker_id !== null;
+
+          if (remote_authenticication_passed) {
             return Buf.concat([
               this._ProtocolCodes.worker_socket,
               Buf.from([0x01]), // Accept.
@@ -310,7 +347,6 @@ WorkerProtocol.prototype.start = function(callback) {
               Buf.from([0x00]) // Reject. Authenticication error.
             ]);
           }
-
         } else if (synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_socket[0] &&
           synchronize_acknowledgement_information[1] === 0x00
         ) {
@@ -349,7 +385,7 @@ WorkerProtocol.prototype.start = function(callback) {
         }
       };
 
-      this._open_handshake_from_worker_id(remote_worker_id, synchronize_information, acknowledge_synchronization, finish_handshake);
+      this._openHandshakeFromWorkerId(remote_worker_id, synchronize_information, acknowledge_synchronization, finish_handshake);
     });
 
   this._worker_module.on('hash-string-request', (worker_socket_purpose_name) => {
@@ -358,14 +394,19 @@ WorkerProtocol.prototype.start = function(callback) {
 
   this._worker_module.on('me-join', (remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authenticication_data, callback) => {
     if(this._my_worker_id === null || this._my_worker_id === 0) {
-
+      this._worker_affairs_protocol.encodeJoinMeRequest(my_worker_interfaces, my_worker_detail, my_worker_authenticication_data);
     }
     else {
-
+      // [Flag]
+      callback('this worker has already joined.');
     }
   });
 
-  this._worker_module.on('me-update', () => {});
+  this._worker_module.on('me-update', () => {
+    // this._worker_affairs_protocol.updateMe(123, () => {
+    //   this._openHandshakeFromWorkerId
+    // });
+  });
 
   this._worker_module.on('me-leave', () => {});
 
@@ -389,7 +430,7 @@ WorkerProtocol.prototype.close = function(callback) {
 }
 
 /**
- * @memberof module:ServiceProtocol
+ * @memberof module:WorkerProtocol
  * @param {buffer} synchronize_information
  * @return {buffer} synchronize_acknowledgement_information
  * @description Synchronize handshake from remote emitter.
@@ -407,42 +448,42 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
 
     if (synchronize_information[0] === this._ProtocolCodes.worker_affairs[0]) {
       // Check worker_socket_list_hash_4bytes match.
-      console.log('synchronize_information', synchronize_information);
-
 
     } else if (synchronize_information[0] === this._ProtocolCodes.worker_socket[0]) {
-      const remote_worker_id = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
-      const remote_worker_authenticity_data_length = Buf.decodeUInt32BE(synchronize_information.slice(5, 9));
-      const remote_worker_authenticity_data = NSDT.decode(synchronize_information.slice(9, 9 + remote_worker_authenticity_data_length));
-      const worker_socket_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(9 + remote_worker_authenticity_data_length, 9 + remote_worker_authenticity_data_length + 4));
-      const worker_socket_purpose_parameter = NSDT.decode(synchronize_information.slice(9 + remote_worker_authenticity_data_length + 4));
-      const is_auth_passed = this._worker_module.emitEventListener('worker-authenticication', remote_worker_id, remote_worker_authenticity_data);
-      // console.log(is_auth_passed, remote_worker_id, remote_worker_authenticity_data_length, remote_worker_authenticity_data, worker_socket_purpose_name, worker_socket_purpose_parameter);
+      const remote_worker_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
+      const remote_worker_id = this._validateAuthenticityBytes(synchronize_information.slice(5, 5 + remote_worker_authenticity_bytes_length));
+      const is_auth_validated = remote_worker_id !== null;
 
       onError((error) => {
+        console.log(error);
         return false;
       });
 
-      onAcknowledge((acknowledge_information, tunnel) => {
-        if (acknowledge_information[0] === this._ProtocolCodes.worker_socket[0] &&
-          acknowledge_information[1] === 0x01
-        ) {
-          this._worker_module.emitEventListener('worker-socket-request', (error, worker_socket) => {
-            this._worker_socket_protocol.handleTunnel(error, worker_socket, tunnel);
-            this._worker_module.emitEventListener('worker-socket-ready', worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, worker_socket);
-          });
-        } else {
-          tunnel.close();
-          return false;
-        }
-      });
+      if(is_auth_validated) {
+        const worker_socket_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(5 + remote_worker_authenticity_bytes_length, 5 + remote_worker_authenticity_bytes_length + 4));
+        const worker_socket_purpose_parameter = NSDT.decode(synchronize_information.slice(5 + remote_worker_authenticity_bytes_length + 4));
+        // console.log(is_auth_validated, remote_worker_id, remote_worker_authenticity_bytes_length, remote_worker_authenticity_bytes, worker_socket_purpose_name, worker_socket_purpose_parameter);
 
-      if (is_auth_passed) {
+        onAcknowledge((acknowledge_information, tunnel) => {
+          if (acknowledge_information[0] === this._ProtocolCodes.worker_socket[0] &&
+            acknowledge_information[1] === 0x01
+          ) {
+            this._worker_module.emitEventListener('worker-socket-request', (error, worker_socket) => {
+              this._worker_socket_protocol.handleTunnel(error, worker_socket, tunnel);
+              this._worker_module.emitEventListener('worker-socket-ready', worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, worker_socket);
+            });
+          } else {
+            tunnel.close();
+            return false;
+          }
+        });
+
         return Buf.concat([
           this._ProtocolCodes.worker_socket,
           Buf.from([0x01]), // Accept.
-          this._my_worker_authenticity_data_bytes
+          this._encodeAuthenticity()
         ]);
+
       } else {
         return Buf.concat([
           this._ProtocolCodes.worker_socket,

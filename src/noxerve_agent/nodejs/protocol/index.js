@@ -260,7 +260,7 @@ Protocol.prototype.start = function(callback) {
               // Check if any protocol module synchronize with the data or not.
               for (const protocol_name in this._protocol_modules) {
                 // Call synchronize function. Check will it respond with data or not.
-                let synchronize_returned_data = this._protocol_modules[protocol_name].synchronize(data, onSynchronizationError, onAcknowledge);
+                const synchronize_returned_data = this._protocol_modules[protocol_name].synchronize(data, onSynchronizationError, onAcknowledge);
 
                 // If responded then finish up.
                 if (synchronize_returned_data !== false && synchronize_returned_data !== null) {
@@ -330,7 +330,7 @@ Protocol.prototype.start = function(callback) {
           tunnel.on('close', () => {
             if (stage === 1) {
               // [Flag] Uncatogorized error.
-              synchronization_error_handler(true);
+              synchronization_error_handler('Tunnel close');
             }
           });
         }
