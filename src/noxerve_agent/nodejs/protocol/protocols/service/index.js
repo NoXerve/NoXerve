@@ -63,7 +63,7 @@ function ServiceProtocol(settings) {
  * @private
  */
 ServiceProtocol.prototype._ProtocolCodes = {
-  service_and_activity_protocol: Buf.from([0x01])
+  service_and_activity: Buf.from([0x01])
 }
 
 /**
@@ -105,7 +105,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
   // 0x01
 
   if (synchronize_information.length === 1 &&
-    synchronize_information[0] === this._ProtocolCodes.service_and_activity_protocol[0]
+    synchronize_information[0] === this._ProtocolCodes.service_and_activity[0]
   ) {
     const generated_activity_id = Utils.random8Bytes();
     const generated_activity_id_base64 = generated_activity_id.toString('base64');
@@ -114,7 +114,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
     });
 
     onAcknowledge((acknowledge_information, tunnel) => {
-      if (acknowledge_information[0] === this._ProtocolCodes.service_and_activity_protocol[0]) {
+      if (acknowledge_information[0] === this._ProtocolCodes.service_and_activity[0]) {
         this._service_module.emitEventListener('service-of-activity-request', (error, service_of_activity) => {
           this._service_of_activity_protocol.handleTunnel(error, service_of_activity, tunnel);
           this._service_module.emitEventListener('service-of-activity-ready', service_of_activity)
@@ -126,7 +126,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
 
     // Send 8 bytes id;
     next(Buf.concat([
-      this._ProtocolCodes.service_and_activity_protocol,
+      this._ProtocolCodes.service_and_activity,
       generated_activity_id
     ]));
 

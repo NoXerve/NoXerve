@@ -63,7 +63,7 @@ function ActivityProtocol(settings) {
  * @private
  */
 ActivityProtocol.prototype._ProtocolCodes = {
-  service_and_activity_protocol: Buf.from([0x01])
+  service_and_activity: Buf.from([0x01])
 }
 
 /**
@@ -81,7 +81,7 @@ ActivityProtocol.prototype.start = function(callback) {
   this._activity_module.on('activity-create', (interface_connect_settings_list, create_activity_callback) => {
 
     // Shuffle for clientwise loadbalancing.
-    let shuffled_interface_connect_settings_list = Utils.shuffleArray(interface_connect_settings_list);
+    const shuffled_interface_connect_settings_list = Utils.shuffleArray(interface_connect_settings_list);
 
     // Get activity_id from synchronize_acknowledgement_information;
     let activity_id;
@@ -90,7 +90,7 @@ ActivityProtocol.prototype.start = function(callback) {
     // Format:
     // service-activity byte
     // 0x01
-    const synchronize_information = this._ProtocolCodes.service_and_activity_protocol;
+    const synchronize_information = this._ProtocolCodes.service_and_activity;
 
     // Proceed tunnel creations loop.
     let index = 0;
@@ -120,14 +120,14 @@ ActivityProtocol.prototype.start = function(callback) {
         } else {
           // Handshake opened. Check if synchronize_acknowledgement_information valid.
           try {
-            if(synchronize_acknowledgement_information[0] === this._ProtocolCodes.service_and_activity_protocol[0]) {
+            if(synchronize_acknowledgement_information[0] === this._ProtocolCodes.service_and_activity[0]) {
               activity_id = synchronize_acknowledgement_information;
               // Acknowledgement information for handshake
               // Format:
               // acknowledge byte
               // 0x01(ok)
               // 0x00(not ok)
-              const acknowledge_information = this._ProtocolCodes.service_and_activity_protocol;
+              const acknowledge_information = this._ProtocolCodes.service_and_activity;
 
               // Return acknowledge binary.
               next(acknowledge_information);
@@ -158,7 +158,7 @@ ActivityProtocol.prototype.start = function(callback) {
             create_activity_callback(error, activity_of_service);
           });
         }
-      }
+      };
 
       // Callbacks setup completed. Start handshake process.
       this._open_handshake_function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake);

@@ -204,7 +204,6 @@ Protocol.prototype.start = function(callback) {
 
   const loop = () => {
     const module_name = module_name_list[index];
-    console.log(module_name, this._protocol_modules[module_name]);
     this._protocol_modules[module_name].start((error) => {
       if(error) {
         if(callback) callback(error);

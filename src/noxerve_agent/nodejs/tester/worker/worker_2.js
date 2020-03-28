@@ -9,50 +9,55 @@
 let Node = new(require('../../node'))();
 let Worker = new(require('../../worker'))();
 
-const worker_detail = {
-  name: 'worker 1'
+const my_worker_id = 2;
+
+const my_worker_detail = {
+  name: 'worker 2'
 };
-const interfaces = [{
-    interface_name: 'WebSocket',
-    interface_settings: {
-      host: '0.0.0.0',
-      port: 9992
-    }
-  },
-  {
-    interface_name: 'WebSocket',
-    interface_settings: {
-      host: '0.0.0.0',
-      port: 6662
-    }
+
+const my_worker_interfaces = [{
+  interface_name: 'WebSocket',
+  interface_settings: {
+    host: '0.0.0.0',
+    port: 9992
   }
-];
+},
+{
+  interface_name: 'WebSocket',
+  interface_settings: {
+    host: '0.0.0.0',
+    port: 6662
+  }
+}];
 
 let worker_peers_settings = {};
 
 let index = 0;
 
-const loop = (callback) => {
-  const _interface = interfaces[index];
+const initialize_interfaces = (callback)=> {
+  const _interface = my_worker_interfaces[index];
   Node.createInterface(_interface.interface_name, _interface.interface_settings, (err, id) => {
     if (err) console.log('[Node module] Create interface error.', err);
     loop_next(callback);
   })
 };
 
-const loop_next = (callback) => {
+const loop_next = (callback)=> {
   // console.log(index, interfaces.length);
   index++;
-  if (index < interfaces.length) {
-    loop(callback);
-  } else {
+  if(index < my_worker_interfaces.length) {
+    initialize_interfaces(callback);
+  }
+  else {
     // console.log(index, interfaces.length);
     callback();
   }
 };
 
-loop(() => {
-  let Protocol = new(require('../../protocol'))({
+initialize_interfaces(()=> {
+  console.log('[Worker ' + my_worker_id + '] initialize_interfaces ok.');
+
+  const Protocol = new(require('../../protocol'))({
     modules: {
       worker: Worker
     },
@@ -61,51 +66,36 @@ loop(() => {
 
   Protocol.start();
 
-  Worker.importWorkerAuthenticityData(1, 'whatsoever_auth', ()=> {
-    Worker.importWorkerPeersSettings(worker_peers_settings, () => {
-      Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
+  Worker.on('worker-authentication', (worker_id, worker_authenticity_information, next)=> {
+    if(worker_id === 0) {
+      // Initailize new worker.
+    }
+    console.log('[Worker ' + my_worker_id + '] "worker-authentication" event. ', worker_id, worker_authenticity_information);
+    next(true);
+  });
 
-      });
+  Worker.on('worker-join', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo)=> {
+    on_undo(()=> {
 
-      Worker.createWorkerSocket('purpose 1', parameters, remote_worker_id, (error, worker_socket)=> {
-
-      });
     });
   });
 
-  Worker.on('worker-authentication', (worker_id, worker_authenticity_information) => {
-    if (worker_id === 0) {
-      // Initailize new worker.
-    }
-    console.log('worker_authenticity_information', worker_authenticity_information);
-    return true;
+  Worker.on('worker-update', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo)=> {
+    on_undo(()=> {
+
+    });
   });
 
-  Worker.joinMe(interfaces, worker_detail, 'whatsoever_auth', (error, my_worker_id) => {
+  Worker.on('worker-leave', (remote_worker_id, on_undo)=> {
+    on_undo(()=> {
 
+    });
   });
 
-  Worker.on('worker-join', (remote_worker_id, worker_interfaces, worker_detail) => {
-
-  });
-
-  Worker.updateMe(interfaces, worker_detail, (error, my_worker_id) => {
-
-  });
-
-  Worker.on('worker-update', (remote_worker_id, worker_interfaces, worker_detail) => {
-
-  });
-
-  Worker.leaveMe((error) => {
-
-  });
-
-  Worker.leaveByWorkerId(worker_id, (error) => {
-
-  });
-
-  Worker.on('worker-leave', (remote_worker_id) => {
-
+  Worker.importWorkerAuthenticityData(my_worker_id, 'whatsoever_auth', (error)=> {
+    if (error) console.log('[Worker ' + my_worker_id + '] importWorkerAuthenticityData error.', error);
+    Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
+      if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
+    });
   });
 });
