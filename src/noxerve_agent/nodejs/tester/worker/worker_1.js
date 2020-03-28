@@ -94,11 +94,11 @@ loop(()=> {
     });
   });
 
-  Worker.on('worker-authenticication', (worker_id, worker_authenticity_information)=> {
+  Worker.on('worker-authentication', (worker_id, worker_authenticity_information)=> {
     if(worker_id === 0) {
       // Initailize new worker.
     }
-    console.log('[Worker module] "worker-authenticication" event. ', worker_id, worker_authenticity_information);
+    console.log('[Worker module] "worker-authentication" event. ', worker_id, worker_authenticity_information);
     return true;
   });
 

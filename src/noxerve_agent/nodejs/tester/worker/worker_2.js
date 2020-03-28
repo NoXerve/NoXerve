@@ -73,7 +73,7 @@ loop(() => {
     });
   });
 
-  Worker.on('worker-authenticication', (worker_id, worker_authenticity_information) => {
+  Worker.on('worker-authentication', (worker_id, worker_authenticity_information) => {
     if (worker_id === 0) {
       // Initailize new worker.
     }

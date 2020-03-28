@@ -64,12 +64,12 @@ NoXerveAgent.start((error)=> {
 
       NoXerveAgent.Worker.importWorkerPeersSettings(worker_peers_settings, (error)=> {
         if (error) console.log('[Worker module] importWorkerPeersSettings error.', error);
-        NoXerveAgent.Worker.on('worker-authenticication', (worker_id, worker_authenticity_information)=> {
+        NoXerveAgent.Worker.on('worker-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
           if(worker_id === 0) {
             // Initailize new worker.
           }
-          console.log('[Worker module] "worker-authenticication" event. ', worker_id, worker_authenticity_information);
-          return true;
+          console.log('[Worker module] "worker-authentication" event. ', worker_id, worker_authenticity_information);
+          is_valid(true);
         });
 
         NoXerveAgent.Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {

@@ -43,7 +43,7 @@ function Worker(settings) {
         callback(error);
       }
     },
-    'worker-authenticication': (remote_worker_id, worker_authenticity_information) => {
+    'worker-authentication': (remote_worker_id, worker_authenticity_information) => {
       return false;
     },
     'worker-socket-ready': (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, worker_socket) => {
@@ -149,12 +149,12 @@ Worker.prototype.onWorkerSocketCreate = function(worker_socket_purpose_name, lis
  * @memberof module:Worker
  * @param {array} my_worker_interfaces - This worker avaliable interfaces.
  * @param {noxerve_supported_data_type} my_worker_detail - Detail of this worker.
- * @param {noxerve_supported_data_type} my_worker_authenticication_data - Authenticication data of this worker.
+ * @param {noxerve_supported_data_type} my_worker_authentication_data - Authenticication data of this worker.
  * @param {module:Worker~callback_of_join_me} callback
  * @description Join myself into workers cluster.
  */
-Worker.prototype.joinMe = function(remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authenticication_data, callback) {
-  this._event_listeners['me-join'](remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authenticication_data, callback);
+Worker.prototype.joinMe = function(remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authentication_data, callback) {
+  this._event_listeners['me-join'](remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authentication_data, callback);
 }
 
 /**

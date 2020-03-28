@@ -110,13 +110,13 @@ ActivityProtocol.prototype.start = function(callback) {
       const interface_name = shuffled_interface_connect_settings_list[index].interface_name;
       const interface_connect_settings = shuffled_interface_connect_settings_list[index].interface_connect_settings;
 
-      const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information) => {
+      const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
         if (open_handshanke_error) {
           // Unable to open handshake. Next loop.
           loop_next();
 
           // Return acknowledge_information(not acknowledge).
-          return false;
+          next(false);
         } else {
           // Handshake opened. Check if synchronize_acknowledgement_information valid.
           try {
@@ -130,20 +130,20 @@ ActivityProtocol.prototype.start = function(callback) {
               const acknowledge_information = this._ProtocolCodes.service_and_activity_protocol;
 
               // Return acknowledge binary.
-              return acknowledge_information;
+              next(acknowledge_information);
             }
             else {
               loop_next();
 
               // Return acknowledge_information(not acknowledge).
-              return false;
+              next(false);
             }
           } catch (error) {
             // Unable to open handshake. Next loop.
             loop_next();
 
             // Return acknowledge_information(not acknowledge).
-            return false;
+            next(false);
           }
         }
       };
@@ -187,9 +187,9 @@ ActivityProtocol.prototype.close = function(callback) {
  * @return {buffer} synchronize_acknowledgement_information
  * @description Synchronize handshake from remote emitter.
  */
-ActivityProtocol.prototype.synchronize = function(synchronize_information) {
+ActivityProtocol.prototype.synchronize = function(synchronize_information, next) {
   // Activity doesn't support SYN.
-  return false;
+  next(false);
 }
 
 

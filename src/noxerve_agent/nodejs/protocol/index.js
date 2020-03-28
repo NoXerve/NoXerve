@@ -100,39 +100,39 @@ function Protocol(settings) {
         tunnel.on('data', (data) => {
           if (stage === 0) {
             // Call acknowledge_synchronization function. Respond with acknowledge_information for remote.
-            const acknowledge_information = acknowledge_synchronization(false, data);
+            acknowledge_synchronization(false, data, (acknowledge_information)=> {
+              // stage 1 => waiting to finish up. If any error happened call
+              // "finish_handshake" from arguments.
+              stage = 1;
+              try {
+                if (acknowledge_information === false) {
+                  // [Flag] Uncatogorized error.
+                  stage = -1;
+                  tunnel.close();
+                }
+                else {
+                  tunnel.send(acknowledge_information, (error) => {
+                    if (error) {
+                      stage = -1;
+                      tunnel.close();
+                      finish_handshake(error);
+                    } else {
+                      // Reset events.
+                      tunnel.on('ready', () => {});
+                      tunnel.on('data', () => {});
+                      tunnel.on('error', () => {});
 
-            // stage 1 => waiting to finish up. If any error happened call
-            // "finish_handshake" from arguments.
-            stage = 1;
-            try {
-              if (acknowledge_information === false) {
-                // [Flag] Uncatogorized error.
+                      // Finish up
+                      finish_handshake(error, tunnel);
+                    }
+                  });
+                }
+              } catch (error) {
                 stage = -1;
                 tunnel.close();
+                finish_handshake(error);
               }
-              else {
-                tunnel.send(acknowledge_information, (error) => {
-                  if (error) {
-                    stage = -1;
-                    tunnel.close();
-                    finish_handshake(error);
-                  } else {
-                    // Reset events.
-                    tunnel.on('ready', () => {});
-                    tunnel.on('data', () => {});
-                    tunnel.on('error', () => {});
-
-                    // Finish up
-                    finish_handshake(error, tunnel);
-                  }
-                });
-              }
-            } catch (error) {
-              stage = -1;
-              tunnel.close();
-              finish_handshake(error);
-            }
+            });
           } else if (stage === 1) {
             // Nothing happened
           }
@@ -143,7 +143,7 @@ function Protocol(settings) {
             // [Flag] Uncatogorized error.
             stage = -1;
             tunnel.close();
-            acknowledge_synchronization(error);
+            acknowledge_synchronization(error, null, ()=> {});
           } else if (stage === 1) {
             // [Flag] Uncatogorized error.
             stage = -1;
@@ -155,7 +155,7 @@ function Protocol(settings) {
         tunnel.on('close', () => {
           if (stage === 0) {
             // [Flag] Uncatogorized error.
-            acknowledge_synchronization(true);
+            acknowledge_synchronization('Tunnel closed.', null, ()=> {});
           } else if (stage === 1) {
             // [Flag] Uncatogorized error.
             finish_handshake(true);
@@ -257,41 +257,46 @@ Protocol.prototype.start = function(callback) {
           });
           tunnel.on('data', (data) => {
             if (stage === 0) {
+              let has_any_synchronize_returned_data = false;
+              let synchronize_protocol_left_count = Object.keys(this._protocol_modules).length;
+
               // Check if any protocol module synchronize with the data or not.
               for (const protocol_name in this._protocol_modules) {
                 // Call synchronize function. Check will it respond with data or not.
-                const synchronize_returned_data = this._protocol_modules[protocol_name].synchronize(data, onSynchronizationError, onAcknowledge);
-
-                // If responded then finish up.
-                if (synchronize_returned_data !== false && synchronize_returned_data !== null) {
-
-                  // Associate protocol module and send data to remote.
-                  related_module = this._protocol_modules[protocol_name];
-
-                  stage = 1;
-
-                  // Send synchronize() return value to remote.
-                  try {
-                    tunnel.send(synchronize_returned_data, (error) => {
-                      if (error) {
-                        stage = -1;
-                        tunnel.close();
-                        synchronization_error_handler(error, data);
-                      }
-                    });
-                  } catch (error) {
-                    stage = -1;
-                    tunnel.close();
-                    synchronization_error_handler(error, data);
+                this._protocol_modules[protocol_name].synchronize(data, onSynchronizationError, onAcknowledge, (synchronize_returned_data)=> {
+                  synchronize_protocol_left_count--;
+                  // If responded then finish up.
+                  if(has_any_synchronize_returned_data) {
+                    return;
                   }
+                  else if (synchronize_returned_data !== false && synchronize_returned_data !== null) {
+                    has_any_synchronize_returned_data = true;
+                    // Associate protocol module and send data to remote.
+                    related_module = this._protocol_modules[protocol_name];
 
-                  // Handled by a protocol. Stop loop.
-                  break;
-                } else {
-                  // Reset handlers.
-                  synchronization_error_handler = null;
-                  acknowledge_handler = null;
-                }
+                    stage = 1;
+
+                    // Send synchronize() return value to remote.
+                    try {
+                      tunnel.send(synchronize_returned_data, (error) => {
+                        if (error) {
+                          stage = -1;
+                          tunnel.close();
+                          synchronization_error_handler(error, data);
+                        }
+                      });
+                    } catch (error) {
+                      stage = -1;
+                      tunnel.close();
+                      synchronization_error_handler(error, data);
+                    }
+                  } else if(synchronize_protocol_left_count === 0) {
+                    // Reset handlers.
+                    synchronization_error_handler = null;
+                    acknowledge_handler = null;
+                    tunnel.close();
+                  }
+                });
               }
 
               // If no protocol module synchronize with the data. Close tunnel.

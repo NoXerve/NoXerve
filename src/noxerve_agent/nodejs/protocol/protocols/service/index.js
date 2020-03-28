@@ -98,7 +98,7 @@ ServiceProtocol.prototype.close = function(callback) {
  * @return {buffer} synchronize_acknowledgement_information
  * @description Synchronize handshake from remote emitter.
  */
-ServiceProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge) {
+ServiceProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
   // Synchronize information for handshake
   // Format:
   // service-activity byte
@@ -111,7 +111,6 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
     const generated_activity_id_base64 = generated_activity_id.toString('base64');
 
     onError((error) => {
-      return false;
     });
 
     onAcknowledge((acknowledge_information, tunnel) => {
@@ -122,16 +121,16 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
         });
       } else {
         tunnel.close();
-        return false;
       }
     });
 
     // Send 8 bytes id;
-    return Buf.concat([
+    next(Buf.concat([
       this._ProtocolCodes.service_and_activity_protocol,
-      generated_activity_id]);
+      generated_activity_id
+    ]));
 
-  } else return false;
+  } else next(false);
 }
 
 module.exports = {
