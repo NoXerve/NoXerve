@@ -6,8 +6,15 @@
  * @description Start testing by enter command "node tester.js".
  */
 
-let Node = new(require('../../node'))();
-let Worker = new(require('../../worker'))();
+const readline = require("readline");
+const Node = new(require('../../node'))();
+const Worker = new(require('../../worker'))();
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
 
 const my_worker_id = 2;
 
@@ -96,6 +103,10 @@ initialize_interfaces(()=> {
     if (error) console.log('[Worker ' + my_worker_id + '] importWorkerAuthenticityData error.', error);
     Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
       if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
+
+      rl.question('Waiting for other workers. If workers are ready then input any thing to continue tesing.', ()=> {
+
+      });
     });
   });
 });
