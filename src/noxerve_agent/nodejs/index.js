@@ -94,8 +94,8 @@ function NoXerveAgent(settings) {
    * @description API intended to provide functions for the role of worker.
    */
   this.Worker = {
-    importWorkerAuthenticityData: (worker_id, worker_authenticity_information, callback) => {
-      this._worker_module.importWorkerAuthenticityData(worker_id, worker_authenticity_information, callback);
+    importMyWorkerAuthenticityData: (worker_id, worker_authenticity_information, callback) => {
+      this._worker_module.importMyWorkerAuthenticityData(worker_id, worker_authenticity_information, callback);
     },
     importWorkerPeersSettings: (worker_peers_settings, callback) => {
       this._worker_module.importWorkerPeersSettings(worker_peers_settings, callback);

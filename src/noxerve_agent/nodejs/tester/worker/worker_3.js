@@ -91,8 +91,8 @@ initialize_interfaces(() => {
 
   Protocol.start();
 
-  Worker.on('worker-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
-    console.log('[Worker ' + my_worker_id + '] "worker-authentication" event. ', worker_id, worker_authenticity_information);
+  Worker.on('worker-peer-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-authentication" event. ', worker_id, worker_authenticity_information);
     if(worker_id === 0 && worker_authenticity_information === 'join_me_auth') {
       // Initailize new worker.
       is_valid(true);
@@ -105,19 +105,19 @@ initialize_interfaces(() => {
     }
   });
 
-  Worker.on('worker-join', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo) => {
+  Worker.on('worker-peer-join', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo) => {
     on_undo(() => {
 
     });
   });
 
-  Worker.on('worker-update', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo) => {
+  Worker.on('worker-peer-update', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo) => {
     on_undo(() => {
 
     });
   });
 
-  Worker.on('worker-leave', (remote_worker_id, on_undo) => {
+  Worker.on('worker-peer-leave', (remote_worker_id, on_undo) => {
     on_undo(() => {
 
     });
@@ -130,8 +130,8 @@ initialize_interfaces(() => {
         if(error) console.log('[Worker ' + my_worker_id + '] joinMe error.', error);
         else {
           worker_peers_settings = _worker_peers_settings;
-          Worker.importWorkerAuthenticityData(_worker_id, 'whatsoever_auth', (error) => {
-            if (error) console.log('[Worker ' + my_worker_id + '] importWorkerAuthenticityData error.', error);
+          Worker.importMyWorkerAuthenticityData(_worker_id, 'whatsoever_auth', (error) => {
+            if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);
 
           });
         }

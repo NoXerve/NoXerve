@@ -107,9 +107,9 @@ function WorkerProtocol(settings) {
     hash_manager: settings.hash_manager
   });
   //
-  // this._worker_affairs_protocol.on('worker-join');
-  // this._worker_affairs_protocol.on('worker-update');
-  // this._worker_affairs_protocol.on('worker-leave');
+  // this._worker_affairs_protocol.on('worker-peer-join');
+  // this._worker_affairs_protocol.on('worker-peer-update');
+  // this._worker_affairs_protocol.on('worker-peer-leave');
 
   /**
    * @memberof module:WorkerProtocol
@@ -209,6 +209,47 @@ WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
   loop();
 }
 
+/**
+ * @memberof module:WorkerProtocol
+ * @type {object}
+ * @private
+ */
+WorkerProtocol.prototype._broadcastRequestResponse = function(worker_id_list, broadcast_bytes, ) {
+
+  // Broadcast worker join start.
+  // max concurrent connections.
+  // const max_connections_count = 1;
+  // let current_connections_count = 0;
+  // let index = 0;
+  //
+  // const loop_over_workers = () => {
+  //   current_connections_count++;
+  //   if (current_connections_count < max_connections_count) {
+  //     loop_next();
+  //   }
+  // };
+  //
+  // const loop_next = () => {
+  //   index++
+  //   if (index < worker_id_list.length) {
+  //
+  //   } else if () {
+  //
+  //   }
+  // };
+  //
+  // loop_over_workers();
+}
+
+/**
+ * @memberof module:WorkerProtocol
+ * @type {object}
+ * @private
+ */
+WorkerProtocol.prototype._broadcastRequestResponseToAllWorkers = function(broadcast_bytes, ) {
+  const worker_id_list = Object.keys(this._worker_peers_settings).map(x => parseInt(x));
+  this._broadcastRequestResponse(worker_id_list);
+}
 
 /**
  * @memberof module:WorkerProtocol
@@ -234,23 +275,20 @@ WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authentici
   const remote_worker_authenticity_data = NSDT.decode(remote_authenticity_bytes.slice(8));
 
   // Check worker_peers_ids_checksum_4bytes.
-  if(Utils.areBuffersEqual(this._worker_peers_ids_checksum_4bytes, remote_worker_peers_ids_checksum_4bytes)) {
+  if (Utils.areBuffersEqual(this._worker_peers_ids_checksum_4bytes, remote_worker_peers_ids_checksum_4bytes)) {
     try {
       // Emit worker authentication from worker module.
-      this._worker_module.emitEventListener('worker-authentication', remote_worker_id, remote_worker_authenticity_data, (is_authenticity_valid_validated) => {
-        if(is_authenticity_valid_validated) {
+      this._worker_module.emitEventListener('worker-peer-authentication', remote_worker_id, remote_worker_authenticity_data, (is_authenticity_valid_validated) => {
+        if (is_authenticity_valid_validated) {
           callback(false, true, remote_worker_id);
-        }
-        else {
+        } else {
           callback(false, false, remote_worker_id);
         }
       });
-    }
-    catch(error) {
+    } catch (error) {
       callback(error, false, null);
     }
-  }
-  else {
+  } else {
     callback(false, false, null);
   }
 }
@@ -265,7 +303,7 @@ WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authentici
  * @description Start running WorkerProtocol.
  */
 WorkerProtocol.prototype.start = function(callback) {
-  this._worker_module.on('worker-authenticity-data-import', (worker_id, worker_authenticity_information, callback) => {
+  this._worker_module.on('my-worker-authenticity-data-import', (worker_id, worker_authenticity_information, callback) => {
     if (worker_id) {
       this._my_worker_id = worker_id;
       this._my_worker_id_4bytes = Buf.encodeUInt32BE(worker_id);
@@ -311,7 +349,7 @@ WorkerProtocol.prototype.start = function(callback) {
           }
         }
 
-        // For worker-join worker-update worker-leave.
+        // For worker-peer-join worker-peer-update worker-peer-leave.
         worker_peers_settings[index]['worker_affairs_locked'] = false;
       }
     }
@@ -370,13 +408,12 @@ WorkerProtocol.prototype.start = function(callback) {
         } else if (synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_socket[0] &&
           synchronize_acknowledgement_information[1] === 0x00
         ) {
-          if(synchronize_acknowledgement_information[2] === 0x00) {
+          if (synchronize_acknowledgement_information[2] === 0x00) {
 
             // [Flag] Uncatogorized error.
             callback('worker authentication error.');
             next(false);
-          }
-          else {
+          } else {
 
             // [Flag] Uncatogorized error.
             callback('Unknown error');
@@ -392,13 +429,12 @@ WorkerProtocol.prototype.start = function(callback) {
         if (error) {
           callback(error);
         } else {
-          if(_is_authenticity_valid) {
+          if (_is_authenticity_valid) {
             this._worker_module.emitEventListener('worker-socket-request', (error, worker_socket) => {
               this._worker_socket_protocol.handleTunnel(error, worker_socket, tunnel);
               callback(error, worker_socket);
             });
-          }
-          else {
+          } else {
             // [Flag] Uncatogorized error.
             callback('Remote worker authentication failed.');
           }
@@ -413,7 +449,7 @@ WorkerProtocol.prototype.start = function(callback) {
   });
 
   this._worker_module.on('me-join', (remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authentication_data, me_join_callback) => {
-    if(this._my_worker_id === null || this._my_worker_id === 0) {
+    if (this._my_worker_id === null || this._my_worker_id === 0) {
       // Shuffle for clientwise loadbalancing.
       const shuffled_interface_connect_settings_list = Utils.shuffleArray(remote_worker_interfaces);
 
@@ -458,10 +494,10 @@ WorkerProtocol.prototype.start = function(callback) {
 
             // Return acknowledge_information(not acknowledge).
             next(false);
-          }  else {
+          } else {
             // Handshake opened. Check if synchronize_acknowledgement_information valid.
             try {
-              if(synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_affairs[0]) {
+              if (synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_affairs[0]) {
                 // Acknowledgement information for handshake
                 // Format:
                 // acknowledge byte
@@ -471,8 +507,7 @@ WorkerProtocol.prototype.start = function(callback) {
 
                 // Return acknowledge binary.
                 next(acknowledge_information);
-              }
-              else {
+              } else {
                 loop_next();
 
                 // Return acknowledge_information(not acknowledge).
@@ -501,8 +536,7 @@ WorkerProtocol.prototype.start = function(callback) {
         this._open_handshake_function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
       };
       loop();
-    }
-    else {
+    } else {
       // [Flag] Uncatogorized error.
       callback('this worker has already joined.');
     }
@@ -516,7 +550,7 @@ WorkerProtocol.prototype.start = function(callback) {
 
   this._worker_module.on('me-leave', () => {});
 
-  this._worker_module.on('by-worker-id-leave', () => {});
+  this._worker_module.on('worker-peer-leave', () => {});
 
   // this._worker_module.on('', () => {});
   if (callback) callback(false);
@@ -552,25 +586,49 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
 
     });
 
-    if(synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_join_request_respond[0]) {
+    if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_join_request_respond[0]) {
       const remote_worker_authentication_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
       const remote_worker_authentication_data = NSDT.decode(synchronize_information.slice(6, 6 + remote_worker_authentication_bytes_length));
       try {
         // Emit worker authentication from worker module.
-        this._worker_module.emitEventListener('worker-authentication', 0, remote_worker_authentication_data, (is_authenticity_valid_validated) => {
-          if(is_authenticity_valid_validated) {
+        this._worker_module.emitEventListener('worker-peer-authentication', 0, remote_worker_authentication_data, (is_authenticity_valid_validated) => {
+          if (is_authenticity_valid_validated) {
             // Broadcast worker join.
             const bytes_offset_length = 6 + remote_worker_authentication_bytes_length;
-            const remote_worker_interfaces_bytes_length =  Buf.decodeUInt32BE(synchronize_information.slice(bytes_offset_length, bytes_offset_length + 4));
+            const remote_worker_interfaces_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(bytes_offset_length, bytes_offset_length + 4));
             const remote_worker_interfaces = NSDT.decode(synchronize_information.slice(bytes_offset_length + 4, bytes_offset_length + 4 + remote_worker_interfaces_bytes_length));
             const remote_worker_detail = NSDT.decode(synchronize_information.slice(bytes_offset_length + 4 + remote_worker_interfaces_bytes_length));
             console.log(remote_worker_interfaces, remote_worker_detail);
 
-            // Broadcast worker join start.
-            // max concurrent connections.
-            const max_connections_count = 1;
-          }
-          else {
+            // Obtain new Id.
+            const worker_id_list = Object.keys(this._worker_peers_settings).map(x => parseInt(x));
+            const max_worker_id = worker_id_list[worker_id_list.length - 1] + 1;
+            let new_worker_id = 0;
+            for (let id = 1; id <= max_worker_id; id++) {
+              if (!worker_id_list.includes(id)) {
+                new_worker_id = id;
+                break;
+              }
+            }
+            console.log(new_worker_id, worker_id_list);
+
+            const worker_affairs_worker_join_broadcast_bytes = Buf.concat([
+              this._ProtocolCodes.worker_affairs,
+              this._ProtocolCodes.worker_affairs_worker_join_broadcast,
+
+            ]);
+
+            const onAWorkerResponse = (worker_id, next) => {
+
+            };
+
+            const onFinish = (error, finished_worker_id_list)=> {
+
+            };
+
+            this._broadcastRequestResponseToAllWorkers(worker_affairs_worker_join_broadcast_bytes, onAWorkerError, onFinish);
+
+          } else {
             next(Buf.concat([
               this._ProtocolCodes.worker_affairs,
               this._ProtocolCodes.worker_affairs_worker_join_request_respond,
@@ -579,8 +637,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
             ]));
           }
         });
-      }
-      catch(error) {
+      } catch (error) {
         console.log(error);
         next(Buf.concat([
           this._ProtocolCodes.worker_affairs,
@@ -590,16 +647,15 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
         ]));
       }
     }
-  }
-  else if (synchronize_information[0] === this._ProtocolCodes.worker_socket[0]) {
+  } else if (synchronize_information[0] === this._ProtocolCodes.worker_socket[0]) {
     const worker_id = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
     const remote_worker_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
     onError((error) => {
       console.log(error);
     });
 
-    this._validateAuthenticityBytes(synchronize_information.slice(5, 5 + remote_worker_authenticity_bytes_length), (error, is_authenticity_valid_validated, remote_worker_id)=> {
-      if(is_authenticity_valid_validated && !error) {
+    this._validateAuthenticityBytes(synchronize_information.slice(5, 5 + remote_worker_authenticity_bytes_length), (error, is_authenticity_valid_validated, remote_worker_id) => {
+      if (is_authenticity_valid_validated && !error) {
         const worker_socket_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(5 + remote_worker_authenticity_bytes_length, 5 + remote_worker_authenticity_bytes_length + 4));
         const worker_socket_purpose_parameter = NSDT.decode(synchronize_information.slice(5 + remote_worker_authenticity_bytes_length + 4));
         // console.log(is_authenticity_valid_validated, remote_worker_id, remote_worker_authenticity_bytes_length, remote_worker_authenticity_bytes, worker_socket_purpose_name, worker_socket_purpose_parameter);
