@@ -264,7 +264,7 @@ Protocol.prototype.start = function(callback) {
                 // Call synchronize function. Check will it respond with data or not.
                 this._protocol_modules[protocol_name].synchronize(data, onSynchronizationError, onAcknowledge, (synchronize_returned_data)=> {
                   synchronize_protocol_left_count--;
-                  
+
                   // If responded then finish up.
                   if(has_any_synchronize_returned_data) {
                     return;

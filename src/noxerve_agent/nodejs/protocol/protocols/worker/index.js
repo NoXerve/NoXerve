@@ -162,6 +162,7 @@ WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
   // Stage 1: If next_loop then call finish_handshake with error.
   let stage = 0;
   let index = 0;
+  const open_handshanke_errors = [];
   const loop_next = () => {
     index++;
     if (stage === 1) {
@@ -173,7 +174,7 @@ WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
     // No more next loop. Exit.
     else {
       // [Flag] Uncatogorized error.
-      acknowledge_synchronization(true, null, () => {});
+      acknowledge_synchronization(open_handshanke_errors, null, () => {});
     }
   };
 
@@ -185,10 +186,10 @@ WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
     const _acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
       if (open_handshanke_error) {
         // Unable to open handshake. Next loop.
+        open_handshanke_errors.push(open_handshanke_error);
         loop_next();
-
         // Return acknowledge_information(not acknowledge).
-        return false;
+        next(false);
       } else {
         stage = 1;
 
@@ -206,6 +207,7 @@ WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
     // Callbacks setup completed. Start handshake process.
     this._open_handshake_function(interface_name, interface_connect_settings, synchronize_information, _acknowledge_synchronization, _finish_handshake);
   };
+
   loop();
 }
 
@@ -214,31 +216,62 @@ WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
  * @type {object}
  * @private
  */
-WorkerProtocol.prototype._broadcastRequestResponse = function(worker_id_list, broadcast_bytes, ) {
+WorkerProtocol.prototype._broadcastRequestResponse = function(worker_id_list, broadcast_bytes, on_a_worker_response, on_finish) {
 
   // Broadcast worker join start.
   // max concurrent connections.
-  // const max_connections_count = 1;
-  // let current_connections_count = 0;
-  // let index = 0;
-  //
-  // const loop_over_workers = () => {
-  //   current_connections_count++;
-  //   if (current_connections_count < max_connections_count) {
-  //     loop_next();
-  //   }
-  // };
-  //
-  // const loop_next = () => {
-  //   index++
-  //   if (index < worker_id_list.length) {
-  //
-  //   } else if () {
-  //
-  //   }
-  // };
-  //
-  // loop_over_workers();
+  const max_connections_count = 2;
+  const finished_worker_id_list = [];
+  let escape_loop_with_error = false;
+  let current_connections_count = 0;
+  let index = 0;
+  // let errors = {};
+
+  const loop_over_workers = () => {
+    const worker_id = worker_id_list[index];
+
+    current_connections_count++;
+
+    // Concurrently open connections.
+    if (current_connections_count < max_connections_count) {
+      loop_next();
+    }
+
+    const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
+      current_connections_count--;
+
+      next(false);
+      on_a_worker_response(worker_id, open_handshanke_error, synchronize_acknowledgement_information, (error, is_finished) => {
+        if (error) {
+          escape_loop_with_error = error;
+        }
+        if (is_finished) {
+          finished_worker_id_list.push(worker_id);
+        }
+        loop_next();
+      });
+    };
+
+    const finish_handshake = (error, tunnel) => {
+      // Not suppose to be called.
+      // Request, response only have 2 progress instead of 3 full handshake.
+    };
+
+    this._openHandshakeFromWorkerId(worker_id, broadcast_bytes, acknowledge_synchronization, finish_handshake);
+  };
+
+  const loop_next = () => {
+    index++;
+    if (escape_loop_with_error && current_connections_count === 0) {
+      on_finish(escape_loop_with_error, finished_worker_id_list);
+    } else if (finished_worker_id_list.length === worker_id_list.length) {
+      on_finish(false, finished_worker_id_list);
+    } else if (index < worker_id_list.length && current_connections_count < max_connections_count) {
+      loop_over_workers();
+    }
+  };
+
+  loop_over_workers();
 }
 
 /**
@@ -246,9 +279,9 @@ WorkerProtocol.prototype._broadcastRequestResponse = function(worker_id_list, br
  * @type {object}
  * @private
  */
-WorkerProtocol.prototype._broadcastRequestResponseToAllWorkers = function(broadcast_bytes, ) {
+WorkerProtocol.prototype._broadcastRequestResponseToAllWorkers = function(broadcast_bytes, on_a_worker_response, on_finish) {
   const worker_id_list = Object.keys(this._worker_peers_settings).map(x => parseInt(x));
-  this._broadcastRequestResponse(worker_id_list);
+  this._broadcastRequestResponse(worker_id_list, broadcast_bytes, on_a_worker_response, on_finish);
 }
 
 /**
@@ -489,7 +522,6 @@ WorkerProtocol.prototype.start = function(callback) {
         const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
           if (open_handshanke_error) {
             // Unable to open handshake. Next loop.
-            console.log(open_handshanke_error);
             loop_next();
 
             // Return acknowledge_information(not acknowledge).
@@ -497,29 +529,40 @@ WorkerProtocol.prototype.start = function(callback) {
           } else {
             // Handshake opened. Check if synchronize_acknowledgement_information valid.
             try {
-              if (synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_affairs[0]) {
+              if (synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_affairs[0] && synchronize_acknowledgement_information[1] === this._ProtocolCodes.worker_affairs_worker_join_request_respond[0]) {
                 // Acknowledgement information for handshake
                 // Format:
                 // acknowledge byte
                 // 0x01(ok)
                 // 0x00(not ok)
                 // const acknowledge_information = this._ProtocolCodes.worker_affairs;
+                if (synchronize_acknowledgement_information[2] === 0x01) {
+                  // Accept.
 
+
+
+                } else if (synchronize_acknowledgement_information[2] === 0x00) {
+                  // Reject.
+                  if (synchronize_acknowledgement_information[3] === 0x00) {
+                    me_join_callback('Unknown error');
+                  }
+                  else if (synchronize_acknowledgement_information[3] === 0x01) {
+                    me_join_callback('auth error');
+                  }
+                  else if (synchronize_acknowledgement_information[3] === 0x02) {
+                    me_join_callback('Broadcast error');
+                  }
+                }
                 // Return acknowledge binary.
-                next(acknowledge_information);
               } else {
                 loop_next();
-
-                // Return acknowledge_information(not acknowledge).
-                next(false);
               }
             } catch (error) {
               // Unable to open handshake. Next loop.
               loop_next();
-
-              // Return acknowledge_information(not acknowledge).
-              next(false);
             }
+            next(false);
+
           }
         };
 
@@ -548,7 +591,9 @@ WorkerProtocol.prototype.start = function(callback) {
     // });
   });
 
-  this._worker_module.on('me-leave', () => {});
+  this._worker_module.on('me-leave', () => {
+
+  });
 
   this._worker_module.on('worker-peer-leave', () => {});
 
@@ -612,28 +657,48 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
             }
             console.log(new_worker_id, worker_id_list);
 
+            const my_worker_authenticity_bytes = this._encodeAuthenticityBytes();
+
             const worker_affairs_worker_join_broadcast_bytes = Buf.concat([
               this._ProtocolCodes.worker_affairs,
               this._ProtocolCodes.worker_affairs_worker_join_broadcast,
-
+              Buf.encodeUInt32BE(my_worker_authenticity_bytes.length),
+              my_worker_authenticity_bytes,
+              synchronize_information.slice(bytes_offset_length)
             ]);
 
-            const onAWorkerResponse = (worker_id, next) => {
-
+            const onAWorkerResponse = (worker_id, error, response_bytes, response_next) => {
+              console.log(worker_id, error, response_bytes, next);
+              if (error) {
+                response_next(error, false);
+              } else {
+                response_next(false, true);
+              }
             };
 
-            const onFinish = (error, finished_worker_id_list)=> {
+            const onFinish = (error, finished_worker_id_list) => {
+              console.log(error, finished_worker_id_list);
+              if (error) {
+                next(Buf.concat([
+                  this._ProtocolCodes.worker_affairs,
+                  this._ProtocolCodes.worker_affairs_worker_join_request_respond,
+                  Buf.from([0x00]), // Reject
+                  Buf.from([0x02])
+                ]));
+                // this._broadcastRequestResponse(finished_worker_id_list, worker_affairs_worker_join_cancel_broadcast_bytes, onAWorkerResponse, onFinish);
+              } else {
 
+              }
             };
 
-            this._broadcastRequestResponseToAllWorkers(worker_affairs_worker_join_broadcast_bytes, onAWorkerError, onFinish);
+            this._broadcastRequestResponseToAllWorkers(worker_affairs_worker_join_broadcast_bytes, onAWorkerResponse, onFinish);
 
           } else {
             next(Buf.concat([
               this._ProtocolCodes.worker_affairs,
               this._ProtocolCodes.worker_affairs_worker_join_request_respond,
               Buf.from([0x00]), // Reject
-              Buf.from([0x00])
+              Buf.from([0x01])
             ]));
           }
         });
@@ -646,7 +711,8 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
           Buf.from([0x00])
         ]));
       }
-    }
+    } else next(false);
+
   } else if (synchronize_information[0] === this._ProtocolCodes.worker_socket[0]) {
     const worker_id = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
     const remote_worker_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));

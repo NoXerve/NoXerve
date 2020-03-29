@@ -122,20 +122,20 @@ initialize_interfaces(()=> {
     }
   });
 
-  Worker.on('worker-peer-join', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo)=> {
-    on_undo(()=> {
+  Worker.on('worker-peer-join', (remote_worker_id, worker_interfaces, my_worker_detail, on_cancel)=> {
+    on_cancel(()=> {
 
     });
   });
 
-  Worker.on('worker-peer-update', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo)=> {
-    on_undo(()=> {
+  Worker.on('worker-peer-update', (remote_worker_id, worker_interfaces, my_worker_detail, on_cancel)=> {
+    on_cancel(()=> {
 
     });
   });
 
-  Worker.on('worker-peer-leave', (remote_worker_id, on_undo)=> {
-    on_undo(()=> {
+  Worker.on('worker-peer-leave', (remote_worker_id, on_cancel)=> {
+    on_cancel(()=> {
 
     });
   });
