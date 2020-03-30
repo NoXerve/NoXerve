@@ -14,21 +14,25 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
-const workers_paths = ['./worker_1', './worker_2', './worker_3'];
+const worker_indexs = ['1', '2', '3'];
 
-let worker_ready_left = Object.keys(workers_paths).length;
+let worker_ready_left = Object.keys(worker_indexs).length;
 
-for(const index in workers_paths) {
-  let child = child_process.fork(workers_paths[index], {stdio: [process.stdin, process.stdout, process.stderr, 'ipc']});
+const worker_childs = {};
+
+for(const index in worker_indexs) {
+  const worker_index = worker_indexs[index];
+  let child = child_process.fork('./worker_' + worker_index, {stdio: [process.stdin, process.stdout, process.stderr, 'ipc']});
+  worker_childs[worker_index] = child;
 
   child.on('message', (msg)=> {
     if(msg === 'ready') {
-      console.log('[Test] Worker '+ index +' ready.');
+      console.log('[Test] Worker '+ worker_index +' ready.');
       worker_ready_left--;
       if(worker_ready_left === 0) {
         next = ()=> {
           rl.question('[Test] Input worker index to execute test.', (number)=> {
-            child.send('execTest');
+            worker_childs[number].send('execTest');
             next();
           });
         };
