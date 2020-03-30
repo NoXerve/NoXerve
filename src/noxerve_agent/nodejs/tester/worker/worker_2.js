@@ -125,24 +125,29 @@ initialize_interfaces(()=> {
 
   Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_interfaces, new_worker_peer_detail, next) => {
     console.log('[Worker ' + my_worker_id + '] "worker-peer-join" event.', new_worker_peer_id, new_worker_peer_interfaces, new_worker_peer_detail);
-    next(false, ()=> {
-
-    });
+    const on_cancel = (next_of_cancel)=> {
+      console.log('[Worker ' + my_worker_id + '] "worker-peer-join" cancel.');
+      next_of_cancel(false);
+    };
+    next(false, on_cancel);
   });
 
   Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail, next) => {
     console.log('[Worker ' + my_worker_id + '] "worker-peer-update" event.', remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail);
-    next(false, ()=> {
+    const on_cancel = ()=> {
 
-    });
+    };
+    next(false, on_cancel);
   });
 
   Worker.on('worker-peer-leave', (remote_worker_peer_id, next) => {
     console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" event.', remote_worker_peer_id);
-    next(false, ()=> {
+    const on_cancel = ()=> {
 
-    });
+    };
+    next(false, on_cancel);
   });
+
 
   Worker.importMyWorkerAuthenticityData(my_worker_id, 'whatsoever_auth2', (error)=> {
     if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);

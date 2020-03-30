@@ -51,6 +51,22 @@ const my_worker_interfaces = [{
   }
 ];
 
+const my_worker_interfaces_connect_setting = [{
+    interface_name: 'WebSocket',
+    interface_connect_settings: {
+      host: '0.0.0.0',
+      port: 9993
+    }
+  },
+  {
+    interface_name: 'WebSocket',
+    interface_connect_settings: {
+      host: '0.0.0.0',
+      port: 6663
+    }
+  }
+];
+
 
 // This worker is not joined yet.
 let worker_peers_settings = {};
@@ -104,28 +120,70 @@ initialize_interfaces(() => {
 
   Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_interfaces, new_worker_peer_detail, next) => {
     console.log('[Worker ' + my_worker_id + '] "worker-peer-join" event.', new_worker_peer_id, new_worker_peer_interfaces, new_worker_peer_detail);
-    next(false, ()=> {
-
-    });
+    const on_cancel = (next_of_cancel)=> {
+      console.log('[Worker ' + my_worker_id + '] "worker-peer-join" cancel.');
+      next_of_cancel(false);
+    };
+    next(false, on_cancel);
   });
 
   Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail, next) => {
     console.log('[Worker ' + my_worker_id + '] "worker-peer-update" event.', remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail);
-    next(false, ()=> {
+    const on_cancel = ()=> {
 
-    });
+    };
+    next(false, on_cancel);
   });
 
   Worker.on('worker-peer-leave', (remote_worker_peer_id, next) => {
     console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" event.', remote_worker_peer_id);
-    next(false, ()=> {
+    const on_cancel = ()=> {
 
+    };
+    next(false, on_cancel);
+  });
+
+  Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
+    console.log('[Worker ' + my_worker_id + '] onWorkerSocketCreate OK.', parameters, remote_worker_id, worker_socket);
+    worker_socket.on('close', () => {
+      console.log('[Worker ' + my_worker_id + '] WorkerSocket from onWorkerSocketCreate closed.');
+    });
+    worker_socket.define('func2', (service_function_parameter, return_data, yield_data) => {
+      console.log('[Worker ' + my_worker_id + '] WorkerSocket function on createWorkerSocket called.');
+      yield_data(321);
+      yield_data({foo: 321});
+      yield_data(Buffer.from([5, 4, 3, 0, 1]));
+      return_data('hehe');
+    });
+    worker_socket.call('func1', {foo: 'call from onWorkerSocketCreate'}, (err, data, eof)=> {
+      console.log('[Worker ' + my_worker_id + '] "func1" Return value: ', data);
+      if(eof) console.log('finished worker_func1_call_test');
+    });
+    worker_socket.handleYielding('field2', (yielding_handler_parameter, ready_yielding) => {
+      console.log('[Worker ' + my_worker_id + '] "field2" handleYielding started.');
+      console.log('[Worker ' + my_worker_id + '] Parameters value: ', yielding_handler_parameter);
+      ready_yielding('"field2" ok for yielding.', (error, data, eof)=> {
+        if(error) console.log('[Worker ' + my_worker_id + '] "field1" Yielding error.', error);
+        console.log('[Worker ' + my_worker_id + '] "field2" Yielded value: ', data);
+        if(eof) {
+          console.log('finished worker_field2_yield_test');
+        };
+      });
+    });
+    worker_socket.startYielding('field1', 'yield from createWorkerSocket', (error, yielding_start_parameter, finish_yield, yield_data) => {
+      if (error) console.log('[Worker ' + my_worker_id + '] "field1" Yield error.', error);
+      console.log('[Worker ' + my_worker_id + '] "field1" yielding_start_parameter value: ', yielding_start_parameter);
+
+      yield_data(321);
+      yield_data({foo: 321});
+      yield_data(Buffer.from([5, 4, 3, 0, 1]));
+      finish_yield('hehe');
     });
   });
 
   process.on('message', (msg)=> {
     if(msg === 'execTest') {
-      Worker.joinMe(worker_1_interfaces_for_joining_me, my_worker_interfaces,
+      Worker.joinMe(worker_1_interfaces_for_joining_me, my_worker_interfaces_connect_setting,
         my_worker_detail, 'join_me_auth',
         (error, _worker_id, _worker_peers_settings) => {
           if(error) console.log('[Worker ' + my_worker_id + '] joinMe error.', error);
@@ -133,7 +191,7 @@ initialize_interfaces(() => {
             my_worker_id = _worker_id;
             console.log('[Worker ' + my_worker_id + '] new worker settings.', _worker_id, JSON.stringify(_worker_peers_settings, null, 2));
             worker_peers_settings = _worker_peers_settings;
-            Worker.importMyWorkerAuthenticityData(_worker_id, 'whatsoever_auth', (error) => {
+            Worker.importMyWorkerAuthenticityData(_worker_id, 'whatsoever_auth'+my_worker_id, (error) => {
               if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);
 
             });
