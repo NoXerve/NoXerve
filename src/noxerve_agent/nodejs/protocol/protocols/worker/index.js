@@ -143,6 +143,139 @@ WorkerProtocol.prototype._ProtocolCodes = {
 
 /**
  * @memberof module:WorkerProtocol
+ * @private
+ */
+WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(operation_type, target_worker_peer_worker_id, broadcast_bytes, callback) {
+  const worker_affairs_worker_peer_operations_protocol_codes = {
+    'join': this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast,
+    'update': this._ProtocolCodes.worker_affairs_worker_peer_update_broadcast,
+    'leave': this._ProtocolCodes.worker_affairs_worker_peer_leave_broadcast
+  };
+
+  const my_worker_authenticity_bytes = this._encodeAuthenticityBytes();
+  const worker_peer_opreation_byte = worker_affairs_worker_peer_operations_protocol_codes[operation_type];
+
+  const worker_affairs_worker_peer_join_broadcast_bytes = Buf.concat([
+    this._ProtocolCodes.worker_affairs,
+    worker_peer_opreation_byte,
+
+    // My
+    Buf.encodeUInt32BE(my_worker_authenticity_bytes.length),
+    my_worker_authenticity_bytes,
+
+    // Remote
+    broadcast_bytes
+  ]);
+
+  const on_a_worker_response = (worker_id, error, response_bytes, response_next) => {
+    if (error) {
+      response_next(error, false);
+    } else if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === worker_peer_opreation_byte[0]) {
+      if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
+        response_next(error, true);
+      } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
+        // [Flag]
+        response_next('Unknown error.', false);
+      } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
+        // [Flag]
+        response_next('auth err.', false);
+      } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), Buf.from([0x00, 0x02]))) {
+        // [Flag]
+        response_next('worker_affairs collision err.', false);
+      } else {
+        // [Flag]
+        response_next('Unknown protocol.', false);
+      }
+    }
+  };
+
+  const on_finish = (error, finished_worker_id_list) => {
+    if (error) {
+      callback(error);
+
+      // Cancel all operation done.
+      const worker_affairs_worker_peer_join_cancel_broadcast_bytes = Buf.concat([
+        this._ProtocolCodes.worker_affairs,
+        this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast,
+        Buf.encodeUInt32BE(target_worker_peer_worker_id),
+        this._encodeAuthenticityBytes()
+      ]);
+
+      const on_a_worker_response = (worker_id, error, response_bytes, response_next) => {
+        if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
+          if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
+            // [Flag] Uncatogorized errors.
+            response_next(false, true);
+          } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
+            // [Flag] Uncatogorized errors.
+            response_next('Authenticication error', false);
+          } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
+            // [Flag] Uncatogorized errors.
+            response_next('Unknown error', false);
+          } else {
+            // [Flag] Uncatogorized errors.
+            response_next('Unknown protocol', false);
+          }
+        } else {
+          // [Flag] Uncatogorized errors.
+          response_next('Unknown protocol', false);
+        }
+      };
+
+      const inner_on_finish = (error, inner_finished_worker_id_list) => {
+        if (error) {
+          console.log(error, inner_finished_worker_id_list);
+        }
+      };
+
+      this._broadcastRequestResponse(finished_worker_id_list, worker_affairs_worker_peer_join_cancel_broadcast_bytes, on_a_worker_response, inner_on_finish);
+    } else {
+      callback(false);
+
+      // Comfirm all operation done.
+      const worker_affairs_worker_peer_join_comfirm_broadcast_bytes = Buf.concat([
+        this._ProtocolCodes.worker_affairs,
+        this._ProtocolCodes.worker_affairs_worker_peer_operation_comfirm_broadcast,
+        Buf.encodeUInt32BE(target_worker_peer_worker_id),
+        this._encodeAuthenticityBytes()
+      ]);
+
+      const on_a_worker_response = (worker_id, error, response_bytes, response_next) => {
+        if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
+          if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
+            // [Flag] Uncatogorized errors.
+            response_next(false, true);
+          } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
+            // [Flag] Uncatogorized errors.
+            response_next('Authenticication error', false);
+          } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
+            // [Flag] Uncatogorized errors.
+            response_next('Unknown error', false);
+          } else {
+            // [Flag] Uncatogorized errors.
+            response_next('Unknown protocol', false);
+          }
+        } else {
+          // [Flag] Uncatogorized errors.
+          response_next('Unknown protocol', false);
+        }
+      };
+
+      const inner_on_finish = (error, inner_finished_worker_id_list) => {
+        if (error) {
+          console.log(error, inner_finished_worker_id_list);
+        }
+      };
+
+      this._broadcastRequestResponse(finished_worker_id_list, worker_affairs_worker_peer_join_comfirm_broadcast_bytes, on_a_worker_response, inner_on_finish);
+    }
+  };
+
+  this._broadcastRequestResponseToAllWorkers(worker_affairs_worker_peer_join_broadcast_bytes, on_a_worker_response, on_finish);
+}
+
+/**
+ * @memberof module:WorkerProtocol
  * @param {array} peers_worker_id_list
  * @private
  */
@@ -324,9 +457,9 @@ WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authentici
   // Check worker_peers_ids_checksum_4bytes.
   if (Utils.areBuffersEqual(this._worker_peers_ids_checksum_4bytes, remote_worker_peers_ids_checksum_4bytes)) {
     // Emit worker authentication from worker module.
-    this._worker_module.emitEventListener('worker-peer-authentication', remote_worker_peer_id, remote_worker_peer_authenticity_data, (is_authenticity_valid_validated) => {
+    this._worker_module.emitEventListener('worker-peer-authentication', remote_worker_peer_id, remote_worker_peer_authenticity_data, (is_authenticity_valid) => {
       try {
-        if (is_authenticity_valid_validated) {
+        if (is_authenticity_valid) {
           callback(false, true, remote_worker_peer_id);
         } else {
           callback(false, false, remote_worker_peer_id);
@@ -686,8 +819,8 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
       const new_worker_authentication_data = NSDT.decode(synchronize_information.slice(6, 6 + new_worker_authentication_bytes_length));
       try {
         // Emit worker authentication from worker module.
-        this._worker_module.emitEventListener('worker-peer-authentication', 0, new_worker_authentication_data, (is_authenticity_valid_validated) => {
-          if (is_authenticity_valid_validated) {
+        this._worker_module.emitEventListener('worker-peer-authentication', 0, new_worker_authentication_data, (is_authenticity_valid) => {
+          if (is_authenticity_valid) {
             // Broadcast worker join.
             const bytes_offset_length = 6 + new_worker_authentication_bytes_length;
             const new_worker_peer_interfaces_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(bytes_offset_length, bytes_offset_length + 4));
@@ -708,85 +841,19 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
             const my_worker_authenticity_bytes = this._encodeAuthenticityBytes();
 
             const worker_affairs_worker_peer_join_broadcast_bytes = Buf.concat([
-              this._ProtocolCodes.worker_affairs,
-              this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast,
-
-              // My
-              Buf.encodeUInt32BE(my_worker_authenticity_bytes.length),
-              my_worker_authenticity_bytes,
-
-              // New
               Buf.encodeUInt32BE(new_worker_id),
               synchronize_information.slice(bytes_offset_length)
             ]);
 
-            const on_a_worker_response = (worker_id, error, response_bytes, response_next) => {
-              if (error) {
-                response_next(error, false);
-              } else if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast[0]) {
-                if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
-                  response_next(error, true);
-                } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
-                  // [Flag]
-                  response_next('Unknown error.', false);
-                } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
-                  // [Flag]
-                  response_next('auth err.', false);
-                } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), Buf.from([0x00, 0x02]))) {
-                  // [Flag]
-                  response_next('worker_affairs collision err.', false);
-                } else {
-                  // [Flag]
-                  response_next('Unknown protocol.', false);
-                }
-              }
-            };
-
-            const on_finish = (error, finished_worker_id_list) => {
+            this._broadcastWorkerAffairsWorkerPeerOperation('join', new_worker_id, worker_affairs_worker_peer_join_broadcast_bytes, (error)=> {
               if (error) {
                 next(Buf.concat([
                   this._ProtocolCodes.worker_affairs,
                   this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
                   Buf.from([0x00, 0x02]) // Reject Broadcast error.
                 ]));
-
-                // Cancel all opereation done.
-                const worker_affairs_worker_peer_join_cancel_broadcast_bytes = Buf.concat([
-                  this._ProtocolCodes.worker_affairs,
-                  this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast,
-                  Buf.encodeUInt32BE(new_worker_id),
-                  this._encodeAuthenticityBytes()
-                ]);
-
-                const on_a_worker_response = (worker_id, error, response_bytes, response_next) => {
-                  if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
-                    if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
-                      // [Flag] Uncatogorized errors.
-                      response_next(false, true);
-                    } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
-                      // [Flag] Uncatogorized errors.
-                      response_next('Authenticication error', false);
-                    } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
-                      // [Flag] Uncatogorized errors.
-                      response_next('Unknown error', false);
-                    } else {
-                      // [Flag] Uncatogorized errors.
-                      response_next('Unknown protocol', false);
-                    }
-                  } else {
-                    // [Flag] Uncatogorized errors.
-                    response_next('Unknown protocol', false);
-                  }
-                };
-
-                const inner_on_finish = (error, inner_finished_worker_id_list) => {
-                  if (error) {
-                    console.log(error, inner_finished_worker_id_list);
-                  }
-                };
-
-                this._broadcastRequestResponse(finished_worker_id_list, worker_affairs_worker_peer_join_cancel_broadcast_bytes, on_a_worker_response, inner_on_finish);
-              } else {
+              }
+              else {
                 let worker_peers_settings = {};
                 // Generate clean new interfaces settings for new worker.
                 for (const index in this._worker_peers_settings) {
@@ -808,48 +875,8 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
                   Buf.encodeUInt32BE(new_worker_id),
                   NSDT.encode(worker_peers_settings)
                 ]));
-
-                // Comfirm all opereation done.
-                const worker_affairs_worker_peer_join_comfirm_broadcast_bytes = Buf.concat([
-                  this._ProtocolCodes.worker_affairs,
-                  this._ProtocolCodes.worker_affairs_worker_peer_operation_comfirm_broadcast,
-                  Buf.encodeUInt32BE(new_worker_id),
-                  this._encodeAuthenticityBytes()
-                ]);
-
-                const on_a_worker_response = (worker_id, error, response_bytes, response_next) => {
-                  if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
-                    if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
-                      // [Flag] Uncatogorized errors.
-                      response_next(false, true);
-                    } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
-                      // [Flag] Uncatogorized errors.
-                      response_next('Authenticication error', false);
-                    } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
-                      // [Flag] Uncatogorized errors.
-                      response_next('Unknown error', false);
-                    } else {
-                      // [Flag] Uncatogorized errors.
-                      response_next('Unknown protocol', false);
-                    }
-                  } else {
-                    // [Flag] Uncatogorized errors.
-                    response_next('Unknown protocol', false);
-                  }
-                };
-
-                const inner_on_finish = (error, inner_finished_worker_id_list) => {
-                  if (error) {
-                    console.log(error, inner_finished_worker_id_list);
-                  }
-                };
-
-                this._broadcastRequestResponse(finished_worker_id_list, worker_affairs_worker_peer_join_comfirm_broadcast_bytes, on_a_worker_response, inner_on_finish);
               }
-            };
-
-            this._broadcastRequestResponseToAllWorkers(worker_affairs_worker_peer_join_broadcast_bytes, on_a_worker_response, on_finish);
-
+            });
           } else {
             next(Buf.concat([
               this._ProtocolCodes.worker_affairs,
@@ -998,11 +1025,11 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
       console.log(error);
     });
 
-    this._validateAuthenticityBytes(synchronize_information.slice(5, 5 + remote_worker_peer_authenticity_bytes_length), (error, is_authenticity_valid_validated, remote_worker_peer_id) => {
-      if (is_authenticity_valid_validated && !error) {
+    this._validateAuthenticityBytes(synchronize_information.slice(5, 5 + remote_worker_peer_authenticity_bytes_length), (error, is_authenticity_valid, remote_worker_peer_id) => {
+      if (is_authenticity_valid && !error) {
         const worker_socket_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(5 + remote_worker_peer_authenticity_bytes_length, 5 + remote_worker_peer_authenticity_bytes_length + 4));
         const worker_socket_purpose_parameter = NSDT.decode(synchronize_information.slice(5 + remote_worker_peer_authenticity_bytes_length + 4));
-        // console.log(is_authenticity_valid_validated, remote_worker_peer_id, remote_worker_peer_authenticity_bytes_length, remote_worker_peer_authenticity_bytes, worker_socket_purpose_name, worker_socket_purpose_parameter);
+        // console.log(is_authenticity_valid, remote_worker_peer_id, remote_worker_peer_authenticity_bytes_length, remote_worker_peer_authenticity_bytes, worker_socket_purpose_name, worker_socket_purpose_parameter);
 
         onAcknowledge((acknowledge_information, tunnel) => {
           if (acknowledge_information[0] === this._ProtocolCodes.worker_socket[0] &&

@@ -317,7 +317,7 @@ Protocol.prototype.start = function(callback) {
           tunnel.on('error', (error) => {
             if (ready_state) {
               if (stage === 0) {
-                // Happened error even not synchronize at all. Abort opereation without any further actions.
+                // Happened error even not synchronize at all. Abort operation without any further actions.
                 stage = -1;
                 tunnel.close();
               } else if (stage === 1) {
@@ -326,7 +326,7 @@ Protocol.prototype.start = function(callback) {
                 synchronization_error_handler(error);
               }
             } else {
-              // Happened error even not ready at all. Abort opereation without any further actions.
+              // Happened error even not ready at all. Abort operation without any further actions.
               stage = -1;
               tunnel.close();
             }
