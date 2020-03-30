@@ -6,15 +6,12 @@
  * @description Start testing by enter command "node tester.js".
  */
 
-const readline = require("readline");
+ process.on('disconnect', ()=> {
+   process.exit();
+ });
+
 const Node = new(require('../../node'))();
 const Worker = new(require('../../worker'))();
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-
 
 const my_worker_id = 2;
 
@@ -182,10 +179,7 @@ initialize_interfaces(()=> {
           finish_yield('hehe');
         });
       });
-
-      rl.question('Waiting for other workers. If workers are ready then input any thing to continue tesing.', ()=> {
-
-      });
+      process.send('ready');
     });
   });
 });

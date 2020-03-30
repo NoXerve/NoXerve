@@ -6,15 +6,12 @@
  * @description Start testing by enter command "node tester.js".
  */
 
-const readline = require("readline");
+ process.on('disconnect', ()=> {
+   process.exit();
+ });
+
 const Node = new(require('../../node'))();
 const Worker = new(require('../../worker'))();
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
 
 const my_worker_id = 0;
 
@@ -123,19 +120,22 @@ initialize_interfaces(() => {
     });
   });
 
-  rl.question('Waiting for other workers. If workers are ready then input any thing to continue tesing.', () => {
-    Worker.joinMe(worker_1_interfaces_for_joining_me, my_worker_interfaces,
-      my_worker_detail, 'join_me_auth',
-      (error, _worker_id, _worker_peers_settings) => {
-        if(error) console.log('[Worker ' + my_worker_id + '] joinMe error.', error);
-        else {
-          worker_peers_settings = _worker_peers_settings;
-          Worker.importMyWorkerAuthenticityData(_worker_id, 'whatsoever_auth', (error) => {
-            if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);
+  process.on('message', (msg)=> {
+    if(msg === 'execTest') {
+      Worker.joinMe(worker_1_interfaces_for_joining_me, my_worker_interfaces,
+        my_worker_detail, 'join_me_auth',
+        (error, _worker_id, _worker_peers_settings) => {
+          if(error) console.log('[Worker ' + my_worker_id + '] joinMe error.', error);
+          else {
+            worker_peers_settings = _worker_peers_settings;
+            Worker.importMyWorkerAuthenticityData(_worker_id, 'whatsoever_auth', (error) => {
+              if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);
 
-          });
-        }
-      });
+            });
+          }
+        });
+    }
   });
+  process.send('ready');
 
 });
