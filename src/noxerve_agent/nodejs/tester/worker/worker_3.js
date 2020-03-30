@@ -13,7 +13,7 @@
 const Node = new(require('../../node'))();
 const Worker = new(require('../../worker'))();
 
-const my_worker_id = 0;
+let my_worker_id = 0;
 
 const worker_1_interfaces_for_joining_me = [{
     interface_name: 'WebSocket',
@@ -102,20 +102,23 @@ initialize_interfaces(() => {
     }
   });
 
-  Worker.on('worker-peer-join', (remote_worker_id, worker_interfaces, my_worker_detail, on_cancel) => {
-    on_cancel(() => {
+  Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_interfaces, new_worker_peer_detail, next) => {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-join" event.', new_worker_peer_id, new_worker_peer_interfaces, new_worker_peer_detail);
+    next(false, ()=> {
 
     });
   });
 
-  Worker.on('worker-peer-update', (remote_worker_id, worker_interfaces, my_worker_detail, on_cancel) => {
-    on_cancel(() => {
+  Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail, next) => {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-update" event.', remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail);
+    next(false, ()=> {
 
     });
   });
 
-  Worker.on('worker-peer-leave', (remote_worker_id, on_cancel) => {
-    on_cancel(() => {
+  Worker.on('worker-peer-leave', (remote_worker_peer_id, next) => {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" event.', remote_worker_peer_id);
+    next(false, ()=> {
 
     });
   });
@@ -127,6 +130,8 @@ initialize_interfaces(() => {
         (error, _worker_id, _worker_peers_settings) => {
           if(error) console.log('[Worker ' + my_worker_id + '] joinMe error.', error);
           else {
+            my_worker_id = _worker_id;
+            console.log('[Worker ' + my_worker_id + '] new worker settings.', _worker_id, JSON.stringify(_worker_peers_settings, null, 2));
             worker_peers_settings = _worker_peers_settings;
             Worker.importMyWorkerAuthenticityData(_worker_id, 'whatsoever_auth', (error) => {
               if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);

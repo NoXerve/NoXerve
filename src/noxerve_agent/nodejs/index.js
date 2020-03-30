@@ -148,7 +148,7 @@ function NoXerveAgent(settings) {
  * @param {module:NoXerveAgent~callback_of_create_interface} callback
  */
 NoXerveAgent.prototype.createInterface = function(interface_name, interface_settings, callback) {
-  // This opreation handled by Node module.
+  // This opereation handled by Node module.
   this._node_module.createInterface(interface_name, interface_settings, callback);
 }
 
@@ -162,7 +162,7 @@ NoXerveAgent.prototype.createInterface = function(interface_name, interface_sett
  * @param {module:NoXerveAgent~callback_of_destroy_interface} callback
  */
 NoXerveAgent.prototype.destroyInterface = function(interface_id, callback) {
-  // This opreation handled by Node module.
+  // This opereation handled by Node module.
   this._node_module.destroyInterface(interface_id, callback);
 }
 

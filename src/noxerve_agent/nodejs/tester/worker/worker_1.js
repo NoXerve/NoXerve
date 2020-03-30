@@ -50,7 +50,9 @@ let worker_peers_settings = {
         port: 6661
       }
     }],
-    detail: {}
+    detail: {
+      name: 'worker 1'
+    }
   },
   2: {
     interfaces: [{
@@ -67,7 +69,9 @@ let worker_peers_settings = {
         port: 6662
       }
     }],
-    detail: {}
+    detail: {
+      name: 'worker 2'
+    }
   }
 };
 
@@ -119,20 +123,23 @@ initialize_interfaces(()=> {
     }
   });
 
-  Worker.on('worker-peer-join', (remote_worker_id, worker_interfaces, my_worker_detail, on_cancel)=> {
-    on_cancel(()=> {
+  Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_interfaces, new_worker_peer_detail, next) => {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-join" event.', new_worker_peer_id, new_worker_peer_interfaces, new_worker_peer_detail);
+    next(false, ()=> {
 
     });
   });
 
-  Worker.on('worker-peer-update', (remote_worker_id, worker_interfaces, my_worker_detail, on_cancel)=> {
-    on_cancel(()=> {
+  Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail, next) => {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-update" event.', remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail);
+    next(false, ()=> {
 
     });
   });
 
-  Worker.on('worker-peer-leave', (remote_worker_id, on_cancel)=> {
-    on_cancel(()=> {
+  Worker.on('worker-peer-leave', (remote_worker_peer_id, next) => {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" event.', remote_worker_peer_id);
+    next(false, ()=> {
 
     });
   });
