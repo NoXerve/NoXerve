@@ -6,15 +6,12 @@
  * @description Start testing by enter command "node tester.js".
  */
 
-const readline = require("readline");
+ process.on('disconnect', ()=> {
+   process.exit();
+ });
+
 const Node = new(require('../../node'))();
 const Worker = new(require('../../worker'))();
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-
 
 const my_worker_id = 2;
 
@@ -53,7 +50,9 @@ let worker_peers_settings = {
         port: 6661
       }
     }],
-    detail: {}
+    detail: {
+      name: 'worker 1'
+    }
   },
   2: {
     interfaces: [{
@@ -70,7 +69,9 @@ let worker_peers_settings = {
         port: 6662
       }
     }],
-    detail: {}
+    detail: {
+      name: 'worker 2'
+    }
   }
 };
 
@@ -108,8 +109,8 @@ initialize_interfaces(()=> {
 
   Protocol.start();
 
-  Worker.on('worker-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
-    console.log('[Worker ' + my_worker_id + '] "worker-authentication" event. ', worker_id, worker_authenticity_information);
+  Worker.on('worker-peer-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-authentication" event. ', worker_id, worker_authenticity_information);
     if(worker_id === 0 && worker_authenticity_information === 'join_me_auth') {
       // Initailize new worker.
       is_valid(true);
@@ -122,26 +123,36 @@ initialize_interfaces(()=> {
     }
   });
 
-  Worker.on('worker-join', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo)=> {
-    on_undo(()=> {
-
-    });
+  Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_interfaces, new_worker_peer_detail, next) => {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-join" event.', new_worker_peer_id, new_worker_peer_interfaces, new_worker_peer_detail);
+    const on_cancel = (next_of_cancel)=> {
+      console.log('[Worker ' + my_worker_id + '] "worker-peer-join" cancel.');
+      next_of_cancel(false);
+    };
+    next(false, on_cancel);
   });
 
-  Worker.on('worker-update', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo)=> {
-    on_undo(()=> {
-
-    });
+  Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail, next) => {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-update" event.', remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail);
+    const on_cancel = ()=> {
+      console.log('[Worker ' + my_worker_id + '] "worker-peer-update" cancel.');
+      next_of_cancel(false);
+    };
+    next(false, on_cancel);
   });
 
-  Worker.on('worker-leave', (remote_worker_id, on_undo)=> {
-    on_undo(()=> {
-
-    });
+  Worker.on('worker-peer-leave', (remote_worker_peer_id, next) => {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" event.', remote_worker_peer_id);
+    const on_cancel = ()=> {
+      console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" cancel.');
+      next_of_cancel(false);
+    };
+    next(false, on_cancel);
   });
 
-  Worker.importWorkerAuthenticityData(my_worker_id, 'whatsoever_auth2', (error)=> {
-    if (error) console.log('[Worker ' + my_worker_id + '] importWorkerAuthenticityData error.', error);
+
+  Worker.importMyWorkerAuthenticityData(my_worker_id, 'whatsoever_auth2', (error)=> {
+    if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);
     Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
       if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
 
@@ -182,10 +193,7 @@ initialize_interfaces(()=> {
           finish_yield('hehe');
         });
       });
-
-      rl.question('Waiting for other workers. If workers are ready then input any thing to continue tesing.', ()=> {
-
-      });
+      process.send('ready');
     });
   });
 });

@@ -6,15 +6,12 @@
  * @description Start testing by enter command "node tester.js".
  */
 
-const readline = require("readline");
-const Node = new(require('../../node'))();
-const Worker = new(require('../../worker'))();
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
+process.on('disconnect', ()=> {
+  process.exit();
 });
 
+const Node = new(require('../../node'))();
+const Worker = new(require('../../worker'))();
 
 const my_worker_id = 1;
 
@@ -53,7 +50,9 @@ let worker_peers_settings = {
         port: 6661
       }
     }],
-    detail: {}
+    detail: {
+      name: 'worker 1'
+    }
   },
   2: {
     interfaces: [{
@@ -70,7 +69,9 @@ let worker_peers_settings = {
         port: 6662
       }
     }],
-    detail: {}
+    detail: {
+      name: 'worker 2'
+    }
   }
 };
 
@@ -108,8 +109,8 @@ initialize_interfaces(()=> {
 
   Protocol.start();
 
-  Worker.on('worker-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
-    console.log('[Worker ' + my_worker_id + '] "worker-authentication" event. ', worker_id, worker_authenticity_information);
+  Worker.on('worker-peer-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-authentication" event. ', worker_id, worker_authenticity_information);
     if(worker_id === 0 && worker_authenticity_information === 'join_me_auth') {
       // Initailize new worker.
       is_valid(true);
@@ -122,74 +123,85 @@ initialize_interfaces(()=> {
     }
   });
 
-  Worker.on('worker-join', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo)=> {
-    on_undo(()=> {
-
-    });
+  Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_interfaces, new_worker_peer_detail, next) => {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-join" event.', new_worker_peer_id, new_worker_peer_interfaces, new_worker_peer_detail);
+    const on_cancel = (next_of_cancel)=> {
+      console.log('[Worker ' + my_worker_id + '] "worker-peer-join" cancel.');
+      next_of_cancel(false);
+    };
+    next(false, on_cancel);
   });
 
-  Worker.on('worker-update', (remote_worker_id, worker_interfaces, my_worker_detail, on_undo)=> {
-    on_undo(()=> {
-
-    });
+  Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail, next) => {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-update" event.', remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail);
+    const on_cancel = ()=> {
+      console.log('[Worker ' + my_worker_id + '] "worker-peer-update" cancel.');
+      next_of_cancel(false);
+    };
+    next(false, on_cancel);
   });
 
-  Worker.on('worker-leave', (remote_worker_id, on_undo)=> {
-    on_undo(()=> {
-
-    });
+  Worker.on('worker-peer-leave', (remote_worker_peer_id, next) => {
+    console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" event.', remote_worker_peer_id);
+    const on_cancel = ()=> {
+      console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" cancel.');
+      next_of_cancel(false);
+    };
+    next(false, on_cancel);
   });
 
-  Worker.importWorkerAuthenticityData(my_worker_id, 'whatsoever_auth1', (error)=> {
-    if (error) console.log('[Worker ' + my_worker_id + '] importWorkerAuthenticityData error.', error);
+  Worker.importMyWorkerAuthenticityData(my_worker_id, 'whatsoever_auth1', (error)=> {
+    if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);
     Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
       if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
-
-      rl.question('Waiting for other workers. If workers are ready then input any thing to continue tesing.', ()=> {
-        Worker.createWorkerSocket('purpose 1', {p: 1}, 2, (error, worker_socket)=> {
-          if (error) {
-            console.log('[Worker module] createWorkerSocket error.', error);
-          }
-          else {
-            worker_socket.on('close', () => {
-              console.log('[Worker module] WorkerSocket from createWorkerSocket closed.');
-            });
-            worker_socket.define('func1', (service_function_parameter, return_data, yield_data) => {
-              console.log('[Worker module] WorkerSocket function on createWorkerSocket called.');
-              yield_data(123);
-              yield_data({foo: 123});
-              yield_data(Buffer.from([5, 4, 3, 2, 1]));
-              return_data('haha');
-            });
-            worker_socket.call('func2', {foo: 'call from createWorkerSocket'}, (err, data, eof)=> {
-              console.log('[Worker module] "func2" Return value: ', data);
-              if(eof) console.log('finished worker_func2_call_test');
-            });
-            worker_socket.handleYielding('field1', (yielding_handler_parameter, ready_yielding) => {
-              console.log('[Worker module] "field1" handleYielding started.');
-              console.log('[Worker module] Parameters value: ', yielding_handler_parameter);
-              ready_yielding('"field1" ok for yielding.', (error, data, eof)=> {
-                if(error) console.log('[Worker module] "field1" Yielding error.', error);
-                console.log('[Worker module] "field1" Yielded value: ', data);
-                if(eof) {
-                  console.log('finished worker_field1_yield_test');
-                  setTimeout(()=>{worker_socket.close()}, 1500);
-                };
+      process.on('message', (msg)=> {
+        if(msg === '4') {
+          Worker.createWorkerSocket('purpose 1', {p: 1}, 3, (error, worker_socket)=> {
+            if (error) {
+              console.log('[Worker ' + my_worker_id + '] createWorkerSocket error.', error);
+            }
+            else {
+              worker_socket.on('close', () => {
+                console.log('[Worker ' + my_worker_id + '] WorkerSocket from createWorkerSocket closed.');
               });
-            });
-            worker_socket.startYielding('field2', 'yield from createWorkerSocket', (error, yielding_start_parameter, finish_yield, yield_data) => {
-              if (error) console.log('[Worker module] "field2" Yield error.', error);
-              console.log('[Worker module] "field2" yielding_start_parameter value: ', yielding_start_parameter);
+              worker_socket.define('func1', (service_function_parameter, return_data, yield_data) => {
+                console.log('[Worker ' + my_worker_id + '] WorkerSocket function on createWorkerSocket called.');
+                yield_data(123);
+                yield_data({foo: 123});
+                yield_data(Buffer.from([5, 4, 3, 2, 1]));
+                return_data('haha');
+              });
+              worker_socket.call('func2', {foo: 'call from createWorkerSocket'}, (err, data, eof)=> {
+                console.log('[Worker ' + my_worker_id + '] "func2" Return value: ', data);
+                if(eof) console.log('finished worker_func2_call_test');
+              });
+              worker_socket.handleYielding('field1', (yielding_handler_parameter, ready_yielding) => {
+                console.log('[Worker ' + my_worker_id + '] "field1" handleYielding started.');
+                console.log('[Worker ' + my_worker_id + '] Parameters value: ', yielding_handler_parameter);
+                ready_yielding('"field1" ok for yielding.', (error, data, eof)=> {
+                  if(error) console.log('[Worker ' + my_worker_id + '] "field1" Yielding error.', error);
+                  console.log('[Worker ' + my_worker_id + '] "field1" Yielded value: ', data);
+                  if(eof) {
+                    console.log('finished worker_field1_yield_test');
+                    setTimeout(()=>{worker_socket.close()}, 1500);
+                  };
+                });
+              });
+              worker_socket.startYielding('field2', 'yield from createWorkerSocket', (error, yielding_start_parameter, finish_yield, yield_data) => {
+                if (error) console.log('[Worker ' + my_worker_id + '] "field2" Yield error.', error);
+                console.log('[Worker ' + my_worker_id + '] "field2" yielding_start_parameter value: ', yielding_start_parameter);
 
-              yield_data(123);
-              yield_data({foo: 123});
-              yield_data(Buffer.from([5, 4, 3, 2, 1]));
-              finish_yield('haha');
-            });
-            console.log('[Worker module] createWorkerSocket OK.', worker_socket);
-          }
-        });
+                yield_data(123);
+                yield_data({foo: 123});
+                yield_data(Buffer.from([5, 4, 3, 2, 1]));
+                finish_yield('haha');
+              });
+              console.log('[Worker ' + my_worker_id + '] createWorkerSocket OK.', worker_socket);
+            }
+          });
+        }
       });
+      process.send('ready');
     });
   });
 });

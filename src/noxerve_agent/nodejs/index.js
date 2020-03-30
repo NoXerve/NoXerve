@@ -94,8 +94,8 @@ function NoXerveAgent(settings) {
    * @description API intended to provide functions for the role of worker.
    */
   this.Worker = {
-    importWorkerAuthenticityData: (worker_id, worker_authenticity_information, callback) => {
-      this._worker_module.importWorkerAuthenticityData(worker_id, worker_authenticity_information, callback);
+    importMyWorkerAuthenticityData: (worker_id, worker_authenticity_information, callback) => {
+      this._worker_module.importMyWorkerAuthenticityData(worker_id, worker_authenticity_information, callback);
     },
     importWorkerPeersSettings: (worker_peers_settings, callback) => {
       this._worker_module.importWorkerPeersSettings(worker_peers_settings, callback);
@@ -108,7 +108,19 @@ function NoXerveAgent(settings) {
     },
     on: (event_name, listener) => {
       this._worker_module.on(event_name, listener);
-    }
+    },
+    joinMe: (remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authentication_data, callback) => {
+      this._worker_module.joinMe(remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authentication_data, callback);
+    },
+    updateMe: (my_worker_interfaces, my_worker_detail, callback) => {
+      this._worker_module.updateMe(my_worker_interfaces, my_worker_detail, callback);
+    },
+    leaveMe: (callback) => {
+      this._worker_module.leaveMe(callback);
+    },
+    leaveWorkerPeer: (worker_id, callback) => {
+      this._worker_module.leaveWorkerPeer(worker_id, callback);
+    },
   };
 
   /**
@@ -148,7 +160,7 @@ function NoXerveAgent(settings) {
  * @param {module:NoXerveAgent~callback_of_create_interface} callback
  */
 NoXerveAgent.prototype.createInterface = function(interface_name, interface_settings, callback) {
-  // This opreation handled by Node module.
+  // This operation handled by Node module.
   this._node_module.createInterface(interface_name, interface_settings, callback);
 }
 
@@ -162,7 +174,7 @@ NoXerveAgent.prototype.createInterface = function(interface_name, interface_sett
  * @param {module:NoXerveAgent~callback_of_destroy_interface} callback
  */
 NoXerveAgent.prototype.destroyInterface = function(interface_id, callback) {
-  // This opreation handled by Node module.
+  // This operation handled by Node module.
   this._node_module.destroyInterface(interface_id, callback);
 }
 

@@ -107,9 +107,9 @@ function WorkerProtocol(settings) {
     hash_manager: settings.hash_manager
   });
   //
-  // this._worker_affairs_protocol.on('worker-join');
-  // this._worker_affairs_protocol.on('worker-update');
-  // this._worker_affairs_protocol.on('worker-leave');
+  // this._worker_affairs_protocol.on('worker-peer-join');
+  // this._worker_affairs_protocol.on('worker-peer-update');
+  // this._worker_affairs_protocol.on('worker-peer-leave');
 
   /**
    * @memberof module:WorkerProtocol
@@ -126,13 +126,258 @@ function WorkerProtocol(settings) {
  */
 WorkerProtocol.prototype._ProtocolCodes = {
   worker_affairs: Buf.from([0x01]),
-  worker_affairs_worker_join_request_respond: Buf.from([0x01]),
-  worker_affairs_worker_update_request_respond: Buf.from([0x02]),
-  worker_affairs_worker_leave_request_respond: Buf.from([0x03]),
-  worker_affairs_worker_join_broadcast: Buf.from([0x04]),
-  worker_affairs_worker_update_broadcast: Buf.from([0x05]),
-  worker_affairs_worker_leave_broadcast: Buf.from([0x06]),
-  worker_socket: Buf.from([0x02])
+  worker_affairs_worker_peer_join_request_respond: Buf.from([0x01]),
+  worker_affairs_worker_peer_update_request_respond: Buf.from([0x02]),
+  worker_affairs_worker_peer_leave_request_respond: Buf.from([0x03]),
+  worker_affairs_worker_peer_join_broadcast: Buf.from([0x04]),
+  worker_affairs_worker_peer_update_broadcast: Buf.from([0x05]),
+  worker_affairs_worker_peer_leave_broadcast: Buf.from([0x06]),
+  worker_affairs_worker_peer_operation_comfirm_broadcast: Buf.from([0x07]),
+  worker_affairs_worker_peer_operation_cancel_broadcast: Buf.from([0x08]),
+  worker_socket: Buf.from([0x02]),
+  accept: Buf.from([0x01]),
+  reject: Buf.from([0x00]),
+  unknown_reason_reject_2_bytes: Buf.from([0x00, 0x01]),
+  authentication_reason_reject_2_bytes: Buf.from([0x00, 0x02])
+}
+
+/**
+ * @memberof module:WorkerProtocol
+ * @private
+ */
+WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(operation_type, target_worker_peer_worker_id, broadcast_bytes, callback) {
+  const worker_affairs_worker_peer_operations_protocol_codes = {
+    'join': this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast,
+    'update': this._ProtocolCodes.worker_affairs_worker_peer_update_broadcast,
+    'leave': this._ProtocolCodes.worker_affairs_worker_peer_leave_broadcast
+  };
+
+  const my_worker_authenticity_bytes = this._encodeAuthenticityBytes();
+  const worker_peer_opreation_byte = worker_affairs_worker_peer_operations_protocol_codes[operation_type];
+
+  const worker_affairs_worker_peer_join_broadcast_bytes = Buf.concat([
+    this._ProtocolCodes.worker_affairs,
+    worker_peer_opreation_byte,
+
+    // My
+    Buf.encodeUInt32BE(my_worker_authenticity_bytes.length),
+    my_worker_authenticity_bytes,
+
+    // Remote
+    broadcast_bytes
+  ]);
+
+  const on_a_worker_response = (worker_id, error, response_bytes, response_next) => {
+    if (error) {
+      response_next(error, false);
+    } else if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === worker_peer_opreation_byte[0]) {
+      if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
+        response_next(error, true);
+      } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
+        // [Flag]
+        response_next('Unknown error.', false);
+      } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
+        // [Flag]
+        response_next('auth err.', false);
+      } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), Buf.from([0x00, 0x02]))) {
+        // [Flag]
+        response_next('worker_affairs collision err.', false);
+      } else {
+        // [Flag]
+        response_next('Unknown protocol.', false);
+      }
+    }
+  };
+
+  const on_finish = (error, finished_worker_id_list) => {
+    const encoded_authenticity_bytes = this._encodeAuthenticityBytes();
+    if (error) {
+      // Cancel all operation done.
+      const worker_affairs_worker_peer_operation_cancel_broadcast_bytes = Buf.concat([
+        this._ProtocolCodes.worker_affairs,
+        this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast,
+        Buf.encodeUInt32BE(target_worker_peer_worker_id),
+        encoded_authenticity_bytes
+      ]);
+
+      const on_a_worker_response = (worker_id, error, response_bytes, response_next) => {
+        if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
+          if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
+            // [Flag] Uncatogorized errors.
+            response_next(false, true);
+          } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
+            // [Flag] Uncatogorized errors.
+            response_next('Authenticication error', false);
+          } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
+            // [Flag] Uncatogorized errors.
+            response_next('Unknown error', false);
+          } else {
+            // [Flag] Uncatogorized errors.
+            response_next('Unknown protocol', false);
+          }
+        } else {
+          // [Flag] Uncatogorized errors.
+          response_next('Unknown protocol', false);
+        }
+      };
+
+      const inner_on_finish = (error, inner_finished_worker_id_list) => {
+        if (error) {
+          console.log(error, inner_finished_worker_id_list);
+        }
+      };
+      this._broadcastRequestResponse(finished_worker_id_list, worker_affairs_worker_peer_operation_cancel_broadcast_bytes, on_a_worker_response, inner_on_finish);
+    } else {
+      // Comfirm all operation done.
+      const worker_affairs_worker_peer_join_comfirm_broadcast_bytes = Buf.concat([
+        this._ProtocolCodes.worker_affairs,
+        this._ProtocolCodes.worker_affairs_worker_peer_operation_comfirm_broadcast,
+        Buf.encodeUInt32BE(target_worker_peer_worker_id),
+        encoded_authenticity_bytes
+      ]);
+
+      const on_a_worker_response = (worker_id, error, response_bytes, response_next) => {
+        if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
+          if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
+            // [Flag] Uncatogorized errors.
+            response_next(false, true);
+          } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
+            // [Flag] Uncatogorized errors.
+            response_next('Authenticication error', false);
+          } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
+            // [Flag] Uncatogorized errors.
+            response_next('Unknown error', false);
+          } else {
+            // [Flag] Uncatogorized errors.
+            response_next('Unknown protocol', false);
+          }
+        } else {
+          // [Flag] Uncatogorized errors.
+          response_next('Unknown protocol', false);
+        }
+      };
+
+      const inner_on_finish = (error, inner_finished_worker_id_list) => {
+        if (error) {
+          console.log(error, inner_finished_worker_id_list);
+        }
+        if(operation_type === 'leave') {
+          // Reset worker.
+          this._my_worker_id = null;
+          this._my_worker_id_4bytes = null;
+          this._my_worker_id_4bytes = null;
+          this._my_worker_authenticity_data_bytes = null;
+          this._worker_peers_ids_checksum_4bytes = null;
+          this._worker_peers_settings = {};
+        }
+      };
+
+      this._broadcastRequestResponse(finished_worker_id_list, worker_affairs_worker_peer_join_comfirm_broadcast_bytes, on_a_worker_response, inner_on_finish);
+    }
+    callback(error);
+  };
+
+  this._broadcastRequestResponseToAllWorkers(worker_affairs_worker_peer_join_broadcast_bytes, on_a_worker_response, on_finish);
+}
+
+/**
+ * @memberof module:WorkerProtocol
+ * @private
+ */
+WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = function(operation_type, synchronize_information, next) {
+  const worker_affairs_worker_peer_operations_protocol_codes = {
+    'join': this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast,
+    'update': this._ProtocolCodes.worker_affairs_worker_peer_update_broadcast,
+    'leave': this._ProtocolCodes.worker_affairs_worker_peer_leave_broadcast
+  };
+
+  const event_listener_names = {
+    'join': 'worker-peer-join-request',
+    'update': 'worker-peer-update-request',
+    'leave': 'worker-peer-leave-request'
+  };
+
+  const worker_peer_opreation_byte = worker_affairs_worker_peer_operations_protocol_codes[operation_type];
+  const event_listener_name = event_listener_names[operation_type];
+
+  const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
+  const remote_worker_peer_authenticity_bytes = synchronize_information.slice(6, 6 + remote_worker_peer_authenticity_bytes_length);
+  this._validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_id) => {
+    if((operation_type === 'update' || operation_type === 'leave') && !Object.keys(this._worker_peers_settings).includes(remote_worker_peer_id+'')) {
+      next(Buf.concat([
+        this._ProtocolCodes.worker_affairs,
+        worker_peer_opreation_byte,
+        this._ProtocolCodes.authentication_reason_reject_2_bytes // Reject. Authenticication error.
+      ]));
+    }
+    else if (is_authenticity_valid) {
+      const bytes_offseted = synchronize_information.slice(6 + remote_worker_peer_authenticity_bytes_length);
+      const target_worker_peer_worker_id = Buf.decodeUInt32BE(bytes_offseted.slice(0, 4));
+      const new_worker_peer_interfaces_bytes_length = (operation_type === 'leave') ? null : Buf.decodeUInt32BE(bytes_offseted.slice(4, 8));
+      const new_worker_peer_interfaces = (operation_type === 'leave') ? null : NSDT.decode(bytes_offseted.slice(8, 8 + new_worker_peer_interfaces_bytes_length));
+      const new_worker_peer_detail = (operation_type === 'leave') ? null : NSDT.decode(bytes_offseted.slice(8 + new_worker_peer_interfaces_bytes_length));
+
+      // [Flag] Test
+      // if (this._my_worker_id === 2) {
+      //   this._worker_peers_settings[3] = {};
+      //   this._worker_peers_settings[3]['worker_affairs_locked'] = true;
+      //   console.log(this._isWorkerPeerWorkerAffairsLocked(target_worker_peer_worker_id), target_worker_peer_worker_id);
+      // }
+
+      // Check not blocked by other worker peer.
+      if (this._isWorkerPeerWorkerAffairsLocked(target_worker_peer_worker_id)) {
+        next(Buf.concat([
+          this._ProtocolCodes.worker_affairs,
+          worker_peer_opreation_byte,
+          Buf.from([0x00, 0x02]), // Reject. Locked error.
+          Buf.encodeUInt32BE(this._isWorkerPeerWorkerAffairsLocked(target_worker_peer_worker_id)) // Locked by whom.
+        ]));
+      } else {
+        this._setWorkerPeerWorkerAffairsLocked(target_worker_peer_worker_id, remote_worker_peer_id);
+        if (operation_type === 'leave') {
+          this._worker_peers_settings[target_worker_peer_worker_id].new_settings = null;
+        } else {
+          this._worker_peers_settings[target_worker_peer_worker_id].new_settings = {
+            interfaces: new_worker_peer_interfaces,
+            detail: new_worker_peer_detail
+          };
+        }
+
+        const next_of_worker_module = (error, on_cancel) => {
+          this._worker_peers_settings[target_worker_peer_worker_id].on_worker_affairs_worker_peer_operation_cancel = on_cancel;
+          if (error) {
+            next(Buf.concat([
+              this._ProtocolCodes.worker_affairs,
+              worker_peer_opreation_byte,
+              this._ProtocolCodes.unknown_reason_reject_2_bytes // Reject. Authenticication error.
+            ]));
+          } else {
+            // this._worker_peers_settings[target_worker_peer_worker_id] = {
+            //   interfaces: new_worker_peer_interfaces,
+            //   detail: new_worker_peer_detail
+            // };
+            next(Buf.concat([
+              this._ProtocolCodes.worker_affairs,
+              worker_peer_opreation_byte,
+              this._ProtocolCodes.accept // Reject. Authenticication error.
+            ]));
+          }
+        };
+        if (operation_type === 'leave') {
+          this._worker_module.emitEventListener(event_listener_name, target_worker_peer_worker_id, next_of_worker_module);
+        }
+        else {
+          this._worker_module.emitEventListener(event_listener_name, target_worker_peer_worker_id, new_worker_peer_interfaces, new_worker_peer_detail, next_of_worker_module);
+        }
+      }
+    } else {
+      next(Buf.concat([
+        this._ProtocolCodes.worker_affairs,
+        worker_peer_opreation_byte,
+        this._ProtocolCodes.authentication_reason_reject_2_bytes // Reject. Authenticication error.
+      ]));
+    }
+  });
 }
 
 /**
@@ -141,10 +386,12 @@ WorkerProtocol.prototype._ProtocolCodes = {
  * @private
  */
 WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_worker_id_list) {
+  let worker_peers_ids_checksum = 0;
   for (const index in peers_worker_id_list) {
     peers_worker_id_list[index] = parseInt(peers_worker_id_list[index]);
-    worker_peers_ids_checksum_bytes += peers_worker_id_list[index];
+    worker_peers_ids_checksum += peers_worker_id_list[index];
   }
+  const worker_peers_ids_checksum_bytes = Buf.encodeUInt32BE(worker_peers_ids_checksum);
   this._worker_peers_ids_checksum_4bytes = worker_peers_ids_checksum_bytes;
   return worker_peers_ids_checksum_bytes;
 }
@@ -156,12 +403,17 @@ WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_wo
  */
 WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
   worker_id, synchronize_information, acknowledge_synchronization, finish_handshake) {
+  if(!this._worker_peers_settings[worker_id]) {
+    // [Flag] Uncatogorized error.
+    finish_handshake('No such worker Id.');
+    return;
+  }
   const interfaces = this._worker_peers_settings[worker_id].interfaces;
-
   // Stage 0: If loop to the end call acknowledge_synchronization with error.
   // Stage 1: If next_loop then call finish_handshake with error.
   let stage = 0;
   let index = 0;
+  const open_handshanke_errors = [];
   const loop_next = () => {
     index++;
     if (stage === 1) {
@@ -173,7 +425,7 @@ WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
     // No more next loop. Exit.
     else {
       // [Flag] Uncatogorized error.
-      acknowledge_synchronization(true, null, () => {});
+      acknowledge_synchronization(open_handshanke_errors, null, () => {});
     }
   };
 
@@ -185,10 +437,11 @@ WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
     const _acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
       if (open_handshanke_error) {
         // Unable to open handshake. Next loop.
+        open_handshanke_errors.push(open_handshanke_error);
         loop_next();
 
         // Return acknowledge_information(not acknowledge).
-        return false;
+        next(false);
       } else {
         stage = 1;
 
@@ -206,9 +459,91 @@ WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
     // Callbacks setup completed. Start handshake process.
     this._open_handshake_function(interface_name, interface_connect_settings, synchronize_information, _acknowledge_synchronization, _finish_handshake);
   };
+
   loop();
 }
 
+/**
+ * @memberof module:WorkerProtocol
+ * @type {object}
+ * @private
+ */
+WorkerProtocol.prototype._broadcastRequestResponse = function(worker_id_list, broadcast_bytes, on_a_worker_response, on_finish) {
+
+  // Broadcast worker join start.
+  // max concurrent connections.
+  const max_connections_count = 2;
+  const finished_worker_id_list = [];
+  let escape_loop_with_error = false;
+  let worker_peers_errors = {};
+  let current_connections_count = 0;
+  let index = 0;
+  // let errors = {};
+
+  const loop_over_workers = () => {
+    const worker_id = worker_id_list[index];
+    if (worker_id) {
+      current_connections_count++;
+
+      // Concurrently open connections.
+      if (current_connections_count < max_connections_count) {
+        loop_next();
+      }
+
+      if (parseInt(worker_id) !== 0) {
+        const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
+          current_connections_count--;
+
+          next(false);
+          on_a_worker_response(worker_id, open_handshanke_error, synchronize_acknowledgement_information, (error, is_finished) => {
+            if (error) {
+              worker_peers_errors[worker_id] = error;
+              escape_loop_with_error = true;
+            }
+            if (is_finished) {
+              finished_worker_id_list.push(worker_id);
+            }
+            loop_next();
+          });
+        };
+
+        const finish_handshake = (error, tunnel) => {
+          // Not suppose to be called.
+          // Request, response only have 2 progress instead of 3 full handshake.
+        };
+
+        this._openHandshakeFromWorkerId(worker_id, broadcast_bytes, acknowledge_synchronization, finish_handshake);
+      } else {
+        loop_next();
+      }
+    } else {
+      loop_next();
+    }
+  };
+
+  const loop_next = () => {
+    index++;
+    if (finished_worker_id_list.length >= worker_id_list.length) {
+      on_finish(false, finished_worker_id_list);
+    } else if (escape_loop_with_error && current_connections_count === 0) {
+      on_finish(worker_peers_errors, finished_worker_id_list);
+    } else if (index < worker_id_list.length && current_connections_count < max_connections_count) {
+      loop_over_workers();
+    }
+  };
+
+  loop_over_workers();
+}
+
+/**
+ * @memberof module:WorkerProtocol
+ * @type {object}
+ * @private
+ */
+WorkerProtocol.prototype._broadcastRequestResponseToAllWorkers = function(broadcast_bytes, on_a_worker_response, on_finish) {
+  const worker_id_list = Object.keys(this._worker_peers_settings).map(x => parseInt(x));
+  this._broadcastRequestResponse(worker_id_list, broadcast_bytes, on_a_worker_response, on_finish);
+}
 
 /**
  * @memberof module:WorkerProtocol
@@ -229,29 +564,74 @@ WorkerProtocol.prototype._encodeAuthenticityBytes = function() {
  * @private
  */
 WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authenticity_bytes, callback) {
-  const remote_worker_id = Buf.decodeUInt32BE(remote_authenticity_bytes.slice(0, 4));
+  const remote_worker_peer_id = Buf.decodeUInt32BE(remote_authenticity_bytes.slice(0, 4));
   const remote_worker_peers_ids_checksum_4bytes = remote_authenticity_bytes.slice(4, 8);
-  const remote_worker_authenticity_data = NSDT.decode(remote_authenticity_bytes.slice(8));
+  const remote_worker_peer_authenticity_data = NSDT.decode(remote_authenticity_bytes.slice(8));
 
   // Check worker_peers_ids_checksum_4bytes.
-  if(Utils.areBuffersEqual(this._worker_peers_ids_checksum_4bytes, remote_worker_peers_ids_checksum_4bytes)) {
-    try {
-      // Emit worker authentication from worker module.
-      this._worker_module.emitEventListener('worker-authentication', remote_worker_id, remote_worker_authenticity_data, (is_authenticity_valid_validated) => {
-        if(is_authenticity_valid_validated) {
-          callback(false, true, remote_worker_id);
+  if (Utils.areBuffersEqual(this._worker_peers_ids_checksum_4bytes, remote_worker_peers_ids_checksum_4bytes)) {
+    // Emit worker authentication from worker module.
+    this._worker_module.emitEventListener('worker-peer-authentication', remote_worker_peer_id, remote_worker_peer_authenticity_data, (is_authenticity_valid) => {
+      try {
+        if (is_authenticity_valid) {
+          callback(false, true, remote_worker_peer_id);
+        } else {
+          callback(false, false, remote_worker_peer_id);
         }
-        else {
-          callback(false, false, remote_worker_id);
-        }
-      });
-    }
-    catch(error) {
-      callback(error, false, null);
-    }
-  }
-  else {
+      } catch (error) {
+        throw error;
+      }
+    });
+  } else {
     callback(false, false, null);
+  }
+}
+
+/**
+ * @memberof module:WorkerProtocol
+ * @type {object}
+ * @private
+ */
+WorkerProtocol.prototype._isWorkerPeerWorkerAffairsLocked = function(worker_id) {
+  const worker_peer_settings = this._worker_peers_settings[worker_id];
+  if (worker_peer_settings) {
+    if (worker_peer_settings.worker_affairs_locked) {
+      return worker_peer_settings.worker_affairs_locked;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+}
+
+/**
+ * @memberof module:WorkerProtocol
+ * @type {object}
+ * @private
+ */
+WorkerProtocol.prototype._setWorkerPeerWorkerAffairsLocked = function(worker_id, locked_by_worker_peer_with_worker_id) {
+  if (this._worker_peers_settings[worker_id]) {
+    this._worker_peers_settings[worker_id].worker_affairs_locked = locked_by_worker_peer_with_worker_id;
+  } else {
+    this._worker_peers_settings[worker_id] = {};
+    this._worker_peers_settings[worker_id].worker_affairs_locked = locked_by_worker_peer_with_worker_id;
+  }
+}
+
+/**
+ * @memberof module:WorkerProtocol
+ * @type {object}
+ * @private
+ */
+WorkerProtocol.prototype._setWorkerPeerWorkerAffairUnLocked = function(worker_id, locked_by_worker_peer_with_worker_id) {
+  if (!this._worker_peers_settings[worker_id].interfaces) {
+    delete this._worker_peers_settings[worker_id];
+  } else if (this._worker_peers_settings[worker_id]) {
+    this._worker_peers_settings[worker_id].worker_affairs_locked = false;
+  } else {
+    this._worker_peers_settings[worker_id] = {};
+    this._worker_peers_settings[worker_id].worker_affairs_locked = false;
   }
 }
 
@@ -265,7 +645,7 @@ WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authentici
  * @description Start running WorkerProtocol.
  */
 WorkerProtocol.prototype.start = function(callback) {
-  this._worker_module.on('worker-authenticity-data-import', (worker_id, worker_authenticity_information, callback) => {
+  this._worker_module.on('my-worker-authenticity-data-import', (worker_id, worker_authenticity_information, callback) => {
     if (worker_id) {
       this._my_worker_id = worker_id;
       this._my_worker_id_4bytes = Buf.encodeUInt32BE(worker_id);
@@ -311,24 +691,25 @@ WorkerProtocol.prototype.start = function(callback) {
           }
         }
 
-        // For worker-join worker-update worker-leave.
+        // For worker-peer-join worker-peer-update worker-peer-leave.
         worker_peers_settings[index]['worker_affairs_locked'] = false;
       }
     }
+
     if (!include_myself) {
       // [Flag] Uncatogorized error.
       callback(this._my_worker_id);
       return;
     }
     this._worker_peers_settings = worker_peers_settings;
-    // console.log(worker_peers_settings);
+
     this._worker_peers_ids_checksum_4bytes = Buf.encodeUInt32BE(worker_peers_ids_checksum);
     // Peacefully finish the job.
     callback(false);
   });
 
   this._worker_module.on('worker-socket-create',
-    (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, callback) => {
+    (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_id, callback) => {
       const worker_socket_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_socket_purpose_name);
       const worker_socket_purpose_parameter_bytes = NSDT.encode(worker_socket_purpose_parameter);
       const worker_authenticity_bytes = this._encodeAuthenticityBytes();
@@ -348,35 +729,33 @@ WorkerProtocol.prototype.start = function(callback) {
           callback(open_handshanke_error);
           next(false);
         } else if (synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_socket[0] &&
-          synchronize_acknowledgement_information[1] === 0x01
+          synchronize_acknowledgement_information[1] === this._ProtocolCodes.accept[0]
         ) {
-          const remote_worker_authenticity_bytes = synchronize_acknowledgement_information.slice(2);
+          const remote_worker_peer_authenticity_bytes = synchronize_acknowledgement_information.slice(2);
           // Auth remote worker.
-          this._validateAuthenticityBytes(remote_worker_authenticity_bytes, (error, is_authenticity_valid, remote_worker_id) => {
+          this._validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_id) => {
             _is_authenticity_valid = is_authenticity_valid;
             if (is_authenticity_valid && !error) {
               next(Buf.concat([
                 this._ProtocolCodes.worker_socket,
-                Buf.from([0x01]), // Accept.
+                this._ProtocolCodes.accept, // Accept.
               ]));
             } else {
               next(Buf.concat([
                 this._ProtocolCodes.worker_socket,
-                Buf.from([0x00]), // Reject.
-                Buf.from([0x00]) // Reject. Authenticication error.
+                this._ProtocolCodes.authentication_reason_reject_2_bytes // Reject. Authenticication error.
               ]));
             }
           });
         } else if (synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_socket[0] &&
-          synchronize_acknowledgement_information[1] === 0x00
+          synchronize_acknowledgement_information[1] === this._ProtocolCodes.reject[0]
         ) {
-          if(synchronize_acknowledgement_information[2] === 0x00) {
+          if (synchronize_acknowledgement_information[2] === this._ProtocolCodes.authentication_reason_reject_2_bytes[1]) {
 
             // [Flag] Uncatogorized error.
             callback('worker authentication error.');
             next(false);
-          }
-          else {
+          } else {
 
             // [Flag] Uncatogorized error.
             callback('Unknown error');
@@ -392,20 +771,19 @@ WorkerProtocol.prototype.start = function(callback) {
         if (error) {
           callback(error);
         } else {
-          if(_is_authenticity_valid) {
+          if (_is_authenticity_valid) {
             this._worker_module.emitEventListener('worker-socket-request', (error, worker_socket) => {
               this._worker_socket_protocol.handleTunnel(error, worker_socket, tunnel);
               callback(error, worker_socket);
             });
-          }
-          else {
+          } else {
             // [Flag] Uncatogorized error.
             callback('Remote worker authentication failed.');
           }
         }
       };
 
-      this._openHandshakeFromWorkerId(remote_worker_id, synchronize_information, acknowledge_synchronization, finish_handshake);
+      this._openHandshakeFromWorkerId(remote_worker_peer_id, synchronize_information, acknowledge_synchronization, finish_handshake);
     });
 
   this._worker_module.on('hash-string-request', (worker_socket_purpose_name) => {
@@ -413,7 +791,8 @@ WorkerProtocol.prototype.start = function(callback) {
   });
 
   this._worker_module.on('me-join', (remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authentication_data, me_join_callback) => {
-    if(this._my_worker_id === null || this._my_worker_id === 0) {
+    if (this._my_worker_id === null || this._my_worker_id === 0) {
+      // [Flag] Check field.
       // Shuffle for clientwise loadbalancing.
       const shuffled_interface_connect_settings_list = Utils.shuffleArray(remote_worker_interfaces);
 
@@ -423,7 +802,7 @@ WorkerProtocol.prototype.start = function(callback) {
 
       const synchronize_information = Buf.concat([
         this._ProtocolCodes.worker_affairs,
-        this._ProtocolCodes.worker_affairs_worker_join_request_respond,
+        this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
         Buf.encodeUInt32BE(my_worker_authentication_data_bytes.length),
         my_worker_authentication_data_bytes,
         Buf.encodeUInt32BE(my_worker_interfaces_bytes.length),
@@ -453,38 +832,38 @@ WorkerProtocol.prototype.start = function(callback) {
         const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
           if (open_handshanke_error) {
             // Unable to open handshake. Next loop.
-            console.log(open_handshanke_error);
             loop_next();
 
             // Return acknowledge_information(not acknowledge).
             next(false);
-          }  else {
+          } else {
             // Handshake opened. Check if synchronize_acknowledgement_information valid.
-            try {
-              if(synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_affairs[0]) {
-                // Acknowledgement information for handshake
-                // Format:
-                // acknowledge byte
-                // 0x01(ok)
-                // 0x00(not ok)
-                // const acknowledge_information = this._ProtocolCodes.worker_affairs;
+            if (synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_affairs[0] && synchronize_acknowledgement_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond[0]) {
+              // Acknowledgement information for handshake
+              // const acknowledge_information = this._ProtocolCodes.worker_affairs;
+              if (synchronize_acknowledgement_information[2] === this._ProtocolCodes.accept[0]) {
+                // Accept.
+                const new_worker_id = Buf.decodeUInt32BE(synchronize_acknowledgement_information.slice(3, 7));
+                const worker_peers_settings = NSDT.decode(synchronize_acknowledgement_information.slice(7));
 
-                // Return acknowledge binary.
-                next(acknowledge_information);
-              }
-              else {
-                loop_next();
+                // Update worker peers settings
+                this._worker_peers_settings = worker_peers_settings;
+                this._updateWorkerPeersIdsChecksum4Bytes(Object.keys(worker_peers_settings));
 
-                // Return acknowledge_information(not acknowledge).
-                next(false);
+                me_join_callback(false, new_worker_id, worker_peers_settings);
+              } else if (Utils.areBuffersEqual(synchronize_acknowledgement_information.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
+                me_join_callback('Unknown error');
+              } else if (Utils.areBuffersEqual(synchronize_acknowledgement_information.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
+                me_join_callback('auth error');
+              } else if (Utils.areBuffersEqual(synchronize_acknowledgement_information.slice(2, 4), Buf.from([0x00, 0x02]))) {
+                me_join_callback('Broadcast error');
               }
-            } catch (error) {
-              // Unable to open handshake. Next loop.
+              // Return acknowledge binary.
+            } else {
               loop_next();
-
-              // Return acknowledge_information(not acknowledge).
-              next(false);
             }
+            next(false);
+
           }
         };
 
@@ -501,22 +880,47 @@ WorkerProtocol.prototype.start = function(callback) {
         this._open_handshake_function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
       };
       loop();
-    }
-    else {
+    } else {
       // [Flag] Uncatogorized error.
-      callback('this worker has already joined.');
+      me_join_callback('this worker has already joined.');
     }
   });
 
-  this._worker_module.on('me-update', () => {
-    // this._worker_affairs_protocol.updateMe(123, () => {
-    //   this._openHandshakeFromWorkerId
-    // });
+  this._worker_module.on('me-update', (my_new_worker_interfaces, my_new_worker_detail, me_update_callback) => {
+    const my_new_worker_interfaces_bytes = NSDT.encode(my_new_worker_interfaces);
+    const my_new_worker_detail_bytes = NSDT.encode(my_new_worker_detail);
+
+    const worker_affairs_worker_peer_update_broadcast_bytes = Buf.concat([
+      Buf.encodeUInt32BE(this._my_worker_id),
+      Buf.encodeUInt32BE(my_new_worker_interfaces_bytes.length),
+      my_new_worker_interfaces_bytes,
+      my_new_worker_detail_bytes
+    ]);
+
+    this._broadcastWorkerAffairsWorkerPeerOperation('update', this._my_worker_id, worker_affairs_worker_peer_update_broadcast_bytes, me_update_callback);
   });
 
-  this._worker_module.on('me-leave', () => {});
+  this._worker_module.on('me-leave', (me_leave_callback) => {
+    const worker_affairs_worker_peer_leave_broadcast_bytes = Buf.concat([
+      Buf.encodeUInt32BE(this._my_worker_id)
+    ]);
 
-  this._worker_module.on('by-worker-id-leave', () => {});
+    this._broadcastWorkerAffairsWorkerPeerOperation('leave', this._my_worker_id, worker_affairs_worker_peer_leave_broadcast_bytes, (error)=> {
+      if(error) {
+        me_leave_callback(error);
+      }
+      else {
+        me_leave_callback(error);
+      }
+    });
+  });
+
+  this._worker_module.on('worker-peer-leave', (target_worker_peer_worker_id, me_leave_callback) => {
+    const worker_affairs_worker_peer_update_broadcast_bytes = Buf.concat([
+      Buf.encodeUInt32BE(target_worker_peer_worker_id)
+    ]);
+    this._broadcastWorkerAffairsWorkerPeerOperation('leave', target_worker_peer_worker_id, worker_affairs_worker_peer_leave_broadcast_bytes, me_leave_callback);
+  });
 
   // this._worker_module.on('', () => {});
   if (callback) callback(false);
@@ -543,74 +947,182 @@ WorkerProtocol.prototype.close = function(callback) {
  */
 WorkerProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
   // Synchronize information for handshake
-  // Format:
-  // worker byte
-  // 0x02 worker-affairs
-  // 0x03 worker-socket
   if (synchronize_information[0] === this._ProtocolCodes.worker_affairs[0]) {
     onError(() => {
 
     });
 
-    if(synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_join_request_respond[0]) {
-      const remote_worker_authentication_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
-      const remote_worker_authentication_data = NSDT.decode(synchronize_information.slice(6, 6 + remote_worker_authentication_bytes_length));
+    if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond[0]) {
+      const new_worker_authentication_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
+      const new_worker_authentication_data = NSDT.decode(synchronize_information.slice(6, 6 + new_worker_authentication_bytes_length));
       try {
         // Emit worker authentication from worker module.
-        this._worker_module.emitEventListener('worker-authentication', 0, remote_worker_authentication_data, (is_authenticity_valid_validated) => {
-          if(is_authenticity_valid_validated) {
+        this._worker_module.emitEventListener('worker-peer-authentication', 0, new_worker_authentication_data, (is_authenticity_valid) => {
+          if (is_authenticity_valid) {
             // Broadcast worker join.
-            const bytes_offset_length = 6 + remote_worker_authentication_bytes_length;
-            const remote_worker_interfaces_bytes_length =  Buf.decodeUInt32BE(synchronize_information.slice(bytes_offset_length, bytes_offset_length + 4));
-            const remote_worker_interfaces = NSDT.decode(synchronize_information.slice(bytes_offset_length + 4, bytes_offset_length + 4 + remote_worker_interfaces_bytes_length));
-            const remote_worker_detail = NSDT.decode(synchronize_information.slice(bytes_offset_length + 4 + remote_worker_interfaces_bytes_length));
-            console.log(remote_worker_interfaces, remote_worker_detail);
+            const bytes_offset_length = 6 + new_worker_authentication_bytes_length;
+            const new_worker_peer_interfaces_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(bytes_offset_length, bytes_offset_length + 4));
+            const new_worker_peer_interfaces = NSDT.decode(synchronize_information.slice(bytes_offset_length + 4, bytes_offset_length + 4 + new_worker_peer_interfaces_bytes_length));
+            const new_worker_peer_detail = NSDT.decode(synchronize_information.slice(bytes_offset_length + 4 + new_worker_peer_interfaces_bytes_length));
 
-            // Broadcast worker join start.
-            // max concurrent connections.
-            const max_connections_count = 1;
-          }
-          else {
+            // Obtain new Id.
+            const worker_id_list = Object.keys(this._worker_peers_settings).map(x => parseInt(x));
+            const max_worker_id = worker_id_list[worker_id_list.length - 1] + 1;
+            let new_worker_id = 0;
+            for (let id = 1; id <= max_worker_id; id++) {
+              if (!worker_id_list.includes(id)) {
+                new_worker_id = id;
+                break;
+              }
+            }
+
+            const my_worker_authenticity_bytes = this._encodeAuthenticityBytes();
+
+            const worker_affairs_worker_peer_join_broadcast_bytes = Buf.concat([
+              Buf.encodeUInt32BE(new_worker_id),
+              synchronize_information.slice(bytes_offset_length)
+            ]);
+
+            this._broadcastWorkerAffairsWorkerPeerOperation('join', new_worker_id, worker_affairs_worker_peer_join_broadcast_bytes, (error) => {
+              if (error) {
+                next(Buf.concat([
+                  this._ProtocolCodes.worker_affairs,
+                  this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
+                  Buf.from([0x00, 0x02]) // Reject Broadcast error.
+                ]));
+              } else {
+                let worker_peers_settings = {};
+                // Generate clean new interfaces settings for new worker.
+                for (const index in this._worker_peers_settings) {
+                  worker_peers_settings[index] = {
+                    interfaces: this._worker_peers_settings[index].interfaces,
+                    detail: this._worker_peers_settings[index].detail
+                  };
+                }
+
+                // New worker.
+                worker_peers_settings[new_worker_id] = {};
+                worker_peers_settings[new_worker_id].interfaces = new_worker_peer_interfaces;
+                worker_peers_settings[new_worker_id].detail = new_worker_peer_detail;
+
+                next(Buf.concat([
+                  this._ProtocolCodes.worker_affairs,
+                  this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
+                  this._ProtocolCodes.accept, // Accept.
+                  Buf.encodeUInt32BE(new_worker_id),
+                  NSDT.encode(worker_peers_settings)
+                ]));
+              }
+            });
+          } else {
             next(Buf.concat([
               this._ProtocolCodes.worker_affairs,
-              this._ProtocolCodes.worker_affairs_worker_join_request_respond,
-              Buf.from([0x00]), // Reject
-              Buf.from([0x00])
+              this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
+              this._ProtocolCodes.authentication_reason_reject_2_bytes // Reject Authenticication error.
             ]));
           }
         });
-      }
-      catch(error) {
+      } catch (error) {
         console.log(error);
         next(Buf.concat([
           this._ProtocolCodes.worker_affairs,
-          this._ProtocolCodes.worker_affairs_worker_join_request_respond,
-          Buf.from([0x00]), // Reject
-          Buf.from([0x00])
+          this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
+          this._ProtocolCodes.unknown_reason_reject_2_bytes
         ]));
       }
-    }
-  }
-  else if (synchronize_information[0] === this._ProtocolCodes.worker_socket[0]) {
+    } else if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast[0]) {
+      this._handleWorkerAffairsWorkerPeerOperationBroadcast('join', synchronize_information, next);
+    } else if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_update_broadcast[0]) {
+      this._handleWorkerAffairsWorkerPeerOperationBroadcast('update', synchronize_information, next);
+    } else if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_leave_broadcast[0]) {
+      this._handleWorkerAffairsWorkerPeerOperationBroadcast('leave', synchronize_information, next);
+    } else if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_comfirm_broadcast[0]) {
+      const target_worker_peer_worker_id = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
+      const remote_worker_peer_authenticity_bytes = synchronize_information.slice(6);
+
+      this._validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_id) => {
+        // Validate authentication first.
+        if (is_authenticity_valid) {
+          const new_settings = this._worker_peers_settings[target_worker_peer_worker_id].new_settings;
+          if (new_settings === null) {
+            delete this._worker_peers_settings[target_worker_peer_worker_id];
+          } else {
+            this._worker_peers_settings[target_worker_peer_worker_id] = new_settings;
+            // Recalculate checksum.
+            this._updateWorkerPeersIdsChecksum4Bytes(Object.keys(this._worker_peers_settings));
+            this._setWorkerPeerWorkerAffairUnLocked(target_worker_peer_worker_id);
+          }
+          next(Buf.concat([
+            this._ProtocolCodes.worker_affairs,
+            this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast,
+            this._ProtocolCodes.accept
+          ]));
+        } else {
+          // Send reject to master.
+          next(Buf.concat([
+            this._ProtocolCodes.worker_affairs,
+            this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast,
+            this._ProtocolCodes.authentication_reason_reject_2_bytes // Reject. Authenticication error.
+          ]));
+        }
+      });
+    } else if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
+      const target_worker_peer_worker_id = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
+      const remote_worker_peer_authenticity_bytes = synchronize_information.slice(6);
+      this._validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_id) => {
+        if (is_authenticity_valid) {
+          const next_of_cancel = (error) => {
+            if (error) {
+              // Send reject to master.
+              next(Buf.concat([
+                this._ProtocolCodes.worker_affairs,
+                this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast,
+                this._ProtocolCodes.unknown_reason_reject_2_bytes
+              ]));
+            } else {
+              // Send accept to master.
+              next(Buf.concat([
+                this._ProtocolCodes.worker_affairs,
+                this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast,
+                this._ProtocolCodes.accept
+              ]));
+            }
+          };
+          this._worker_peers_settings[target_worker_peer_worker_id].on_worker_affairs_worker_peer_operation_cancel(next_of_cancel);
+          delete this._worker_peers_settings[target_worker_peer_worker_id]['on_worker_affairs_worker_peer_operation_cancel'];
+          this._setWorkerPeerWorkerAffairUnLocked(target_worker_peer_worker_id);
+        } else {
+          // Send reject to master.
+          next(Buf.concat([
+            this._ProtocolCodes.worker_affairs,
+            this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast,
+            this._ProtocolCodes.authentication_reason_reject_2_bytes // Reject. Authenticication error.
+          ]));
+        }
+      });
+    } else next(false);
+
+  } else if (synchronize_information[0] === this._ProtocolCodes.worker_socket[0]) {
     const worker_id = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
-    const remote_worker_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
+    const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
+
     onError((error) => {
       console.log(error);
     });
 
-    this._validateAuthenticityBytes(synchronize_information.slice(5, 5 + remote_worker_authenticity_bytes_length), (error, is_authenticity_valid_validated, remote_worker_id)=> {
-      if(is_authenticity_valid_validated && !error) {
-        const worker_socket_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(5 + remote_worker_authenticity_bytes_length, 5 + remote_worker_authenticity_bytes_length + 4));
-        const worker_socket_purpose_parameter = NSDT.decode(synchronize_information.slice(5 + remote_worker_authenticity_bytes_length + 4));
-        // console.log(is_authenticity_valid_validated, remote_worker_id, remote_worker_authenticity_bytes_length, remote_worker_authenticity_bytes, worker_socket_purpose_name, worker_socket_purpose_parameter);
+    this._validateAuthenticityBytes(synchronize_information.slice(5, 5 + remote_worker_peer_authenticity_bytes_length), (error, is_authenticity_valid, remote_worker_peer_id) => {
+      if (is_authenticity_valid && !error) {
+        const worker_socket_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(5 + remote_worker_peer_authenticity_bytes_length, 5 + remote_worker_peer_authenticity_bytes_length + 4));
+        const worker_socket_purpose_parameter = NSDT.decode(synchronize_information.slice(5 + remote_worker_peer_authenticity_bytes_length + 4));
+        // console.log(is_authenticity_valid, remote_worker_peer_id, remote_worker_peer_authenticity_bytes_length, remote_worker_peer_authenticity_bytes, worker_socket_purpose_name, worker_socket_purpose_parameter);
 
         onAcknowledge((acknowledge_information, tunnel) => {
           if (acknowledge_information[0] === this._ProtocolCodes.worker_socket[0] &&
-            acknowledge_information[1] === 0x01
+            acknowledge_information[1] === this._ProtocolCodes.accept[0]
           ) {
             this._worker_module.emitEventListener('worker-socket-request', (error, worker_socket) => {
               this._worker_socket_protocol.handleTunnel(error, worker_socket, tunnel);
-              this._worker_module.emitEventListener('worker-socket-ready', worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, worker_socket);
+              this._worker_module.emitEventListener('worker-socket-ready', worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_id, worker_socket);
             });
           } else {
             tunnel.close();
@@ -619,7 +1131,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
 
         next(Buf.concat([
           this._ProtocolCodes.worker_socket,
-          Buf.from([0x01]), // Accept.
+          this._ProtocolCodes.accept, // Accept.
           this._encodeAuthenticityBytes()
         ]));
 
@@ -630,8 +1142,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
         });
         next(Buf.concat([
           this._ProtocolCodes.worker_socket,
-          Buf.from([0x00]), // Reject.
-          Buf.from([0x00]) // Reject. Authenticication error.
+          this._ProtocolCodes.authentication_reason_reject_2_bytes // Reject. Authenticication error.
         ]));
       }
     });

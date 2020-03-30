@@ -43,12 +43,21 @@ function Worker(settings) {
         callback(error);
       }
     },
-    'worker-authentication': (remote_worker_id, worker_authenticity_information) => {
+    'worker-peer-authentication': (remote_worker_id, worker_authenticity_information) => {
       return false;
     },
     'worker-socket-ready': (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, worker_socket) => {
       this._event_listeners['worker-socket-create-' + worker_socket_purpose_name](worker_socket_purpose_parameter, remote_worker_id, worker_socket);
-    }
+    },
+    'worker-peer-join-request': (remote_worker_id, worker_peer_interfaces, worker_peer_detail, next) => {
+      this._event_listeners['worker-peer-join'](remote_worker_id, worker_peer_interfaces, worker_peer_detail, next);
+    },
+    'worker-peer-update-request': (remote_worker_id, worker_peer_interfaces, worker_peer_detail, next) => {
+      this._event_listeners['worker-peer-update'](remote_worker_id, worker_peer_interfaces, worker_peer_detail, next);
+    },
+    'worker-peer-leave-request': (remote_worker_id, next) => {
+      this._event_listeners['worker-peer-leave'](remote_worker_id, next);
+    },
   };
 };
 
@@ -88,8 +97,8 @@ Worker.prototype.close = function(callback) {
  * @param {noxerve_supported_data_type} worker_information
  * @param {module:Worker~callback_of_} callback
  */
-Worker.prototype.importWorkerAuthenticityData = function(worker_id, worker_authenticity_information, callback) {
-  this._event_listeners['worker-authenticity-data-import'](worker_id, worker_authenticity_information, callback);
+Worker.prototype.importMyWorkerAuthenticityData = function(worker_id, worker_authenticity_information, callback) {
+  this._event_listeners['my-worker-authenticity-data-import'](worker_id, worker_authenticity_information, callback);
 }
 
 /**
@@ -187,18 +196,18 @@ Worker.prototype.leaveMe = function(callback) {
 }
 
 /**
- * @callback module:Worker~callback_of_leave_by_worker_id
+ * @callback module:Worker~callback_of_leave_worker_peer
  * @param {error} error
  */
 /**
  * @memberof module:Worker
  * @param {integer} worker_id
- * @param {module:Worker~callback_of_leave_by_worker_id} callback
+ * @param {module:Worker~callback_of_leave_worker_peer} callback
  * @description Leave this worker away from workers cluster by worker id. Which
  * implies that you can remove any worker from workers cluster.
  */
-Worker.prototype.leaveByWorkerId = function(worker_id, callback) {
-  this._event_listeners['by-worker-id-leave'](worker_id, callback);
+Worker.prototype.leaveWorkerPeer = function(worker_id, callback) {
+  this._event_listeners['worker-peer-leave'](worker_id, callback);
 }
 
 /**

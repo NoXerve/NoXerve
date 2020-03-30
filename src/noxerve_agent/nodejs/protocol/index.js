@@ -264,7 +264,7 @@ Protocol.prototype.start = function(callback) {
                 // Call synchronize function. Check will it respond with data or not.
                 this._protocol_modules[protocol_name].synchronize(data, onSynchronizationError, onAcknowledge, (synchronize_returned_data)=> {
                   synchronize_protocol_left_count--;
-                  
+
                   // If responded then finish up.
                   if(has_any_synchronize_returned_data) {
                     return;
@@ -317,7 +317,7 @@ Protocol.prototype.start = function(callback) {
           tunnel.on('error', (error) => {
             if (ready_state) {
               if (stage === 0) {
-                // Happened error even not synchronize at all. Abort opreation without any further actions.
+                // Happened error even not synchronize at all. Abort operation without any further actions.
                 stage = -1;
                 tunnel.close();
               } else if (stage === 1) {
@@ -326,7 +326,7 @@ Protocol.prototype.start = function(callback) {
                 synchronization_error_handler(error);
               }
             } else {
-              // Happened error even not ready at all. Abort opreation without any further actions.
+              // Happened error even not ready at all. Abort operation without any further actions.
               stage = -1;
               tunnel.close();
             }
