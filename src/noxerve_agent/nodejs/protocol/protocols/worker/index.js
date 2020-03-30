@@ -342,15 +342,13 @@ WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authentici
  */
 WorkerProtocol.prototype._isWorkerPeerWorkerAffairsLocked = function(worker_id) {
   const worker_peer_settings = this._worker_peers_settings[worker_id];
-  if(worker_peer_settings) {
-    if(worker_peer_settings.worker_affairs_locked) {
+  if (worker_peer_settings) {
+    if (worker_peer_settings.worker_affairs_locked) {
       return worker_peer_settings.worker_affairs_locked;
-    }
-    else {
+    } else {
       return false;
     }
-  }
-  else {
+  } else {
     return false;
   }
 }
@@ -361,10 +359,9 @@ WorkerProtocol.prototype._isWorkerPeerWorkerAffairsLocked = function(worker_id) 
  * @private
  */
 WorkerProtocol.prototype._setWorkerPeerWorkerAffairsLocked = function(worker_id, locked_by_worker_peer_with_worker_id) {
-  if(this._worker_peers_settings[worker_id]) {
+  if (this._worker_peers_settings[worker_id]) {
     this._worker_peers_settings[worker_id].worker_affairs_locked = locked_by_worker_peer_with_worker_id;
-  }
-  else {
+  } else {
     this._worker_peers_settings[worker_id] = {};
     this._worker_peers_settings[worker_id].worker_affairs_locked = locked_by_worker_peer_with_worker_id;
   }
@@ -376,10 +373,9 @@ WorkerProtocol.prototype._setWorkerPeerWorkerAffairsLocked = function(worker_id,
  * @private
  */
 WorkerProtocol.prototype._setWorkerPeerWorkerAffairUnLocked = function(worker_id, locked_by_worker_peer_with_worker_id) {
-  if(this._worker_peers_settings[worker_id]) {
+  if (this._worker_peers_settings[worker_id]) {
     this._worker_peers_settings[worker_id].worker_affairs_locked = false;
-  }
-  else {
+  } else {
     this._worker_peers_settings[worker_id] = {};
     this._worker_peers_settings[worker_id].worker_affairs_locked = false;
   }
@@ -730,8 +726,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
                 } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), Buf.from([0x00, 0x02]))) {
                   // [Flag]
                   response_next('worker_affairs collision err.', false);
-                }
-                else {
+                } else {
                   // [Flag]
                   response_next('Unknown protocol.', false);
                 }
@@ -751,6 +746,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
                 const worker_affairs_worker_peer_join_cancel_broadcast_bytes = Buf.concat([
                   this._ProtocolCodes.worker_affairs,
                   this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast,
+                  Buf.encodeUInt32BE(this._ProtocolCodes.new_worker_id),
                   this._encodeAuthenticityBytes()
                 ]);
 
@@ -758,8 +754,8 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
                   response_next(error, !error);
                 };
 
-                const inner_on_finish = (error, inner_finished_worker_id_list)=> {
-                  if(error) {
+                const inner_on_finish = (error, inner_finished_worker_id_list) => {
+                  if (error) {
                     console.log(error, inner_finished_worker_id_list);
                   }
                 };
@@ -792,6 +788,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
                 const worker_affairs_worker_peer_join_cancel_broadcast_bytes = Buf.concat([
                   this._ProtocolCodes.worker_affairs,
                   this._ProtocolCodes.worker_affairs_worker_peer_operation_comfirm_broadcast,
+                  Buf.encodeUInt32BE(this._ProtocolCodes.new_worker_id),
                   this._encodeAuthenticityBytes()
                 ]);
 
@@ -799,8 +796,8 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
                   response_next(error, !error);
                 };
 
-                const inner_on_finish = (error, inner_finished_worker_id_list)=> {
-                  if(error) {
+                const inner_on_finish = (error, inner_finished_worker_id_list) => {
+                  if (error) {
                     console.log(error, inner_finished_worker_id_list);
                   }
                 };
@@ -839,22 +836,21 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
           const new_worker_peer_detail = NSDT.decode(bytes_offseted.slice(8 + new_worker_peer_interfaces_bytes_length));
 
           // [Flag] Test
-          if(this._my_worker_id === 2) {
+          if (this._my_worker_id === 2) {
             this._worker_peers_settings[3] = {};
             this._worker_peers_settings[3]['worker_affairs_locked'] = true;
             console.log(this._isWorkerPeerWorkerAffairsLocked(new_worker_peer_id), new_worker_peer_id);
           }
 
           // Check not blocked by other worker peer.
-          if(this._isWorkerPeerWorkerAffairsLocked(new_worker_peer_id)) {
+          if (this._isWorkerPeerWorkerAffairsLocked(new_worker_peer_id)) {
             next(Buf.concat([
               this._ProtocolCodes.worker_affairs,
               this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast,
               Buf.from([0x00, 0x02]), // Reject. Locked error.
               Buf.encodeUInt32BE(this._isWorkerPeerWorkerAffairsLocked(new_worker_peer_id)) // Locked by whom.
             ]));
-          }
-          else {
+          } else {
             this._setWorkerPeerWorkerAffairsLocked(new_worker_peer_id, remote_worker_peer_id);
             const next_of_worker_module = (error, on_undo) => {
               if (error) {
@@ -885,6 +881,23 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
             this._ProtocolCodes.authentication_reason_reject_2_bytes // Reject. Authenticication error.
           ]));
         }
+      });
+    } else if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_comfirm_broadcast[0]) {
+      const remote_worker_peer_authenticity_bytes = synchronize_information.slice(6, 6 + remote_worker_peer_authenticity_bytes_length);
+      this._validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_id) => {
+        // if (is_authenticity_valid) {} else {
+        //
+        // }
+      });
+    } else if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
+      const target_worker_peer_worker_id = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
+      const remote_worker_peer_authenticity_bytes = synchronize_information.slice(6, 6 + remote_worker_peer_authenticity_bytes_length);
+      this._validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_id) => {
+        // if (is_authenticity_valid) {
+        //
+        // } else {
+        //
+        // }
       });
     } else next(false);
 
