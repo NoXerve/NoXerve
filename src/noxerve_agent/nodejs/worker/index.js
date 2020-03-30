@@ -49,8 +49,14 @@ function Worker(settings) {
     'worker-socket-ready': (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, worker_socket) => {
       this._event_listeners['worker-socket-create-' + worker_socket_purpose_name](worker_socket_purpose_parameter, remote_worker_id, worker_socket);
     },
-    'worker-peer-join-request': (remote_worker_id, worker_interfaces, my_worker_detail, next) => {
-      this._event_listeners['worker-peer-join'](remote_worker_id, worker_interfaces, my_worker_detail, next);
+    'worker-peer-join-request': (remote_worker_id, worker_peer_interfaces, worker_peer_detail, next) => {
+      this._event_listeners['worker-peer-join'](remote_worker_id, worker_peer_interfaces, worker_peer_detail, next);
+    },
+    'worker-peer-update-request': (remote_worker_id, worker_peer_interfaces, worker_peer_detail, next) => {
+      this._event_listeners['worker-peer-update'](remote_worker_id, worker_peer_interfaces, worker_peer_detail, next);
+    },
+    'worker-peer-leave-request': (remote_worker_id, next) => {
+      this._event_listeners['worker-peer-leave'](remote_worker_id, next);
     },
   };
 };

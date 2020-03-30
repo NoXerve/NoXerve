@@ -135,7 +135,8 @@ initialize_interfaces(()=> {
   Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail, next) => {
     console.log('[Worker ' + my_worker_id + '] "worker-peer-update" event.', remote_worker_peer_id, remote_worker_peer_interfaces, remote_worker_peer_detail);
     const on_cancel = ()=> {
-
+      console.log('[Worker ' + my_worker_id + '] "worker-peer-update" cancel.');
+      next_of_cancel(false);
     };
     next(false, on_cancel);
   });
@@ -143,7 +144,8 @@ initialize_interfaces(()=> {
   Worker.on('worker-peer-leave', (remote_worker_peer_id, next) => {
     console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" event.', remote_worker_peer_id);
     const on_cancel = ()=> {
-
+      console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" cancel.');
+      next_of_cancel(false);
     };
     next(false, on_cancel);
   });

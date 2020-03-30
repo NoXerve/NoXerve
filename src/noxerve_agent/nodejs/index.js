@@ -108,7 +108,19 @@ function NoXerveAgent(settings) {
     },
     on: (event_name, listener) => {
       this._worker_module.on(event_name, listener);
-    }
+    },
+    joinMe: (remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authentication_data, callback) => {
+      this._worker_module.joinMe(remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authentication_data, callback);
+    },
+    updateMe: (my_worker_interfaces, my_worker_detail, callback) => {
+      this._worker_module.updateMe(my_worker_interfaces, my_worker_detail, callback);
+    },
+    leaveMe: (callback) => {
+      this._worker_module.leaveMe(callback);
+    },
+    leaveWorkerPeer: (worker_id, callback) => {
+      this._worker_module.leaveWorkerPeer(worker_id, callback);
+    },
   };
 
   /**
