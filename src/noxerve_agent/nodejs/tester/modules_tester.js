@@ -34,7 +34,7 @@ let finish = (test_name) => {
   }
 };
 
-let NSDT = require('../nsdt');
+const NSDT = new(require('../nsdt'))({});
 let NoXerveAgent = new(require('../index'))({});
 let Node = new(require('../node'))();
 let Node2 = new(require('../node'))();
@@ -46,17 +46,18 @@ let Protocol = new(require('../protocol'))({
   modules: {
     activity: Activity,
     service: Service,
-    worker: Worker
+    worker: Worker,
+    nsdt: NSDT
   },
   node_module: Node2
 });
 let Utils = require('../utils');
 
 console.log('[Utils module] random8Bytes ', Utils.random8Bytes());
-console.log('[NSDT module] ', NSDT.decode(NSDT.encode({
-  host: '0.0.0.0',
-  port: 12345
-})));
+// console.log('[NSDT module] ', NSDT.decode(NSDT.encode({
+//   host: '0.0.0.0',
+//   port: 12345
+// })));
 finish('other_test');
 
 console.log('[Node module] NoXerveAgent Object: ', NoXerveAgent);

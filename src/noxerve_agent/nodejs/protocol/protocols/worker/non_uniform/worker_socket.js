@@ -14,7 +14,6 @@
 
 const Utils = require('../../../../utils');
 const Buf = require('../../../../buffer');
-const NSDT = require('../../../../nsdt');
 const Crypto = require('crypto');
 
 /**
@@ -29,13 +28,19 @@ function WorkerSocketProtocol(settings) {
    * @private
    */
   this._settings = settings;
-
   /**
    * @memberof module:ActivityOfServiceProtocol
    * @type {object}
    * @private
    */
   this._hash_manager = settings.hash_manager;
+
+  /**
+   * @memberof module:ActivityOfServiceProtocol
+   * @type {object}
+   * @private
+   */
+  this._nsdt_embedded_protocol = settings.nsdt_embedded_protocol;
 }
 
 
@@ -95,7 +100,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
           this._ProtocolCodes.function_call,
           this._hash_manager.hashString4Bytes(function_name),
           function_callback_id,
-          NSDT.encode(function_argument)
+          this._nsdt_embedded_protocol.encode(function_argument)
         ]));
       }
     );
@@ -120,7 +125,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
         this._ProtocolCodes.yielding_start,
         this._hash_manager.hashString4Bytes(field_name),
         yielding_id,
-        NSDT.encode(yielding_start_argument)
+        this._nsdt_embedded_protocol.encode(yielding_start_argument)
       ]));
     });
 
@@ -148,7 +153,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
         // Catch error.
         try {
           const function_name = this._hash_manager.stringify4BytesHash(data.slice(0, 4));
-          const function_parameter = NSDT.decode(data.slice(8));
+          const function_parameter = this._nsdt_embedded_protocol.decode(data.slice(8));
 
           const return_function = (data) => {
             // WorkerSocket Protocol type "function_call_data" code 0x02
@@ -158,7 +163,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
 
             tunnel.send(Buf.concat([
               this._ProtocolCodes.function_call_data_eof,
-              function_callback_id, NSDT.encode(data)
+              function_callback_id, this._nsdt_embedded_protocol.encode(data)
             ]));
           };
 
@@ -170,7 +175,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
 
             tunnel.send(Buf.concat([
               this._ProtocolCodes.function_call_data,
-              function_callback_id, NSDT.encode(data)
+              function_callback_id, this._nsdt_embedded_protocol.encode(data)
             ]));
           };
 
@@ -197,7 +202,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
         try {
           const yielding_id_base64 = yielding_id.toString('base64');
           const field_name = this._hash_manager.stringify4BytesHash(data.slice(0, 4));
-          const yielding_handler_parameter = NSDT.decode(data.slice(8));
+          const yielding_handler_parameter = this._nsdt_embedded_protocol.decode(data.slice(8));
 
           worker_socket.emitEventListener('yielding-start-request', field_name, yielding_handler_parameter, (yielding_handler_argument, yielding_handler) => {
             yielding_handler_dict[yielding_id_base64] = yielding_handler;
@@ -209,7 +214,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
             tunnel.send(Buf.concat([
               this._ProtocolCodes.yielding_start_acknowledge,
               yielding_id,
-              NSDT.encode(yielding_handler_argument)
+              this._nsdt_embedded_protocol.encode(yielding_handler_argument)
             ]));
           });
         } catch (error) {
@@ -220,13 +225,13 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
         }
       } else if (protocol_code === this._ProtocolCodes.yielding_data[0]) {
         const yielding_id = data.slice(0, 4);
-        const yielded_data = NSDT.decode(data.slice(4));
+        const yielded_data = this._nsdt_embedded_protocol.decode(data.slice(4));
 
         yielding_handler_dict[yielding_id.toString('base64')](false, yielded_data, false);
       } else if (protocol_code === this._ProtocolCodes.yielding_data_eof[0]) {
         const yielding_id = data.slice(0, 4);
         const yielding_id_base64 = data.slice(0, 4).toString('base64');
-        const yielded_data = NSDT.decode(data.slice(4));
+        const yielded_data = this._nsdt_embedded_protocol.decode(data.slice(4));
 
         yielding_handler_dict[yielding_id_base64](false, yielded_data, true);
         // EOF, delete the callback no longer useful.
@@ -242,7 +247,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
 
       } else if (protocol_code === this._ProtocolCodes.function_call_data_eof[0]) {
         const function_callback_id = data.slice(0, 4);
-        const function_yielded_data = NSDT.decode(data.slice(4));
+        const function_yielded_data = this._nsdt_embedded_protocol.decode(data.slice(4));
         const function_callback_id_base64 = function_callback_id.toString('base64');
 
         function_callback_dict[function_callback_id_base64](false, function_yielded_data, true);
@@ -252,7 +257,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
 
       } else if (protocol_code === this._ProtocolCodes.function_call_data[0]) {
         const function_callback_id = data.slice(0, 4);
-        const function_yielded_data = NSDT.decode(data.slice(4));
+        const function_yielded_data = this._nsdt_embedded_protocol.decode(data.slice(4));
         function_callback_dict[function_callback_id.toString('base64')](false, function_yielded_data, false);
 
         // Handle worker function call error.
@@ -278,7 +283,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
         } catch (e) {}
         // Catch error.
         try {
-          const yielding_start_parameter = NSDT.decode(data.slice(4));
+          const yielding_start_parameter = this._nsdt_embedded_protocol.decode(data.slice(4));
 
           const finish_yield_function = (data) => {
             // WorkerSocket Protocol type "yielding_data_eof".
@@ -288,7 +293,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
 
             tunnel.send(Buf.concat([
               this._ProtocolCodes.yielding_data_eof,
-              yielding_id, NSDT.encode(data)
+              yielding_id, this._nsdt_embedded_protocol.encode(data)
             ]));
           };
 
@@ -300,7 +305,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
 
             tunnel.send(Buf.concat([
               this._ProtocolCodes.yielding_data,
-              yielding_id, NSDT.encode(data)
+              yielding_id, this._nsdt_embedded_protocol.encode(data)
             ]));
           };
 

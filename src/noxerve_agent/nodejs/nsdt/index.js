@@ -12,75 +12,25 @@
  * @module NSDT
  */
 
-const Buf = require('../buffer');
-
-// 4.2 Gbytes
-const MaxBytesLength = Math.pow(2, 32);
-
 // NSTD cheatsheet
 // Code | Type
 // 0 blob
 // 1 json
 // 2 noxerve callback dictionary
 
-// /**
-//  * @constructor module:NSDT
-//  * @param {object} settings
-//  * @description NoXerve Supported Data Type module. Encode, Decode from and to
-//  * blob and supported data type.
-//  */
-// function NSDT(settings) {
-//   /**
-//    * @memberof module:NSDT
-//    * @type {object}
-//    * @private
-//    */
-//   this._settings = settings;
-// }
-
 /**
- * @memberof module:NSDT
- * @param {object} noxerve_supported_data_type_object
- * @return {buffer} noxerve_supported_data_type_blob
- * @description NSDT => blob
+ * @constructor module:NSDT
+ * @param {object} settings
+ * @description NoXerve Supported Data Type module. Encode, Decode from and to
+ * blob and supported data type.
  */
-module.exports.encode = function(noxerve_supported_data_type_object) {
-  let blob;
-  let type;
-  // Patch undefined.
-  if(typeof(noxerve_supported_data_type_object) === 'undefined') {
-    noxerve_supported_data_type_object = null;
-  }
-  if (Buf.isBuffer(noxerve_supported_data_type_object)) {
-    type = 0x00;
-    blob = noxerve_supported_data_type_object;
-
-  } else {
-    type = 0x01;
-    blob = Buf.encode(JSON.stringify(noxerve_supported_data_type_object));
-  }
-
-  if (blob.length < MaxBytesLength) {
-    return Buf.concat([Buf.from([type]), blob]);
-  } else {
-    // [Flag] Uncatogorized error.
-    throw true;
-  }
+function NSDT(settings) {
+  /**
+   * @memberof module:NSDT
+   * @type {object}
+   * @private
+   */
+  this._settings = settings;
 }
 
-/**
- * @memberof module:NSDT
- * @param {buffer} noxerve_supported_data_type_blob
- * @return {object} noxerve_supported_data_type_object
- * @description blob => NSDT
- */
-module.exports.decode = function(noxerve_supported_data_type_blob) {
-  let type = noxerve_supported_data_type_blob[0];
-
-  if (type === 0x00) {
-    return noxerve_supported_data_type_blob.slice(1);
-
-  } else if (type === 0x01) {
-    return JSON.parse(Buf.decode(noxerve_supported_data_type_blob.slice(1)));
-  }
-}
+module.exports = NSDT;

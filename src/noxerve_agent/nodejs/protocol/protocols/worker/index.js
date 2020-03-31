@@ -14,7 +14,6 @@
 const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
-const NSDT = require('../../../nsdt');
 const WorkerSocketProtocol = require('./non_uniform/worker_socket');
 const WorkerAffairsProtocol = require('./worker_affairs');
 
@@ -93,7 +92,8 @@ function WorkerProtocol(settings) {
    * @description WorkerSocketProtocol submodule.
    */
   this._worker_socket_protocol = new WorkerSocketProtocol({
-    hash_manager: settings.hash_manager
+    hash_manager: settings.hash_manager,
+    nsdt_embedded_protocol: settings.embedded_protocols['nsdt_embedded']
   });
 
   /**
@@ -104,7 +104,7 @@ function WorkerProtocol(settings) {
    */
   this._worker_affairs_protocol = new WorkerAffairsProtocol({
     hash_manager: settings.hash_manager,
-    hash_manager: settings.hash_manager
+    nsdt_embedded_protocol: settings.embedded_protocols['nsdt_embedded']
   });
   //
   // this._worker_affairs_protocol.on('worker-peer-join');
@@ -117,6 +117,13 @@ function WorkerProtocol(settings) {
    * @private
    */
   this._hash_manager = settings.hash_manager;
+
+  /**
+   * @memberof module:WorkerProtocol
+   * @type {object}
+   * @private
+   */
+  this._nsdt_embedded_protocol = settings.embedded_protocols['nsdt_embedded'];
 }
 
 /**
@@ -314,8 +321,8 @@ WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = func
       const bytes_offseted = synchronize_information.slice(6 + remote_worker_peer_authenticity_bytes_length);
       const target_worker_peer_worker_id = Buf.decodeUInt32BE(bytes_offseted.slice(0, 4));
       const new_worker_peer_interfaces_bytes_length = (operation_type === 'leave') ? null : Buf.decodeUInt32BE(bytes_offseted.slice(4, 8));
-      let new_worker_peer_interfaces = (operation_type === 'leave') ? null : NSDT.decode(bytes_offseted.slice(8, 8 + new_worker_peer_interfaces_bytes_length));
-      let new_worker_peer_detail = (operation_type === 'leave') ? null : NSDT.decode(bytes_offseted.slice(8 + new_worker_peer_interfaces_bytes_length));
+      let new_worker_peer_interfaces = (operation_type === 'leave') ? null : this._nsdt_embedded_protocol.decode(bytes_offseted.slice(8, 8 + new_worker_peer_interfaces_bytes_length));
+      let new_worker_peer_detail = (operation_type === 'leave') ? null : this._nsdt_embedded_protocol.decode(bytes_offseted.slice(8 + new_worker_peer_interfaces_bytes_length));
 
       // [Flag] Test
       // if (this._my_worker_id === 2) {
@@ -578,7 +585,7 @@ WorkerProtocol.prototype._encodeAuthenticityBytes = function() {
 WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authenticity_bytes, callback) {
   const remote_worker_peer_id = Buf.decodeUInt32BE(remote_authenticity_bytes.slice(0, 4));
   const remote_worker_peers_ids_checksum_4bytes = remote_authenticity_bytes.slice(4, 8);
-  const remote_worker_peer_authenticity_data = NSDT.decode(remote_authenticity_bytes.slice(8));
+  const remote_worker_peer_authenticity_data = this._nsdt_embedded_protocol.decode(remote_authenticity_bytes.slice(8));
 
   // Check worker_peers_ids_checksum_4bytes.
   if (Utils.areBuffersEqual(this._worker_peers_ids_checksum_4bytes, remote_worker_peers_ids_checksum_4bytes)) {
@@ -661,7 +668,7 @@ WorkerProtocol.prototype.start = function(callback) {
     if (worker_id) {
       this._my_worker_id = worker_id;
       this._my_worker_id_4bytes = Buf.encodeUInt32BE(worker_id);
-      this._my_worker_authenticity_data_bytes = NSDT.encode(worker_authenticity_information);
+      this._my_worker_authenticity_data_bytes = this._nsdt_embedded_protocol.encode(worker_authenticity_information);
       callback(false);
     }
     // [Flag] Uncatogorized error.
@@ -723,7 +730,7 @@ WorkerProtocol.prototype.start = function(callback) {
   this._worker_module.on('worker-socket-create',
     (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_id, callback) => {
       const worker_socket_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_socket_purpose_name);
-      const worker_socket_purpose_parameter_bytes = NSDT.encode(worker_socket_purpose_parameter);
+      const worker_socket_purpose_parameter_bytes = this._nsdt_embedded_protocol.encode(worker_socket_purpose_parameter);
       const worker_authenticity_bytes = this._encodeAuthenticityBytes();
 
       const synchronize_information = Buf.concat([
@@ -808,9 +815,9 @@ WorkerProtocol.prototype.start = function(callback) {
       // Shuffle for clientwise loadbalancing.
       const shuffled_interface_connect_settings_list = Utils.shuffleArray(remote_worker_interfaces);
 
-      const my_worker_authentication_data_bytes = NSDT.encode(my_worker_authentication_data);
-      const my_worker_interfaces_bytes = NSDT.encode(my_worker_interfaces);
-      const my_worker_detail_bytes = NSDT.encode(my_worker_detail);
+      const my_worker_authentication_data_bytes = this._nsdt_embedded_protocol.encode(my_worker_authentication_data);
+      const my_worker_interfaces_bytes = this._nsdt_embedded_protocol.encode(my_worker_interfaces);
+      const my_worker_detail_bytes = this._nsdt_embedded_protocol.encode(my_worker_detail);
 
       const synchronize_information = Buf.concat([
         this._ProtocolCodes.worker_affairs,
@@ -856,7 +863,7 @@ WorkerProtocol.prototype.start = function(callback) {
               if (synchronize_acknowledgement_information[2] === this._ProtocolCodes.accept[0]) {
                 // Accept.
                 const new_worker_id = Buf.decodeUInt32BE(synchronize_acknowledgement_information.slice(3, 7));
-                const worker_peers_settings = NSDT.decode(synchronize_acknowledgement_information.slice(7));
+                const worker_peers_settings = this._nsdt_embedded_protocol.decode(synchronize_acknowledgement_information.slice(7));
 
                 // Update worker peers settings
                 this._worker_peers_settings = worker_peers_settings;
@@ -906,8 +913,8 @@ WorkerProtocol.prototype.start = function(callback) {
       my_new_worker_detail = null;
     }
 
-    const my_new_worker_interfaces_bytes = NSDT.encode(my_new_worker_interfaces);
-    const my_new_worker_detail_bytes = NSDT.encode(my_new_worker_detail);
+    const my_new_worker_interfaces_bytes = this._nsdt_embedded_protocol.encode(my_new_worker_interfaces);
+    const my_new_worker_detail_bytes = this._nsdt_embedded_protocol.encode(my_new_worker_detail);
 
     const worker_affairs_worker_peer_update_broadcast_bytes = Buf.concat([
       Buf.encodeUInt32BE(this._my_worker_id),
@@ -977,7 +984,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
 
     if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond[0]) {
       const new_worker_authentication_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
-      const new_worker_authentication_data = NSDT.decode(synchronize_information.slice(6, 6 + new_worker_authentication_bytes_length));
+      const new_worker_authentication_data = this._nsdt_embedded_protocol.decode(synchronize_information.slice(6, 6 + new_worker_authentication_bytes_length));
       try {
         // Emit worker authentication from worker module.
         this._worker_module.emitEventListener('worker-peer-authentication', 0, new_worker_authentication_data, (is_authenticity_valid) => {
@@ -985,8 +992,8 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
             // Broadcast worker join.
             const bytes_offset_length = 6 + new_worker_authentication_bytes_length;
             const new_worker_peer_interfaces_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(bytes_offset_length, bytes_offset_length + 4));
-            const new_worker_peer_interfaces = NSDT.decode(synchronize_information.slice(bytes_offset_length + 4, bytes_offset_length + 4 + new_worker_peer_interfaces_bytes_length));
-            const new_worker_peer_detail = NSDT.decode(synchronize_information.slice(bytes_offset_length + 4 + new_worker_peer_interfaces_bytes_length));
+            const new_worker_peer_interfaces = this._nsdt_embedded_protocol.decode(synchronize_information.slice(bytes_offset_length + 4, bytes_offset_length + 4 + new_worker_peer_interfaces_bytes_length));
+            const new_worker_peer_detail = this._nsdt_embedded_protocol.decode(synchronize_information.slice(bytes_offset_length + 4 + new_worker_peer_interfaces_bytes_length));
 
             // Obtain new Id.
             const worker_id_list = Object.keys(this._worker_peers_settings).map(x => parseInt(x));
@@ -1033,7 +1040,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
                   this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
                   this._ProtocolCodes.accept, // Accept.
                   Buf.encodeUInt32BE(new_worker_id),
-                  NSDT.encode(worker_peers_settings)
+                  this._nsdt_embedded_protocol.encode(worker_peers_settings)
                 ]));
               }
             });
@@ -1136,7 +1143,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
     this._validateAuthenticityBytes(synchronize_information.slice(5, 5 + remote_worker_peer_authenticity_bytes_length), (error, is_authenticity_valid, remote_worker_peer_id) => {
       if (is_authenticity_valid && !error) {
         const worker_socket_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(5 + remote_worker_peer_authenticity_bytes_length, 5 + remote_worker_peer_authenticity_bytes_length + 4));
-        const worker_socket_purpose_parameter = NSDT.decode(synchronize_information.slice(5 + remote_worker_peer_authenticity_bytes_length + 4));
+        const worker_socket_purpose_parameter = this._nsdt_embedded_protocol.decode(synchronize_information.slice(5 + remote_worker_peer_authenticity_bytes_length + 4));
         // console.log(is_authenticity_valid, remote_worker_peer_id, remote_worker_peer_authenticity_bytes_length, remote_worker_peer_authenticity_bytes, worker_socket_purpose_name, worker_socket_purpose_parameter);
 
         onAcknowledge((acknowledge_information, tunnel) => {

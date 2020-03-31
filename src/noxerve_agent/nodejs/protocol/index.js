@@ -16,7 +16,10 @@ const HashManager = require('./hash_manager');
 
 // Initial supported protocols detail.
 const SupportedProtocolsPath = require("path").join(__dirname, "./protocols");
+const SupportedEmbeddedProtocolsPath = require("path").join(__dirname, "./embedded_protocols");
+
 let SupportedProtocols = {};
+let SupportedEmbeddedProtocols = {};
 
 // Load avaliable protocols auto-dynamicly.
 require("fs").readdirSync(SupportedProtocolsPath).forEach((file_name) => {
@@ -25,6 +28,15 @@ require("fs").readdirSync(SupportedProtocolsPath).forEach((file_name) => {
   // Mapping protocol's name from specified module.
   SupportedProtocols[protocol.protocol_name] = protocol;
 });
+
+// Load avaliable protocols auto-dynamicly.
+require("fs").readdirSync(SupportedEmbeddedProtocolsPath).forEach((file_name) => {
+  let protocol = require(SupportedEmbeddedProtocolsPath + "/" + file_name);
+
+  // Mapping protocol's name from specified module.
+  SupportedEmbeddedProtocols[protocol.protocol_name] = protocol;
+});
+
 
 /**
  * @constructor module:Protocol
@@ -173,7 +185,30 @@ function Protocol(settings) {
    */
   this._protocol_modules = {};
 
-  // Initailize this._protocols.
+  /**
+   * @memberof module:Protocol
+   * @type {object}
+   * @private
+   */
+  this._embedded_protocol_modules = {};
+
+  // Initailize embedded protocols.
+  for (const protocol_name in SupportedEmbeddedProtocols) {
+    // Fetch protocol.
+    let Protocol = SupportedEmbeddedProtocols[protocol_name];
+    // console.log(SupportedEmbeddedProtocols, this._imported_modules, this._imported_modules[Protocol.related_module_name]);
+
+    // Check it's related module exists.
+    if (this._imported_modules[Protocol.related_module_name]) {
+
+      this._embedded_protocol_modules[Protocol.protocol_name] = new(Protocol.module)({
+        related_module: this._imported_modules[Protocol.related_module_name],
+        hash_manager: this._hash_manager
+      });
+    }
+  }
+
+  // Initailize protocols.
   for (const protocol_name in SupportedProtocols) {
     // Fetch protocol.
     let Protocol = SupportedProtocols[protocol_name];
@@ -184,7 +219,8 @@ function Protocol(settings) {
       this._protocol_modules[Protocol.protocol_name] = new(Protocol.module)({
         related_module: this._imported_modules[Protocol.related_module_name],
         open_handshake: this._openHandshake,
-        hash_manager: this._hash_manager
+        hash_manager: this._hash_manager,
+        embedded_protocols: this._embedded_protocol_modules
       });
     }
   }

@@ -15,6 +15,7 @@ const Errors = require('./errors');
 const Worker = require('./worker');
 const Service = require('./service/service');
 const Activity = require('./service/activity');
+const NSDT = require('./nsdt');
 const Protocol = require('./protocol');
 const Node = require('./node');
 // let SecuredNode = require('./node/secured_node');
@@ -75,13 +76,23 @@ function NoXerveAgent(settings) {
    * @type {object}
    * @see module:Node
    * @private
+   * @description Module for tunneling.
+   */
+  this._nsdt_module = new NSDT();
+
+  /**
+   * @memberof module:NoXerveAgent
+   * @type {object}
+   * @see module:Node
+   * @private
    * @description Module for protocols.
    */
   this._protocol_module = new Protocol({
     modules: {
       activity: this._activity_module,
       service: this._service_module,
-      worker: this._worker_module
+      worker: this._worker_module,
+      nsdt: this._nsdt_module
     },
     node_module: this._node_module
   });

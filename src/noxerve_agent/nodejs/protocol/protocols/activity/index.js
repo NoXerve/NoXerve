@@ -53,7 +53,8 @@ function ActivityProtocol(settings) {
    * @description ActivityOfServiceProtocol submodule.
    */
   this._activity_of_service_protocol = new ActivityOfServiceProtocol({
-    hash_manager: settings.hash_manager
+    hash_manager: settings.hash_manager,
+    nsdt_embedded_protocol: settings.embedded_protocols['nsdt_embedded']
   });
 }
 

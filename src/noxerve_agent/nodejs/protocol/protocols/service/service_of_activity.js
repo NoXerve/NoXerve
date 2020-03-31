@@ -15,7 +15,6 @@
 
 const Utils = require('../../../utils');
 const Buf = require('../../../buffer');
-const NSDT = require('../../../nsdt');
 
 /**
  * @constructor module:ServiceOfActivityProtocol
@@ -37,6 +36,13 @@ function ServiceOfActivityProtocol(settings) {
    * @private
    */
   this._hash_manager = settings.hash_manager;
+
+  /**
+   * @memberof module:ActivityOfServiceProtocol
+   * @type {object}
+   * @private
+   */
+  this._nsdt_embedded_protocol = settings.nsdt_embedded_protocol;
 }
 
 /**
@@ -102,7 +108,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
         // Catch error.
         try {
           const service_function_name = this._hash_manager.stringify4BytesHash(data.slice(0, 4));
-          const service_function_parameter = NSDT.decode(data.slice(8));
+          const service_function_parameter = this._nsdt_embedded_protocol.decode(data.slice(8));
 
           const return_function = (data) => {
             // Service Protocol type "service_function_call_data" code 0x02
@@ -112,7 +118,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
 
             tunnel.send(Buf.concat([
               this._ProtocolCodes.service_function_call_data_eof,
-              service_function_callback_id, NSDT.encode(data)
+              service_function_callback_id, this._nsdt_embedded_protocol.encode(data)
             ]));
           };
 
@@ -124,7 +130,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
 
             tunnel.send(Buf.concat([
               this._ProtocolCodes.service_function_call_data,
-              service_function_callback_id, NSDT.encode(data)
+              service_function_callback_id, this._nsdt_embedded_protocol.encode(data)
             ]));
           };
 
@@ -150,7 +156,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
         try {
           const yielding_id_base64 = yielding_id.toString('base64');
           const field_name = this._hash_manager.stringify4BytesHash(data.slice(0, 4));
-          const yielding_handler_parameter = NSDT.decode(data.slice(8));
+          const yielding_handler_parameter = this._nsdt_embedded_protocol.decode(data.slice(8));
 
           service_of_activity.emitEventListener('yielding-start-request', field_name, yielding_handler_parameter, (yielding_handler_argument, yielding_handler) => {
             yielding_handler_dict[yielding_id_base64] = yielding_handler;
@@ -162,7 +168,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
             tunnel.send(Buf.concat([
               this._ProtocolCodes.yielding_start_acknowledge,
               yielding_id,
-              NSDT.encode(yielding_handler_argument)
+              this._nsdt_embedded_protocol.encode(yielding_handler_argument)
             ]));
           });
         } catch (error) {
@@ -173,13 +179,13 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
         }
       } else if (protocol_code === this._ProtocolCodes.yielding_data[0]) {
         const yielding_id = data.slice(0, 4);
-        const yielded_data = NSDT.decode(data.slice(4));
+        const yielded_data = this._nsdt_embedded_protocol.decode(data.slice(4));
 
         yielding_handler_dict[yielding_id.toString('base64')](false, yielded_data, false);
       } else if (protocol_code === this._ProtocolCodes.yielding_data_eof[0]) {
         const yielding_id = data.slice(0, 4);
         const yielding_id_base64 = data.slice(0, 4).toString('base64');
-        const yielded_data = NSDT.decode(data.slice(4));
+        const yielded_data = this._nsdt_embedded_protocol.decode(data.slice(4));
 
         yielding_handler_dict[yielding_id_base64](false, yielded_data, true);
         // EOF, delete the callback no longer useful.

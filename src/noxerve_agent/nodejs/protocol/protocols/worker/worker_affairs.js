@@ -14,7 +14,6 @@
 const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
-const NSDT = require('../../../nsdt');
 
 /**
  * @constructor module:WorkerAffairsProtocol

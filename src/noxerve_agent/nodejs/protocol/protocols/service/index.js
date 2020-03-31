@@ -53,7 +53,8 @@ function ServiceProtocol(settings) {
    * @description ServiceOfActivityProtocol submodule.
    */
   this._service_of_activity_protocol = new ServiceOfActivityProtocol({
-    hash_manager: settings.hash_manager
+    hash_manager: settings.hash_manager,
+    nsdt_embedded_protocol: settings.embedded_protocols['nsdt_embedded']
   });
 }
 

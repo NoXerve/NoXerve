@@ -11,6 +11,7 @@
  });
 
 const Node = new(require('../../node'))();
+const NSDT = new(require('../../nsdt'))();
 const Worker = new(require('../../worker'))();
 
 let my_worker_id = 0;
@@ -97,7 +98,8 @@ initialize_interfaces(() => {
 
   const Protocol = new(require('../../protocol'))({
     modules: {
-      worker: Worker
+      worker: Worker,
+      nsdt: NSDT
     },
     node_module: Node
   });
