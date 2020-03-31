@@ -100,21 +100,6 @@ function WorkerProtocol(settings) {
    * @memberof module:WorkerProtocol
    * @type {object}
    * @private
-   * @description WorkerAffairsProtocol submodule.
-   */
-  this._worker_affairs_protocol = new WorkerAffairsProtocol({
-    hash_manager: settings.hash_manager,
-    nsdt_embedded_protocol: settings.embedded_protocols['nsdt_embedded']
-  });
-  //
-  // this._worker_affairs_protocol.on('worker-peer-join');
-  // this._worker_affairs_protocol.on('worker-peer-update');
-  // this._worker_affairs_protocol.on('worker-peer-leave');
-
-  /**
-   * @memberof module:WorkerProtocol
-   * @type {object}
-   * @private
    */
   this._hash_manager = settings.hash_manager;
 
