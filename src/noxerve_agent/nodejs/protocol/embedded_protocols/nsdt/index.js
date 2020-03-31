@@ -79,7 +79,7 @@ NSDTEmbeddedProtocol.prototype.encode = function(noxerve_supported_data_type_obj
 }
 
 /**
- * @memberof module:NSDT
+ * @memberof module:NSDTEmbeddedProtocol
  * @param {buffer} noxerve_supported_data_type_blob
  * @return {object} noxerve_supported_data_type_object
  * @description blob => NSDT
@@ -93,6 +93,28 @@ NSDTEmbeddedProtocol.prototype.decode = function(noxerve_supported_data_type_blo
   } else if (type === 0x01) {
     return JSON.parse(Buf.decode(noxerve_supported_data_type_blob.slice(1)));
   }
+}
+
+/**
+ * @memberof module:NSDTEmbeddedProtocol
+ * @param {buffer} noxerve_supported_data_type_blob
+ * @return {object} noxerve_supported_data_type_object
+ * @description blob => NSDT
+ */
+NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
+  const encode = (noxerve_supported_data_type_object) => {
+    return this.encode(noxerve_supported_data_type_object);
+  };
+
+  const decode = (noxerve_supported_data_type_blob) => {
+    return this.decode(noxerve_supported_data_type_blob);
+  };
+
+  const destroy = () => {
+
+  };
+
+  callback(false, encode, decode, destroy);
 }
 
 module.exports = {

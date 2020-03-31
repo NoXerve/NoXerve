@@ -70,159 +70,165 @@ ActivityOfServiceProtocol.prototype._ProtocolCodes = {
 ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_service, tunnel) {
   if (error) tunnel.close();
   else {
-    // For "service-function-call" event.
-    let service_function_callback_dict = {};
+    this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_embedded_protocol_destroy)=> {
+      if (error) tunnel.close();
+      else {
+        // For "service-function-call" event.
+        let service_function_callback_dict = {};
 
-    let yielding_start_callback_dict = {};
+        let yielding_start_callback_dict = {};
 
-    // Start communication with service.
-    activity_of_service.on('service-function-call',
-      (service_function_name, service_function_argument, service_function_callback) => {
-        const service_function_callback_id = Utils.random4Bytes();
+        // Start communication with service.
+        activity_of_service.on('service-function-call',
+          (service_function_name, service_function_argument, service_function_callback) => {
+            const service_function_callback_id = Utils.random4Bytes();
 
-        // Register callback with callback id locally.
-        service_function_callback_dict[service_function_callback_id.toString('base64')] = service_function_callback;
+            // Register callback with callback id locally.
+            service_function_callback_dict[service_function_callback_id.toString('base64')] = service_function_callback;
 
-        // Activity Protocol type "service-function-call" code 0x01
-        // format:
-        // +1 | +4 | +4 | ~
-        // protocol_code, service_function_name, service_function_callback_id, NSDT_encoded
-        tunnel.send(Buf.concat([
-          this._ProtocolCodes.service_function_call,
-          this._hash_manager.hashString4Bytes(service_function_name),
-          service_function_callback_id,
-          this._nsdt_embedded_protocol.encode(service_function_argument)
-        ]));
-      }
-    );
-
-    // Start communication with service.
-    activity_of_service.on('yielding-start', (field_name, yielding_start_argument, yielding_start_callback) => {
-      const yielding_id = Utils.random4Bytes();
-
-      // Register callback with callback id locally.
-      yielding_start_callback_dict[yielding_id.toString('base64')] = yielding_start_callback;
-
-      // Activity Protocol type "yielding-start"
-      // format:
-      // +1 | +4 | +4 | ~
-      // protocol_code, field_name, yielding_id, NSDT_encoded
-      tunnel.send(Buf.concat([
-        this._ProtocolCodes.yielding_start,
-        this._hash_manager.hashString4Bytes(field_name),
-        yielding_id,
-        this._nsdt_embedded_protocol.encode(yielding_start_argument)
-      ]));
-    });
-
-    // Start communication with service.
-    activity_of_service.on('initiative-close', (callback) => {
-      tunnel.close(callback);
-    });
-
-    tunnel.on('data', (data) => {
-      // code | type
-      // 0x01 service-function-call
-
-      const protocol_code = data[0];
-      data = data.slice(1);
-
-      if (protocol_code === this._ProtocolCodes.service_function_call_data_eof[0]) {
-        const service_function_callback_id = data.slice(0, 4);
-        const service_function_yielded_data = this._nsdt_embedded_protocol.decode(data.slice(4));
-        const service_function_callback_id_base64 = service_function_callback_id.toString('base64');
-
-        service_function_callback_dict[service_function_callback_id_base64](false, service_function_yielded_data, true);
-
-        // EOF, delete the callback no longer useful.
-        delete service_function_callback_dict[service_function_callback_id_base64];
-
-      } else if (protocol_code === this._ProtocolCodes.service_function_call_data[0]) {
-        const service_function_callback_id = data.slice(0, 4);
-        const service_function_yielded_data = this._nsdt_embedded_protocol.decode(data.slice(4));
-        service_function_callback_dict[service_function_callback_id.toString('base64')](false, service_function_yielded_data, false);
-
-        // Handle service function call error.
-      } else if (protocol_code === this._ProtocolCodes.service_function_call_error[0]) {
-        const service_function_callback_id = data.slice(0, 4);
-        const service_function_callback_id_base64 = service_function_callback_id.toString('base64');
-
-        // [Flag] Uncatogorized error.
-        service_function_callback_dict[service_function_callback_id_base64](true, null, true);
-
-        // EOF, delete the callback no longer useful.
-        delete service_function_callback_dict[service_function_callback_id_base64];
-
-        // Service Protocol type "yielding_start_acknowledge"
-        // format:
-        // +1 | +4 | ~
-        // service_function_call_data, service_function_callback_id, NSDT_encoded
-      } else if (protocol_code === this._ProtocolCodes.yielding_start_acknowledge[0]) {
-        let yielding_id;
-        // Important value. Calculate first.
-        try {
-          yielding_id = data.slice(0, 4);
-        } catch (e) {}
-        // Catch error.
-        try {
-          const yielding_start_parameter = this._nsdt_embedded_protocol.decode(data.slice(4));
-
-          const finish_yield_function = (data) => {
-            // Service Protocol type "yielding_data_eof".
+            // Activity Protocol type "service-function-call" code 0x01
             // format:
-            // +1 | +4 | ~
-            // service_function_call_data, yielding_id, NSDT_encoded
-
+            // +1 | +4 | +4 | ~
+            // protocol_code, service_function_name, service_function_callback_id, NSDT_encoded
             tunnel.send(Buf.concat([
-              this._ProtocolCodes.yielding_data_eof,
-              yielding_id, this._nsdt_embedded_protocol.encode(data)
+              this._ProtocolCodes.service_function_call,
+              this._hash_manager.hashString4Bytes(service_function_name),
+              service_function_callback_id,
+              nsdt_embedded_protocol_encode(service_function_argument)
             ]));
-          };
+          }
+        );
 
-          const yield_data_function = (data) => {
-            // Service Protocol type "yielding_data".
-            // format:
-            // +1 | +4 | ~
-            // service_function_call_data, yielding_id, NSDT_encoded
+        // Start communication with service.
+        activity_of_service.on('yielding-start', (field_name, yielding_start_argument, yielding_start_callback) => {
+          const yielding_id = Utils.random4Bytes();
 
-            tunnel.send(Buf.concat([
-              this._ProtocolCodes.yielding_data,
-              yielding_id, this._nsdt_embedded_protocol.encode(data)
-            ]));
-          };
+          // Register callback with callback id locally.
+          yielding_start_callback_dict[yielding_id.toString('base64')] = yielding_start_callback;
 
-          yielding_start_callback_dict[yielding_id.toString('base64')] (
-            false,
-            yielding_start_parameter,
-            finish_yield_function,
-            yield_data_function
-          );
-
-        } catch (error) {
-          console.log(error);
+          // Activity Protocol type "yielding-start"
+          // format:
+          // +1 | +4 | +4 | ~
+          // protocol_code, field_name, yielding_id, NSDT_encoded
           tunnel.send(Buf.concat([
-            this._ProtocolCodes.yielding_error,
-            yielding_id
+            this._ProtocolCodes.yielding_start,
+            this._hash_manager.hashString4Bytes(field_name),
+            yielding_id,
+            nsdt_embedded_protocol_encode(yielding_start_argument)
           ]));
-        }
+        });
 
-      } else if (protocol_code === this._ProtocolCodes.yielding_error[0]) {
-        const yielding_id = data.slice(0, 4);
-        const yielding_id_base64 = data.slice(0, 4).toString('base64');
+        // Start communication with service.
+        activity_of_service.on('initiative-close', (callback) => {
+          tunnel.close(callback);
+        });
 
-        // [Flag] Uncatogorized error.
-        yielding_start_callback_dict[yielding_id_base64](true);
-        // EOF, delete the callback no longer useful.
-        delete yielding_handler_dict[yielding_id_base64];
+        tunnel.on('data', (data) => {
+          // code | type
+          // 0x01 service-function-call
+
+          const protocol_code = data[0];
+          data = data.slice(1);
+
+          if (protocol_code === this._ProtocolCodes.service_function_call_data_eof[0]) {
+            const service_function_callback_id = data.slice(0, 4);
+            const service_function_yielded_data = nsdt_embedded_protocol_decode(data.slice(4));
+            const service_function_callback_id_base64 = service_function_callback_id.toString('base64');
+
+            service_function_callback_dict[service_function_callback_id_base64](false, service_function_yielded_data, true);
+
+            // EOF, delete the callback no longer useful.
+            delete service_function_callback_dict[service_function_callback_id_base64];
+
+          } else if (protocol_code === this._ProtocolCodes.service_function_call_data[0]) {
+            const service_function_callback_id = data.slice(0, 4);
+            const service_function_yielded_data = nsdt_embedded_protocol_decode(data.slice(4));
+            service_function_callback_dict[service_function_callback_id.toString('base64')](false, service_function_yielded_data, false);
+
+            // Handle service function call error.
+          } else if (protocol_code === this._ProtocolCodes.service_function_call_error[0]) {
+            const service_function_callback_id = data.slice(0, 4);
+            const service_function_callback_id_base64 = service_function_callback_id.toString('base64');
+
+            // [Flag] Uncatogorized error.
+            service_function_callback_dict[service_function_callback_id_base64](true, null, true);
+
+            // EOF, delete the callback no longer useful.
+            delete service_function_callback_dict[service_function_callback_id_base64];
+
+            // Service Protocol type "yielding_start_acknowledge"
+            // format:
+            // +1 | +4 | ~
+            // service_function_call_data, service_function_callback_id, NSDT_encoded
+          } else if (protocol_code === this._ProtocolCodes.yielding_start_acknowledge[0]) {
+            let yielding_id;
+            // Important value. Calculate first.
+            try {
+              yielding_id = data.slice(0, 4);
+            } catch (e) {}
+            // Catch error.
+            try {
+              const yielding_start_parameter = nsdt_embedded_protocol_decode(data.slice(4));
+
+              const finish_yield_function = (data) => {
+                // Service Protocol type "yielding_data_eof".
+                // format:
+                // +1 | +4 | ~
+                // service_function_call_data, yielding_id, NSDT_encoded
+
+                tunnel.send(Buf.concat([
+                  this._ProtocolCodes.yielding_data_eof,
+                  yielding_id, nsdt_embedded_protocol_encode(data)
+                ]));
+              };
+
+              const yield_data_function = (data) => {
+                // Service Protocol type "yielding_data".
+                // format:
+                // +1 | +4 | ~
+                // service_function_call_data, yielding_id, NSDT_encoded
+
+                tunnel.send(Buf.concat([
+                  this._ProtocolCodes.yielding_data,
+                  yielding_id, nsdt_embedded_protocol_encode(data)
+                ]));
+              };
+
+              yielding_start_callback_dict[yielding_id.toString('base64')] (
+                false,
+                yielding_start_parameter,
+                finish_yield_function,
+                yield_data_function
+              );
+
+            } catch (error) {
+              console.log(error);
+              tunnel.send(Buf.concat([
+                this._ProtocolCodes.yielding_error,
+                yielding_id
+              ]));
+            }
+
+          } else if (protocol_code === this._ProtocolCodes.yielding_error[0]) {
+            const yielding_id = data.slice(0, 4);
+            const yielding_id_base64 = data.slice(0, 4).toString('base64');
+
+            // [Flag] Uncatogorized error.
+            yielding_start_callback_dict[yielding_id_base64](true);
+            // EOF, delete the callback no longer useful.
+            delete yielding_handler_dict[yielding_id_base64];
+          }
+        });
+
+        tunnel.on('error', (error) => {
+          activity_of_service.emitEventListener('externel-error');
+        });
+
+        tunnel.on('close', () => {
+          activity_of_service.emitEventListener('passively-close');
+          nsdt_embedded_protocol_destroy();
+        });
       }
-    });
-
-    tunnel.on('error', (error) => {
-      activity_of_service.emitEventListener('externel-error');
-    });
-
-    tunnel.on('close', () => {
-      activity_of_service.emitEventListener('passively-close');
     });
   }
 }

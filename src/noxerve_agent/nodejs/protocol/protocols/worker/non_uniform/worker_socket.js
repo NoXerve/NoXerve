@@ -71,275 +71,281 @@ WorkerSocketProtocol.prototype._ProtocolCodes = {
 WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tunnel) {
   if (error) tunnel.close();
   else {
+    this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_embedded_protocol_destroy) => {
+      if (error) tunnel.close();
+      else {
 
-    // For function-define and yielding-handle.
-    let yielding_handler_dict = {};
+        // For function-define and yielding-handle.
+        let yielding_handler_dict = {};
 
-    // For function-call and yielding-start.
-    let function_callback_dict = {};
-    let yielding_start_callback_dict = {};
+        // For function-call and yielding-start.
+        let function_callback_dict = {};
+        let yielding_start_callback_dict = {};
 
-    // Hash worker socket function name.
-    worker_socket.on('function-define', (function_name) => {
-      this._hash_manager.hashString4Bytes(function_name);
-    });
+        // Hash worker socket function name.
+        worker_socket.on('function-define', (function_name) => {
+          this._hash_manager.hashString4Bytes(function_name);
+        });
 
-    // Start communication with another worker.
-    worker_socket.on('function-call',
-      (function_name, function_argument, function_callback) => {
-        const function_callback_id = Utils.random4Bytes();
+        // Start communication with another worker.
+        worker_socket.on('function-call',
+          (function_name, function_argument, function_callback) => {
+            const function_callback_id = Utils.random4Bytes();
 
-        // Register callback with callback id locally.
-        function_callback_dict[function_callback_id.toString('base64')] = function_callback;
+            // Register callback with callback id locally.
+            function_callback_dict[function_callback_id.toString('base64')] = function_callback;
 
-        // WorkerSocket Protocol type "function-call" code 0x01
-        // format:
-        // +1 | +4 | +4 | ~
-        // protocol_code, function_name, function_callback_id, NSDT_encoded
-        tunnel.send(Buf.concat([
-          this._ProtocolCodes.function_call,
-          this._hash_manager.hashString4Bytes(function_name),
-          function_callback_id,
-          this._nsdt_embedded_protocol.encode(function_argument)
-        ]));
-      }
-    );
-
-    // Hash worker socket function name.
-    worker_socket.on('yielding-handle', (field_name) => {
-      this._hash_manager.hashString4Bytes(field_name);
-    });
-
-    // Start communication with another worker.
-    worker_socket.on('yielding-start', (field_name, yielding_start_argument, yielding_start_callback) => {
-      const yielding_id = Utils.random4Bytes();
-
-      // Register callback with callback id locally.
-      yielding_start_callback_dict[yielding_id.toString('base64')] = yielding_start_callback;
-
-      // WorkerSocket Protocol type "yielding-start"
-      // format:
-      // +1 | +4 | +4 | ~
-      // protocol_code, field_name, yielding_id, NSDT_encoded
-      tunnel.send(Buf.concat([
-        this._ProtocolCodes.yielding_start,
-        this._hash_manager.hashString4Bytes(field_name),
-        yielding_id,
-        this._nsdt_embedded_protocol.encode(yielding_start_argument)
-      ]));
-    });
-
-    // Close communication with another worker.
-    worker_socket.on('initiative-close', (callback) => {
-      tunnel.close(callback);
-    });
-
-    tunnel.on('data', (data) => {
-      // code | type
-      // 0x01 function-call
-
-      const protocol_code = data[0];
-      data = data.slice(1);
-      // WorkerSocket Protocol type "function-call" code 0x01
-      // format:
-      // +1 | +4 | +4 | ~
-      // protocol_code, function_name, function_callback_id, NSDT_encoded
-      if (protocol_code === this._ProtocolCodes.function_call[0]) {
-        let function_callback_id;
-        // Important value. Calculate first.
-        try {
-          function_callback_id = data.slice(4, 8);
-        } catch (e) {}
-        // Catch error.
-        try {
-          const function_name = this._hash_manager.stringify4BytesHash(data.slice(0, 4));
-          const function_parameter = this._nsdt_embedded_protocol.decode(data.slice(8));
-
-          const return_function = (data) => {
-            // WorkerSocket Protocol type "function_call_data" code 0x02
+            // WorkerSocket Protocol type "function-call" code 0x01
             // format:
-            // +1 | +4 | ~
-            // function_call_data, function_callback_id, NSDT_encoded
-
+            // +1 | +4 | +4 | ~
+            // protocol_code, function_name, function_callback_id, NSDT_encoded
             tunnel.send(Buf.concat([
-              this._ProtocolCodes.function_call_data_eof,
-              function_callback_id, this._nsdt_embedded_protocol.encode(data)
+              this._ProtocolCodes.function_call,
+              this._hash_manager.hashString4Bytes(function_name),
+              function_callback_id,
+              nsdt_embedded_protocol_encode(function_argument)
             ]));
-          };
+          }
+        );
 
-          const yield_function = (data) => {
-            // WorkerSocket Protocol type "function_call_data" code 0x03
-            // format:
-            // +1 | +4 | ~
-            // function_call_data, function_callback_id, NSDT_encoded
+        // Hash worker socket function name.
+        worker_socket.on('yielding-handle', (field_name) => {
+          this._hash_manager.hashString4Bytes(field_name);
+        });
 
-            tunnel.send(Buf.concat([
-              this._ProtocolCodes.function_call_data,
-              function_callback_id, this._nsdt_embedded_protocol.encode(data)
-            ]));
-          };
+        // Start communication with another worker.
+        worker_socket.on('yielding-start', (field_name, yielding_start_argument, yielding_start_callback) => {
+          const yielding_id = Utils.random4Bytes();
 
-          worker_socket.emitEventListener('function-call-request',
-            function_name,
-            function_parameter,
-            return_function,
-            yield_function
-          );
-        } catch (error) {
-          console.log(error);
+          // Register callback with callback id locally.
+          yielding_start_callback_dict[yielding_id.toString('base64')] = yielding_start_callback;
+
+          // WorkerSocket Protocol type "yielding-start"
+          // format:
+          // +1 | +4 | +4 | ~
+          // protocol_code, field_name, yielding_id, NSDT_encoded
           tunnel.send(Buf.concat([
-            this._ProtocolCodes.function_call_error,
-            function_callback_id
+            this._ProtocolCodes.yielding_start,
+            this._hash_manager.hashString4Bytes(field_name),
+            yielding_id,
+            nsdt_embedded_protocol_encode(yielding_start_argument)
           ]));
-        }
-      } else if (protocol_code === this._ProtocolCodes.yielding_start[0]) {
-        let yielding_id;
-        // Important value. Calculate first.
-        try {
-          yielding_id = data.slice(4, 8);
-        } catch (e) {}
-        // Catch error.
-        try {
-          const yielding_id_base64 = yielding_id.toString('base64');
-          const field_name = this._hash_manager.stringify4BytesHash(data.slice(0, 4));
-          const yielding_handler_parameter = this._nsdt_embedded_protocol.decode(data.slice(8));
+        });
 
-          worker_socket.emitEventListener('yielding-start-request', field_name, yielding_handler_parameter, (yielding_handler_argument, yielding_handler) => {
-            yielding_handler_dict[yielding_id_base64] = yielding_handler;
+        // Close communication with another worker.
+        worker_socket.on('initiative-close', (callback) => {
+          tunnel.close(callback);
+        });
+
+        tunnel.on('data', (data) => {
+          // code | type
+          // 0x01 function-call
+
+          const protocol_code = data[0];
+          data = data.slice(1);
+          // WorkerSocket Protocol type "function-call" code 0x01
+          // format:
+          // +1 | +4 | +4 | ~
+          // protocol_code, function_name, function_callback_id, NSDT_encoded
+          if (protocol_code === this._ProtocolCodes.function_call[0]) {
+            let function_callback_id;
+            // Important value. Calculate first.
+            try {
+              function_callback_id = data.slice(4, 8);
+            } catch (e) {}
+            // Catch error.
+            try {
+              const function_name = this._hash_manager.stringify4BytesHash(data.slice(0, 4));
+              const function_parameter = nsdt_embedded_protocol_decode(data.slice(8));
+
+              const return_function = (data) => {
+                // WorkerSocket Protocol type "function_call_data" code 0x02
+                // format:
+                // +1 | +4 | ~
+                // function_call_data, function_callback_id, NSDT_encoded
+
+                tunnel.send(Buf.concat([
+                  this._ProtocolCodes.function_call_data_eof,
+                  function_callback_id, nsdt_embedded_protocol_encode(data)
+                ]));
+              };
+
+              const yield_function = (data) => {
+                // WorkerSocket Protocol type "function_call_data" code 0x03
+                // format:
+                // +1 | +4 | ~
+                // function_call_data, function_callback_id, NSDT_encoded
+
+                tunnel.send(Buf.concat([
+                  this._ProtocolCodes.function_call_data,
+                  function_callback_id, nsdt_embedded_protocol_encode(data)
+                ]));
+              };
+
+              worker_socket.emitEventListener('function-call-request',
+                function_name,
+                function_parameter,
+                return_function,
+                yield_function
+              );
+            } catch (error) {
+              console.log(error);
+              tunnel.send(Buf.concat([
+                this._ProtocolCodes.function_call_error,
+                function_callback_id
+              ]));
+            }
+          } else if (protocol_code === this._ProtocolCodes.yielding_start[0]) {
+            let yielding_id;
+            // Important value. Calculate first.
+            try {
+              yielding_id = data.slice(4, 8);
+            } catch (e) {}
+            // Catch error.
+            try {
+              const yielding_id_base64 = yielding_id.toString('base64');
+              const field_name = this._hash_manager.stringify4BytesHash(data.slice(0, 4));
+              const yielding_handler_parameter = nsdt_embedded_protocol_decode(data.slice(8));
+
+              worker_socket.emitEventListener('yielding-start-request', field_name, yielding_handler_parameter, (yielding_handler_argument, yielding_handler) => {
+                yielding_handler_dict[yielding_id_base64] = yielding_handler;
+                // WorkerSocket Protocol type "yielding_start_acknowledge"
+                // format:
+                // +1 | +4 | ~
+                // function_call_data, function_callback_id, NSDT_encoded
+
+                tunnel.send(Buf.concat([
+                  this._ProtocolCodes.yielding_start_acknowledge,
+                  yielding_id,
+                  nsdt_embedded_protocol_encode(yielding_handler_argument)
+                ]));
+              });
+            } catch (error) {
+              tunnel.send(Buf.concat([
+                this._ProtocolCodes.yielding_error,
+                yielding_id
+              ]));
+            }
+          } else if (protocol_code === this._ProtocolCodes.yielding_data[0]) {
+            const yielding_id = data.slice(0, 4);
+            const yielded_data = nsdt_embedded_protocol_decode(data.slice(4));
+
+            yielding_handler_dict[yielding_id.toString('base64')](false, yielded_data, false);
+          } else if (protocol_code === this._ProtocolCodes.yielding_data_eof[0]) {
+            const yielding_id = data.slice(0, 4);
+            const yielding_id_base64 = data.slice(0, 4).toString('base64');
+            const yielded_data = nsdt_embedded_protocol_decode(data.slice(4));
+
+            yielding_handler_dict[yielding_id_base64](false, yielded_data, true);
+            // EOF, delete the callback no longer useful.
+            delete yielding_handler_dict[yielding_id_base64];
+          } else if (protocol_code === this._ProtocolCodes.yielding_error[0]) {
+            const yielding_id = data.slice(0, 4);
+            const yielding_id_base64 = yielding_id.toString('base64');
+
+            // [Flag] Uncatogorized error.
+            yielding_handler_dict[yielding_id_base64](true, null, true);
+            // EOF, delete the callback no longer useful.
+            delete yielding_handler_dict[yielding_id_base64];
+
+          } else if (protocol_code === this._ProtocolCodes.function_call_data_eof[0]) {
+            const function_callback_id = data.slice(0, 4);
+            const function_yielded_data = nsdt_embedded_protocol_decode(data.slice(4));
+            const function_callback_id_base64 = function_callback_id.toString('base64');
+
+            function_callback_dict[function_callback_id_base64](false, function_yielded_data, true);
+
+            // EOF, delete the callback no longer useful.
+            delete function_callback_dict[function_callback_id_base64];
+
+          } else if (protocol_code === this._ProtocolCodes.function_call_data[0]) {
+            const function_callback_id = data.slice(0, 4);
+            const function_yielded_data = nsdt_embedded_protocol_decode(data.slice(4));
+            function_callback_dict[function_callback_id.toString('base64')](false, function_yielded_data, false);
+
+            // Handle worker function call error.
+          } else if (protocol_code === this._ProtocolCodes.function_call_error[0]) {
+            const function_callback_id = data.slice(0, 4);
+            const function_callback_id_base64 = function_callback_id.toString('base64');
+
+            // [Flag] Uncatogorized error.
+            function_callback_dict[function_callback_id_base64](true, null, true);
+
+            // EOF, delete the callback no longer useful.
+            delete function_callback_dict[function_callback_id_base64];
+
             // WorkerSocket Protocol type "yielding_start_acknowledge"
             // format:
             // +1 | +4 | ~
             // function_call_data, function_callback_id, NSDT_encoded
+          } else if (protocol_code === this._ProtocolCodes.yielding_start_acknowledge[0]) {
+            let yielding_id;
+            // Important value. Calculate first.
+            try {
+              yielding_id = data.slice(0, 4);
+            } catch (e) {}
+            // Catch error.
+            try {
+              const yielding_start_parameter = nsdt_embedded_protocol_decode(data.slice(4));
 
-            tunnel.send(Buf.concat([
-              this._ProtocolCodes.yielding_start_acknowledge,
-              yielding_id,
-              this._nsdt_embedded_protocol.encode(yielding_handler_argument)
-            ]));
-          });
-        } catch (error) {
-          tunnel.send(Buf.concat([
-            this._ProtocolCodes.yielding_error,
-            yielding_id
-          ]));
-        }
-      } else if (protocol_code === this._ProtocolCodes.yielding_data[0]) {
-        const yielding_id = data.slice(0, 4);
-        const yielded_data = this._nsdt_embedded_protocol.decode(data.slice(4));
+              const finish_yield_function = (data) => {
+                // WorkerSocket Protocol type "yielding_data_eof".
+                // format:
+                // +1 | +4 | ~
+                // function_call_data, yielding_id, NSDT_encoded
 
-        yielding_handler_dict[yielding_id.toString('base64')](false, yielded_data, false);
-      } else if (protocol_code === this._ProtocolCodes.yielding_data_eof[0]) {
-        const yielding_id = data.slice(0, 4);
-        const yielding_id_base64 = data.slice(0, 4).toString('base64');
-        const yielded_data = this._nsdt_embedded_protocol.decode(data.slice(4));
+                tunnel.send(Buf.concat([
+                  this._ProtocolCodes.yielding_data_eof,
+                  yielding_id, nsdt_embedded_protocol_encode(data)
+                ]));
+              };
 
-        yielding_handler_dict[yielding_id_base64](false, yielded_data, true);
-        // EOF, delete the callback no longer useful.
-        delete yielding_handler_dict[yielding_id_base64];
-      } else if (protocol_code === this._ProtocolCodes.yielding_error[0]) {
-        const yielding_id = data.slice(0, 4);
-        const yielding_id_base64 = yielding_id.toString('base64');
+              const yield_data_function = (data) => {
+                // WorkerSocket Protocol type "yielding_data".
+                // format:
+                // +1 | +4 | ~
+                // function_call_data, yielding_id, NSDT_encoded
 
-        // [Flag] Uncatogorized error.
-        yielding_handler_dict[yielding_id_base64](true, null, true);
-        // EOF, delete the callback no longer useful.
-        delete yielding_handler_dict[yielding_id_base64];
+                tunnel.send(Buf.concat([
+                  this._ProtocolCodes.yielding_data,
+                  yielding_id, nsdt_embedded_protocol_encode(data)
+                ]));
+              };
 
-      } else if (protocol_code === this._ProtocolCodes.function_call_data_eof[0]) {
-        const function_callback_id = data.slice(0, 4);
-        const function_yielded_data = this._nsdt_embedded_protocol.decode(data.slice(4));
-        const function_callback_id_base64 = function_callback_id.toString('base64');
+              yielding_start_callback_dict[yielding_id.toString('base64')](
+                false,
+                yielding_start_parameter,
+                finish_yield_function,
+                yield_data_function
+              );
 
-        function_callback_dict[function_callback_id_base64](false, function_yielded_data, true);
+            } catch (error) {
+              tunnel.send(Buf.concat([
+                this._ProtocolCodes.yielding_error,
+                yielding_id
+              ]));
+            }
 
-        // EOF, delete the callback no longer useful.
-        delete function_callback_dict[function_callback_id_base64];
+          } else if (protocol_code === this._ProtocolCodes.yielding_error[0]) {
+            const yielding_id = data.slice(0, 4);
+            const yielding_id_base64 = data.slice(0, 4).toString('base64');
 
-      } else if (protocol_code === this._ProtocolCodes.function_call_data[0]) {
-        const function_callback_id = data.slice(0, 4);
-        const function_yielded_data = this._nsdt_embedded_protocol.decode(data.slice(4));
-        function_callback_dict[function_callback_id.toString('base64')](false, function_yielded_data, false);
+            // [Flag] Uncatogorized error.
+            yielding_start_callback_dict[yielding_id_base64](true);
+            // EOF, delete the callback no longer useful.
+            delete yielding_handler_dict[yielding_id_base64];
+          }
+        });
 
-        // Handle worker function call error.
-      } else if (protocol_code === this._ProtocolCodes.function_call_error[0]) {
-        const function_callback_id = data.slice(0, 4);
-        const function_callback_id_base64 = function_callback_id.toString('base64');
+        tunnel.on('error', (error) => {
+          worker_socket.emitEventListener('externel-error');
+        });
 
-        // [Flag] Uncatogorized error.
-        function_callback_dict[function_callback_id_base64](true, null, true);
-
-        // EOF, delete the callback no longer useful.
-        delete function_callback_dict[function_callback_id_base64];
-
-        // WorkerSocket Protocol type "yielding_start_acknowledge"
-        // format:
-        // +1 | +4 | ~
-        // function_call_data, function_callback_id, NSDT_encoded
-      } else if (protocol_code === this._ProtocolCodes.yielding_start_acknowledge[0]) {
-        let yielding_id;
-        // Important value. Calculate first.
-        try {
-          yielding_id = data.slice(0, 4);
-        } catch (e) {}
-        // Catch error.
-        try {
-          const yielding_start_parameter = this._nsdt_embedded_protocol.decode(data.slice(4));
-
-          const finish_yield_function = (data) => {
-            // WorkerSocket Protocol type "yielding_data_eof".
-            // format:
-            // +1 | +4 | ~
-            // function_call_data, yielding_id, NSDT_encoded
-
-            tunnel.send(Buf.concat([
-              this._ProtocolCodes.yielding_data_eof,
-              yielding_id, this._nsdt_embedded_protocol.encode(data)
-            ]));
-          };
-
-          const yield_data_function = (data) => {
-            // WorkerSocket Protocol type "yielding_data".
-            // format:
-            // +1 | +4 | ~
-            // function_call_data, yielding_id, NSDT_encoded
-
-            tunnel.send(Buf.concat([
-              this._ProtocolCodes.yielding_data,
-              yielding_id, this._nsdt_embedded_protocol.encode(data)
-            ]));
-          };
-
-          yielding_start_callback_dict[yielding_id.toString('base64')](
-            false,
-            yielding_start_parameter,
-            finish_yield_function,
-            yield_data_function
-          );
-
-        } catch (error) {
-          tunnel.send(Buf.concat([
-            this._ProtocolCodes.yielding_error,
-            yielding_id
-          ]));
-        }
-
-      } else if (protocol_code === this._ProtocolCodes.yielding_error[0]) {
-        const yielding_id = data.slice(0, 4);
-        const yielding_id_base64 = data.slice(0, 4).toString('base64');
-
-        // [Flag] Uncatogorized error.
-        yielding_start_callback_dict[yielding_id_base64](true);
-        // EOF, delete the callback no longer useful.
-        delete yielding_handler_dict[yielding_id_base64];
+        tunnel.on('close', () => {
+          worker_socket.emitEventListener('passively-close');
+          nsdt_embedded_protocol_destroy();
+        });
       }
-    });
-
-    tunnel.on('error', (error) => {
-      worker_socket.emitEventListener('externel-error');
-    });
-
-    tunnel.on('close', () => {
-      worker_socket.emitEventListener('passively-close');
     });
   }
 }
