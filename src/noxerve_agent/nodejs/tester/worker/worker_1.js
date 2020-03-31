@@ -156,6 +156,12 @@ initialize_interfaces(()=> {
       if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
       process.on('message', (msg)=> {
         if(msg === '4') {
+          Worker.getWorkerPeerDetail(3, (error, detail) => {
+            if (error) {
+              console.log('[Worker ' + my_worker_id + '] getWorkerPeerDetail error.', error);
+            }
+            console.log('[Worker ' + my_worker_id + '] getWorkerPeerDetail.', detail);
+          });
           Worker.createWorkerSocket('purpose 1', {p: 1}, 3, (error, worker_socket)=> {
             if (error) {
               console.log('[Worker ' + my_worker_id + '] createWorkerSocket error.', error);

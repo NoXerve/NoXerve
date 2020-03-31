@@ -314,8 +314,8 @@ WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = func
       const bytes_offseted = synchronize_information.slice(6 + remote_worker_peer_authenticity_bytes_length);
       const target_worker_peer_worker_id = Buf.decodeUInt32BE(bytes_offseted.slice(0, 4));
       const new_worker_peer_interfaces_bytes_length = (operation_type === 'leave') ? null : Buf.decodeUInt32BE(bytes_offseted.slice(4, 8));
-      const new_worker_peer_interfaces = (operation_type === 'leave') ? null : NSDT.decode(bytes_offseted.slice(8, 8 + new_worker_peer_interfaces_bytes_length));
-      const new_worker_peer_detail = (operation_type === 'leave') ? null : NSDT.decode(bytes_offseted.slice(8 + new_worker_peer_interfaces_bytes_length));
+      let new_worker_peer_interfaces = (operation_type === 'leave') ? null : NSDT.decode(bytes_offseted.slice(8, 8 + new_worker_peer_interfaces_bytes_length));
+      let new_worker_peer_detail = (operation_type === 'leave') ? null : NSDT.decode(bytes_offseted.slice(8 + new_worker_peer_interfaces_bytes_length));
 
       // [Flag] Test
       // if (this._my_worker_id === 2) {
@@ -336,7 +336,19 @@ WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = func
         this._setWorkerPeerWorkerAffairsLocked(target_worker_peer_worker_id, remote_worker_peer_id);
         if (operation_type === 'leave') {
           this._worker_peers_settings[target_worker_peer_worker_id].new_settings = null;
-        } else {
+        } else if (operation_type === 'join') {
+          this._worker_peers_settings[target_worker_peer_worker_id].new_settings = {
+            interfaces: new_worker_peer_interfaces,
+            detail: new_worker_peer_detail
+          };
+        } else if (operation_type === 'update') {
+          // If null preserve settings.
+          if(!new_worker_peer_interfaces) {
+            new_worker_peer_interfaces = this._worker_peers_settings[target_worker_peer_worker_id].interfaces;
+          }
+          if(!new_worker_peer_detail) {
+            new_worker_peer_interfaces = this._worker_peers_settings[target_worker_peer_worker_id].detail;
+          }
           this._worker_peers_settings[target_worker_peer_worker_id].new_settings = {
             interfaces: new_worker_peer_interfaces,
             detail: new_worker_peer_detail
@@ -887,6 +899,13 @@ WorkerProtocol.prototype.start = function(callback) {
   });
 
   this._worker_module.on('me-update', (my_new_worker_interfaces, my_new_worker_detail, me_update_callback) => {
+    if(!my_new_worker_interfaces) {
+      my_new_worker_interfaces = null;
+    }
+    if(!my_new_worker_detail) {
+      my_new_worker_detail = null;
+    }
+
     const my_new_worker_interfaces_bytes = NSDT.encode(my_new_worker_interfaces);
     const my_new_worker_detail_bytes = NSDT.encode(my_new_worker_detail);
 
@@ -920,6 +939,10 @@ WorkerProtocol.prototype.start = function(callback) {
       Buf.encodeUInt32BE(target_worker_peer_worker_id)
     ]);
     this._broadcastWorkerAffairsWorkerPeerOperation('leave', target_worker_peer_worker_id, worker_affairs_worker_peer_leave_broadcast_bytes, me_leave_callback);
+  });
+
+  this._worker_module.on('worker-peer-detail-get', (target_worker_peer_worker_id, callback) => {
+    callback(false, this._worker_peers_settings[target_worker_peer_worker_id].detail);
   });
 
   // this._worker_module.on('', () => {});

@@ -201,7 +201,7 @@ initialize_interfaces(() => {
         });
     }
     if(msg === '2') {
-      Worker.updateMe(my_worker_interfaces_connect_setting, {name: 'worker 3 updated.'}, (error) => {
+      Worker.updateMe(null, {name: 'worker 3 updated.'}, (error) => {
         if(error) console.log('[Worker ' + my_worker_id + '] updateMe error.', error);
         else console.log('[Worker ' + my_worker_id + '] updateMe ok.');
       });

@@ -211,6 +211,20 @@ Worker.prototype.leaveWorkerPeer = function(worker_id, callback) {
 }
 
 /**
+ * @callback module:Worker~callback_of_worker_peer_detail_get
+ * @param {error} error
+ * @param {noxerve_supported_data_type} detail
+ */
+/**
+ * @memberof module:Worker
+ * @param {integer} worker_id
+ * @param {module:Worker~callback_of_worker_peer_detail_get} callback
+ */
+Worker.prototype.getWorkerPeerDetail = function(worker_id, callback) {
+  this._event_listeners['worker-peer-detail-get'](worker_id, callback);
+}
+
+/**
  * @callback module:Worker~callback_of_on
  * @param {error} error
  * @description Parameters depends.
