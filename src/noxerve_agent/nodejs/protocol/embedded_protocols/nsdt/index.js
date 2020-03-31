@@ -102,19 +102,28 @@ NSDTEmbeddedProtocol.prototype.decode = function(noxerve_supported_data_type_blo
  * @description blob => NSDT
  */
 NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
+  let data_listener = () => {};
   const encode = (noxerve_supported_data_type_object) => {
     return this.encode(noxerve_supported_data_type_object);
   };
 
   const decode = (noxerve_supported_data_type_blob) => {
     return this.decode(noxerve_supported_data_type_blob);
+  }
+
+  const on_data = (callback) => {
+    data_listener = callback;
+  };
+
+  const emit_data = (data) => {
+
   };
 
   const destroy = () => {
 
   };
 
-  callback(false, encode, decode, destroy);
+  callback(false, encode, decode, on_data, emit_data, destroy);
 }
 
 module.exports = {

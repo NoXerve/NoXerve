@@ -58,6 +58,7 @@ ActivityOfServiceProtocol.prototype._ProtocolCodes = {
   yielding_data: Buf.from([0x07]),
   yielding_data_eof: Buf.from([0x08]),
   yielding_error: Buf.from([0x09]),
+  nsdt_embedded: Buf.from([0x0a]),
 };
 
 /**
@@ -70,9 +71,16 @@ ActivityOfServiceProtocol.prototype._ProtocolCodes = {
 ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_service, tunnel) {
   if (error) tunnel.close();
   else {
-    this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_embedded_protocol_destroy)=> {
+    this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy)=> {
       if (error) tunnel.close();
       else {
+        // nsdt embedded runtime protocol setup.
+        nsdt_on_data((data) => {
+          tunnel.send(Buf.concat([
+            this._ProtocolCodes.nsdt_embedded,
+            data
+          ]));
+        });
         // For "service-function-call" event.
         let service_function_callback_dict = {};
 
@@ -129,8 +137,10 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
 
           const protocol_code = data[0];
           data = data.slice(1);
-
-          if (protocol_code === this._ProtocolCodes.service_function_call_data_eof[0]) {
+          if(protocol_code === this._ProtocolCodes.nsdt_embedded[0]) {
+            nsdt_emit_data(data);
+          }
+          else if (protocol_code === this._ProtocolCodes.service_function_call_data_eof[0]) {
             const service_function_callback_id = data.slice(0, 4);
             const service_function_yielded_data = nsdt_embedded_protocol_decode(data.slice(4));
             const service_function_callback_id_base64 = service_function_callback_id.toString('base64');

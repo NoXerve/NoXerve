@@ -60,6 +60,7 @@ ServiceOfActivityProtocol.prototype._ProtocolCodes = {
   yielding_data: Buf.from([0x07]),
   yielding_data_eof: Buf.from([0x08]),
   yielding_error: Buf.from([0x09]),
+  nsdt_embedded: Buf.from([0x0a]),
 };
 
 // [Flag] Need to be rewrited.
@@ -73,9 +74,17 @@ ServiceOfActivityProtocol.prototype._ProtocolCodes = {
 ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_activity, tunnel) {
   if (error) tunnel.close();
   else {
-    this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_embedded_protocol_destroy)=> {
+    this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy)=> {
       if (error) tunnel.close();
       else {
+        // nsdt embedded runtime protocol setup.
+        nsdt_on_data((data) => {
+          tunnel.send(Buf.concat([
+            this._ProtocolCodes.nsdt_embedded,
+            data
+          ]));
+        });
+
         let yielding_handler_dict = {};
         // Hash service function name.
         service_of_activity.on('service-function-define', (service_function_name) => {
@@ -98,11 +107,15 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
 
           const protocol_code = data[0];
           data = data.slice(1);
+
+          if(protocol_code === this._ProtocolCodes.nsdt_embedded[0]) {
+            nsdt_emit_data(data);
+          }
           // Service Protocol type "service-function-call" code 0x01
           // format:
           // +1 | +4 | +4 | ~
           // protocol_code, service_function_name, service_function_callback_id, NSDT_encoded
-          if (protocol_code === this._ProtocolCodes.service_function_call[0]) {
+          else if (protocol_code === this._ProtocolCodes.service_function_call[0]) {
             let service_function_callback_id;
             // Important value. Calculate first.
             try {

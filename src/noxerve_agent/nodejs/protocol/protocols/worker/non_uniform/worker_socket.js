@@ -59,6 +59,7 @@ WorkerSocketProtocol.prototype._ProtocolCodes = {
   yielding_data: Buf.from([0x07]),
   yielding_data_eof: Buf.from([0x08]),
   yielding_error: Buf.from([0x09]),
+  nsdt_embedded: Buf.from([0x0a]),
 };
 
 /**
@@ -71,9 +72,16 @@ WorkerSocketProtocol.prototype._ProtocolCodes = {
 WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tunnel) {
   if (error) tunnel.close();
   else {
-    this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_embedded_protocol_destroy) => {
+    this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy) => {
       if (error) tunnel.close();
       else {
+        // nsdt embedded runtime protocol setup.
+        nsdt_on_data((data) => {
+          tunnel.send(Buf.concat([
+            this._ProtocolCodes.nsdt_embedded,
+            data
+          ]));
+        });
 
         // For function-define and yielding-handle.
         let yielding_handler_dict = {};
@@ -143,11 +151,15 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
 
           const protocol_code = data[0];
           data = data.slice(1);
+          
+          if(protocol_code === this._ProtocolCodes.nsdt_embedded[0]) {
+            nsdt_emit_data(data);
+          }
           // WorkerSocket Protocol type "function-call" code 0x01
           // format:
           // +1 | +4 | +4 | ~
           // protocol_code, function_name, function_callback_id, NSDT_encoded
-          if (protocol_code === this._ProtocolCodes.function_call[0]) {
+          else if (protocol_code === this._ProtocolCodes.function_call[0]) {
             let function_callback_id;
             // Important value. Calculate first.
             try {
