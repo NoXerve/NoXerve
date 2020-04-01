@@ -6,6 +6,8 @@
  * @description Start testing by enter command "node tester.js".
  */
 
+ 'use strict';
+
 process.on('disconnect', ()=> {
   process.exit();
 });

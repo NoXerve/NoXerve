@@ -57,13 +57,13 @@ NSDT.prototype.createCallableStructure = function(name_to_function_dictionary, c
   for(const index in name_to_function_dictionary) {
     if(typeof(name_to_function_dictionary[index]) !== 'function') {
       // [Flag] Uncatogorized error.
-      callback('every value of your dictionary must be callable');
+      throw new Error('every value of your dictionary must be callable');
       return;
     }
   }
-  callback(false, new (CallableStructure.Local)({
+  return new (CallableStructure.Local)({
     name_to_function_dictionary: name_to_function_dictionary
-  }));
+  });
 };
 
 /**

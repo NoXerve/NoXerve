@@ -157,6 +157,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
                 yield_function
               );
             } catch (error) {
+              console.log(error);
               tunnel.send(Buf.concat([
                 this._ProtocolCodes.service_function_call_error,
                 service_function_callback_id

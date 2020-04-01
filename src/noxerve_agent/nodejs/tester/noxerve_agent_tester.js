@@ -6,6 +6,8 @@
  * @description Start testing by enter command "node tester.js".
  */
 
+ 'use strict';
+
 console.log('[Tester] Start testing...');
 
 let Tests = [

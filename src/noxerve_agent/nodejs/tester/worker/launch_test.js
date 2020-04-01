@@ -6,6 +6,8 @@
  * @description Start testing by enter command "node tester.js".
  */
 
+ 'use strict';
+
 const readline = require("readline");
 const child_process = require('child_process');
 
@@ -36,7 +38,7 @@ for(const index in worker_indexs) {
       console.log('[Test] Worker '+ worker_index +' ready.');
       worker_ready_left--;
       if(worker_ready_left === 0) {
-        next = ()=> {
+        const next = ()=> {
           rl.question('[Test] Input test index to execute test.\n'+JSON.stringify(test_indexs, null, 2)+'\n>>> ', (number)=> {
             for(const index in worker_indexs) {
               worker_childs[worker_indexs[index]].send(number);

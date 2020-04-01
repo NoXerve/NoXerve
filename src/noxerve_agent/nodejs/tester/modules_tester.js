@@ -6,6 +6,8 @@
  * @description Start testing by enter command "node tester.js".
  */
 
+'use strict';
+
 console.log('[Tester] Start testing...');
 
 let Tests = [
@@ -275,9 +277,18 @@ Node2.createInterface('WebSocket', {
     service_of_activity.define('test_func', (service_function_parameter, return_data, yield_data) => {
       console.log('[Service module] Service function called.');
       console.log('[Service module] Parameters value: ', service_function_parameter);
+
+      const callable_struture = NSDT.createCallableStructure({haha: ()=> {
+        console.log('NSDT module] haha');
+      }});
+
+      callable_struture.on('close', ()=> {
+
+      });
       // service_of_activity.close();
       yield_data({bar: 13579});
       yield_data(Utils.random8Bytes());
+      yield_data(callable_struture);
       yield_data(Buffer.from([1, 2, 3, 4, 5]));
       return_data({bar: 'last round'});
       finish('service_function_test');
@@ -313,6 +324,9 @@ Node2.createInterface('WebSocket', {
         finish_yield('haha');
       });
       activity_of_service.call('test_func', {foo: 'call from activity'}, (err, data, eof)=> {
+        if (err) {
+          console.log('[Activity module] call test_func error.', err);
+        }
         console.log('[Activity module] Return value: ', data);
         // Twice
         if(eof) activity_of_service.call('test_func', {foo: 'call from activity'}, (err, data, eof)=> {
