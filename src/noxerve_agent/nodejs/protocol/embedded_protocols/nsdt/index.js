@@ -40,6 +40,35 @@ function NSDTEmbeddedProtocol(settings) {
 }
 
 /**
+ * @callback module:NSDTEmbeddedProtocol~callback_of_start
+ * @param {error} error
+ */
+/**
+ * @memberof module:NSDTEmbeddedProtocol
+ * @param {module:NSDTEmbeddedProtocol~callback_of_start} callback
+ * @description Start running NSDTEmbeddedProtocol.
+ */
+NSDTEmbeddedProtocol.prototype.start = function(callback) {
+  // this._nsdt_module.on('callbale-structure-create', () => {
+  //
+  // });
+  if (callback) callback(false);
+}
+
+/**
+ * @callback module:NSDTEmbeddedProtocol~callback_of_close
+ * @param {error} error
+ */
+/**
+ * @memberof module:NSDTEmbeddedProtocol
+ * @param {module:NSDTEmbeddedProtocol~callback_of_close} callback
+ * @description Close the module.
+ */
+NSDTEmbeddedProtocol.prototype.close = function(callback) {
+  if (callback) callback(false);
+}
+
+/**
  * @memberof module:NSDTEmbeddedProtocol
  * @type {object}
  * @private

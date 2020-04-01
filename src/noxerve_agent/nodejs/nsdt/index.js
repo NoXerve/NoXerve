@@ -53,8 +53,17 @@ function NSDT(settings) {
  * @description CallableStructure multiplexing and demultiplexing strutures
  * using one data channel.
  */
-NSDT.prototype.createCallableStructure = function(callback) {
-  this._event_listeners('callbale-structure-create')(callback);
+NSDT.prototype.createCallableStructure = function(name_to_function_dictionary, callback) {
+  for(const index in name_to_function_dictionary) {
+    if(typeof(name_to_function_dictionary[index]) !== 'function') {
+      // [Flag] Uncatogorized error.
+      callback('every value of your dictionary must be callable');
+      return;
+    }
+  }
+  callback(false, new (CallableStructure.Local)({
+    name_to_function_dictionary: name_to_function_dictionary
+  }));
 };
 
 /**
