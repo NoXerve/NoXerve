@@ -68,14 +68,6 @@ function Node(settings) {
    * @memberof module:Node
    * @type {object}
    * @private
-   * @description Dictionary with uuid key.
-   */
-  this._tunnels = {};
-
-  /**
-   * @memberof module:Node
-   * @type {object}
-   * @private
    * @description Dictionary of event listeners.
    */
   this._event_listeners = {
