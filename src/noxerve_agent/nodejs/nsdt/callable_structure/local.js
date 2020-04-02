@@ -63,7 +63,6 @@ CallableStructureLocal.prototype.isCallableStructure = true;
 
 // [Flag] Unfinished annotaion.
 CallableStructureLocal.prototype.close = function() {
-  this._closed = true;
   this._event_listeners['initiative-close']();
 };
 
