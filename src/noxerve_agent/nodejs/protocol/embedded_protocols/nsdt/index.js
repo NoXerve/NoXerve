@@ -129,10 +129,10 @@ NSDTEmbeddedProtocol.prototype.encode = function(noxerve_supported_data_type_obj
 NSDTEmbeddedProtocol.prototype.decode = function(noxerve_supported_data_type_blob) {
   let type = noxerve_supported_data_type_blob[0];
 
-  if (type === 0x00) {
+  if (type === this._ProtocolCodes.binary[0]) {
     return noxerve_supported_data_type_blob.slice(1);
 
-  } else if (type === 0x01) {
+  } else if (type === this._ProtocolCodes.json[0]) {
     return JSON.parse(Buf.decode(noxerve_supported_data_type_blob.slice(1)));
   }
 }
