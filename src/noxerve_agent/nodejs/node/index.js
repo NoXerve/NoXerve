@@ -102,6 +102,7 @@ Node.prototype._newTunnel = function(interface_name, from_interface, from_connec
       send: send
     });
     tunnel.setValue('interface_name', interface_name);
+    tunnel.setValue('interface_secured', AvaliableInterfaces[interface_name].secured);
     tunnel.setValue('from_interface', from_interface);
     tunnel.setValue('from_connector', from_connector);
 
@@ -171,6 +172,15 @@ Node.prototype._checkConnectorAvaliable = function(interface_name, callback) {
 }
 
 /**
+ * @memberof module:Node
+ * @param {string} interface_name
+ * @return {boolean} is_interface_secured
+ */
+Node.prototype.isInterfaceSecured = function(interface_name) {
+  return AvaliableInterfaces[interface_name].secured;
+}
+
+/**
  * @callback module:Node~callback_of_create_interface
  * @param {integer} interface_id
  * @param {error} error
@@ -217,7 +227,7 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
       }
     });
   } catch (error) {
-    if(called_callback) throw error;
+    if (called_callback) throw error;
     else callback(error);
   }
 }
@@ -256,7 +266,7 @@ Node.prototype.destroyInterface = function(interface_id, callback) {
       }
     });
   } catch (error) {
-    if(called_callback) throw error;
+    if (called_callback) throw error;
     else callback(error);
   }
 }
@@ -291,30 +301,31 @@ Node.prototype.createTunnel = function(interface_name, interface_connect_setting
         // Note that this function behave just like this._newTunnel function but with the "connector" taste.
         // instead of interface.
         (send, close, emitter_initializer_from_connector) => {
-        // Create a new tunnel object with proper setting.
-        let tunnel = new Tunnel({
-          close: close,
-          send: send
-        });
-        tunnel.setValue('interface_name', AvaliableInterfaces[interface_name].interface_name);
-        tunnel.setValue('from_interface', false);
-        tunnel.setValue('from_connector', true);
+          // Create a new tunnel object with proper setting.
+          let tunnel = new Tunnel({
+            close: close,
+            send: send
+          });
+          tunnel.setValue('interface_name', AvaliableInterfaces[interface_name].interface_name);
+          tunnel.setValue('interface_secured', AvaliableInterfaces[interface_name].secured);
+          tunnel.setValue('from_interface', false);
+          tunnel.setValue('from_connector', true);
 
-        // Get tunnel emitter and pass to interface or connector.
-        tunnel.getEmitter((error, emitter) => {
-          if (error) {
-            called_callback = true;
-            callback(error);
-          } else {
-            called_callback = true;
-            callback(false, tunnel);
-            emitter_initializer_from_connector(emitter);
-          }
+          // Get tunnel emitter and pass to interface or connector.
+          tunnel.getEmitter((error, emitter) => {
+            if (error) {
+              called_callback = true;
+              callback(error);
+            } else {
+              called_callback = true;
+              callback(false, tunnel);
+              emitter_initializer_from_connector(emitter);
+            }
+          });
         });
-      });
     });
   } catch (error) {
-    if(called_callback) throw error;
+    if (called_callback) throw error;
     else callback(error);
   }
 }
@@ -342,9 +353,9 @@ Node.prototype.on = function(event_name, callback) {
  * @param {module:Node~callback_of_start} callback
  * @description Start running node.
  */
- Node.prototype.start = function(callback) {
-   if(callback) callback(false);
- }
+Node.prototype.start = function(callback) {
+  if (callback) callback(false);
+}
 
 /**
  * @callback module:Node~callback_of_close
@@ -356,6 +367,6 @@ Node.prototype.on = function(event_name, callback) {
  * @description Close module.
  */
 Node.prototype.close = function(interface_id, callback) {
-  if(callback) callback(false);
+  if (callback) callback(false);
 }
 module.exports = Node;

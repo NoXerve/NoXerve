@@ -37,7 +37,7 @@ module.exports = {
   },
 
   decode: (...args) => {
-    return args[0].toString();
+    return args[0].toString('utf8');
   },
 
   concat: (...args) => {

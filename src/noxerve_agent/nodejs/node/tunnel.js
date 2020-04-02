@@ -93,7 +93,6 @@ function Tunnel(settings) {
   this._emitter = (event_name, ...param)=> {
     if(this._event_listeners[event_name]) {
       this._event_listeners[event_name].apply(null, param);
-
     }
   }
 }
