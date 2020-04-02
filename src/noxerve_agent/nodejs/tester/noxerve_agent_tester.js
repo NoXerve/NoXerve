@@ -18,7 +18,8 @@ let Tests = [
   'worker_func1_call_test',
   'worker_func2_call_test',
   'worker_field2_yield_test',
-  'worker_field1_yield_test'
+  'worker_field1_yield_test',
+  'nsdt_test'
 ];
 
 let test_count = Tests.length;
@@ -180,9 +181,21 @@ NoXerveAgent.start((error)=> {
       service_of_activity.define('test_func', (service_function_parameter, return_data, yield_data) => {
         console.log('[Service module] Service function called.');
         console.log('[Service module] Parameters value: ', service_function_parameter);
+
+        const callable_struture = NoXerveAgent.NSDT.createCallableStructure({haha: (callback)=> {
+          console.log('[NSDT module] NSDT haha called.');
+          const callable_struture_2 = NoXerveAgent.NSDT.createCallableStructure({nah: ()=> {}});
+          callback(callable_struture, callable_struture_2, 321);
+        }});
+
+        callable_struture.on('close', ()=> {
+          console.log('[NSDT module] NSDT haha closed.');
+        });
+
         // service_of_activity.close();
         yield_data({bar: 13579});
         yield_data(Utils.random8Bytes());
+        yield_data(callable_struture);
         yield_data(Buffer.from([1, 2, 3, 4, 5]));
         return_data({bar: 'last round'});
         finish('service_function_test');
@@ -219,6 +232,15 @@ NoXerveAgent.start((error)=> {
         activity_of_service.call('test_func', {foo: 'call from activity'}, (error, data, eof)=> {
           if (error) console.log('[Activity module] Call error.', error);
           console.log('[Activity module] Return value: ', data);
+
+          // Twice
+          if(data.isCallableStructure) {
+            data.call('haha', (...params) => {
+              console.log('[NSDT module] haha callback params, ', params);
+              finish('nsdt_test');
+            });
+          }
+
           // Twice
           if(eof) activity_of_service.call('test_func', {foo: 'call from activity'}, (err, data, eof)=> {
             console.log('[Activity module] Returned value: ', data);

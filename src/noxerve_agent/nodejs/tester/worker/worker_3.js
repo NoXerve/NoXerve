@@ -163,6 +163,13 @@ initialize_interfaces(() => {
     });
     worker_socket.call('func1', {foo: 'call from onWorkerSocketCreate'}, (err, data, eof)=> {
       console.log('[Worker ' + my_worker_id + '] "func1" Return value: ', data);
+      // Twice
+      if(data.isCallableStructure) {
+        data.call('haha', (...params) => {
+          console.log('[NSDT module] haha callback params, ', params);
+        });
+      }
+      
       if(eof) console.log('finished worker_func1_call_test');
     });
     worker_socket.handleYielding('field2', (yielding_handler_parameter, ready_yielding) => {

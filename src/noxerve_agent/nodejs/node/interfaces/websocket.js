@@ -97,11 +97,11 @@ Interface.prototype.start = function(callback) {
       this._server.on('connection', (ws, req) => {
         // Call new_tunnel() function aquired from constructor(injected by node module).
         this._new_tunnel_function(
-          // Wrapped send fucntion.
+          // Wrapped send function.
           (data, send_callback) => {
             ws.send(data, send_callback);
           },
-          // Wrapped close fucntion.
+          // Wrapped close function.
           () => {
             ws.close();
           },
@@ -213,11 +213,11 @@ Connector.prototype.connect = function(connect_settings, new_tunnel_callback) {
 
     // Call new_tunnel() function aquired from the function caller.
     new_tunnel_callback(
-      // Wrapped send fucntion.
+      // Wrapped send function.
       (data, callback) => {
         ws.send(data, callback);
       },
-      // Wrapped close fucntion.
+      // Wrapped close function.
       () => {
         ws.close();
       },

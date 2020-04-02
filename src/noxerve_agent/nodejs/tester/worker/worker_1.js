@@ -176,6 +176,18 @@ initialize_interfaces(()=> {
               });
               worker_socket.define('func1', (service_function_parameter, return_data, yield_data) => {
                 console.log('[Worker ' + my_worker_id + '] WorkerSocket function on createWorkerSocket called.');
+                const callable_struture = NSDT.createCallableStructure({haha: (callback)=> {
+                  console.log('[NSDT module] NSDT haha called.');
+                  const callable_struture_2 = NSDT.createCallableStructure({nah: ()=> {}});
+                  callback(callable_struture, callable_struture_2, 321);
+                }});
+
+                callable_struture.on('close', ()=> {
+                  console.log('[NSDT module] NSDT haha closed.');
+                });
+
+                yield_data(callable_struture);
+
                 yield_data(123);
                 yield_data({foo: 123});
                 yield_data(Buffer.from([5, 4, 3, 2, 1]));

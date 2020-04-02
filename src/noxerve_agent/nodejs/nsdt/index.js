@@ -39,11 +39,11 @@ function NSDT(settings) {
    * @private
    */
    this._event_listeners = {
-     'callable-structure-local-request': ()=> {
-
-     },
+     // 'callable-structure-local-request': ()=> {
+     //
+     // },
      'callable-structure-remote-request': ()=> {
-
+       return new (CallableStructure.Remote)();
      }
    };
 }
@@ -86,7 +86,7 @@ NSDT.prototype.on = function(event_name, listener) {
  * @description NSDT events emitter.
  */
 NSDT.prototype.emitEventListener = function(event_name, ...params) {
-  this._event_listeners[event_name].apply(null, params);
+  return this._event_listeners[event_name].apply(null, params);
 }
 
 module.exports = NSDT;

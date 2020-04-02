@@ -25,11 +25,22 @@ function CallableStructureRemote(settings) {
    * @private
    */
   this._settings = settings;
+
+  /**
+   * @memberof module:CallableStructureRemote
+   * @type {object}
+   * @private
+   */
+   this._event_listeners = {
+   };
 }
 
+// For nsdt protocol detecting.
+// [Flag] Unfinished annotaion.
+CallableStructureRemote.prototype.isCallableStructure = true;
 
-CallableStructureRemote.prototype.call = function() {
-
+CallableStructureRemote.prototype.call = function(function_name, ...params) {
+  this._event_listeners['call'](function_name, params);
 }
 
 /**

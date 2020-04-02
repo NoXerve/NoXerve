@@ -21,6 +21,7 @@ let Tests = [
   'worker_func2_call_test',
   'worker_field2_yield_test',
   'worker_field1_yield_test',
+  'nsdt_test',
   'other_test'
 ];
 
@@ -278,12 +279,14 @@ Node2.createInterface('WebSocket', {
       console.log('[Service module] Service function called.');
       console.log('[Service module] Parameters value: ', service_function_parameter);
 
-      const callable_struture = NSDT.createCallableStructure({haha: ()=> {
-        console.log('NSDT module] haha');
+      const callable_struture = NSDT.createCallableStructure({haha: (callback)=> {
+        console.log('[NSDT module] NSDT haha called.');
+        const callable_struture_2 = NSDT.createCallableStructure({nah: ()=> {}});
+        callback(callable_struture, callable_struture_2, 321);
       }});
 
       callable_struture.on('close', ()=> {
-
+        console.log('[NSDT module] NSDT haha closed.');
       });
       // service_of_activity.close();
       yield_data({bar: 13579});
@@ -329,6 +332,13 @@ Node2.createInterface('WebSocket', {
         }
         console.log('[Activity module] Return value: ', data);
         // Twice
+        if(data.isCallableStructure) {
+          data.call('haha', (...params) => {
+            console.log('[NSDT module] haha callback params, ', params);
+            finish('nsdt_test');
+          });
+        }
+
         if(eof) activity_of_service.call('test_func', {foo: 'call from activity'}, (err, data, eof)=> {
           console.log('[Activity module] Returned value: ', data);
           if(eof) setTimeout(()=>{activity_of_service.close()}, 1500);

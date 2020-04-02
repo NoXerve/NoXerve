@@ -150,11 +150,24 @@ function NoXerveAgent(settings) {
    * @memberof module:NoXerveAgent
    * @type {object}
    * @see module:Service
-   * @description API intended to provide functions for the role of activity.
+   * @description API intended to provide functions for the role of service.
    */
   this.Activity = {
     createActivity: (interface_connect_settings_list, callback) => {
       this._activity_module.createActivity(interface_connect_settings_list, callback);
+    }
+  };
+
+  /**
+   * @memberof module:NoXerveAgent
+   * @type {object}
+   * @see module:NSDT
+   * @description NoXerve Supported Data Type module. Encode, Decode from and to
+   * blob and supported data type.
+   */
+  this.NSDT = {
+    createCallableStructure: (name_to_function_dictionary, callback) => {
+      return this._nsdt_module.createCallableStructure(name_to_function_dictionary, callback);
     }
   };
 };
