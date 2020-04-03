@@ -332,8 +332,7 @@ SecuredNode.prototype.createTunnel = function(interface_name, interface_connect_
                     secured_tunnel_emitter('ready');
                   }
                   else {
-                    // [Flag] Uncatogorized error.
-                    callback('error');
+                    callback(new Errors.ERR_NOXERVEAGENT_NODE_CREATE_TUNNEL('SecuredNode AES CBC mode shared key has not been created.'));
                   }
                 }
                 else if (data[0] === this._secured_node_protocol_code[0]) {
@@ -362,8 +361,7 @@ SecuredNode.prototype.createTunnel = function(interface_name, interface_connect_
               });
 
               tunnel.on('close', () => {
-                // [Flag] Uncatogorized error.
-                callback('SecuredNode cannot be established.');
+                callback(new Errors.ERR_NOXERVEAGENT_NODE_CREATE_TUNNEL('Tunnel closed. SecuredNode cannot be established.'));
               });
             });
           }

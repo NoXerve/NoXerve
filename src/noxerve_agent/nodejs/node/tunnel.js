@@ -11,7 +11,7 @@
  * @module Tunnel
  */
 
-require('../errors');
+const Errors = require('../errors');
 
 /**
  * @constructor module:Tunnel
@@ -27,9 +27,8 @@ function Tunnel(settings) {
   this._settings = settings;
 
   if(!settings.close) {
-    // [Flag] Uncatogorized error.
     // Close method of socket is a nessasary setting.
-    throw new Error();
+    throw new Errors.ERR_NOXERVEAGENT_NODE_TUNNEL_SETTINGS('Close function is a nessasary setting of tunnel.');
   }
   /**
    * @memberof module:Tunnel
@@ -39,9 +38,8 @@ function Tunnel(settings) {
   this._close_function = settings.close;
 
   if(!settings.send) {
-    // [Flag] Uncatogorized error.
-    // Close method of socket is a nessasary setting.
-    throw new Error();
+    // Send method of socket is a nessasary setting.
+    throw new Errors.ERR_NOXERVEAGENT_NODE_TUNNEL_SETTINGS('Send function is a nessasary setting of tunnel.');
   }
   /**
    * @memberof module:Tunnel
@@ -138,8 +136,7 @@ Tunnel.prototype.returnValue = function(keyword) {
  */
 Tunnel.prototype.getEmitter = function(callback) {
   if(this._emitter_distributed) {
-    // [Flag] Uncatogorized error.
-    callback(true);
+    callback(new Errors.ERR_NOXERVEAGENT_NODE_TUNNEL_GET_EMITTER('Emitter cannot be distributed twice.'));
   }
   else {
     callback(false, this._emitter);

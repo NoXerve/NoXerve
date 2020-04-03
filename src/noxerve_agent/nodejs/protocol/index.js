@@ -118,7 +118,6 @@ function Protocol(settings) {
               stage = 1;
               try {
                 if (acknowledge_information === false) {
-                  // [Flag] Uncatogorized error.
                   stage = -1;
                   tunnel.close();
                 }
@@ -152,12 +151,10 @@ function Protocol(settings) {
 
         tunnel.on('error', (error) => {
           if (stage === 0) {
-            // [Flag] Uncatogorized error.
             stage = -1;
             tunnel.close();
             acknowledge_synchronization(error, null, ()=> {});
           } else if (stage === 1) {
-            // [Flag] Uncatogorized error.
             stage = -1;
             tunnel.close();
             finish_handshake(error);
@@ -166,11 +163,9 @@ function Protocol(settings) {
 
         tunnel.on('close', () => {
           if (stage === 0) {
-            // [Flag] Uncatogorized error.
-            acknowledge_synchronization('Tunnel closed.', null, ()=> {});
+            acknowledge_synchronization(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'), null, ()=> {});
           } else if (stage === 1) {
-            // [Flag] Uncatogorized error.
-            finish_handshake(true);
+            finish_handshake(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
           }
         });
       }
@@ -370,8 +365,7 @@ Protocol.prototype.start = function(callback) {
 
           tunnel.on('close', () => {
             if (stage === 1) {
-              // [Flag] Uncatogorized error.
-              synchronization_error_handler('Tunnel close');
+              synchronization_error_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
             }
           });
         }

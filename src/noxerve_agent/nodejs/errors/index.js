@@ -54,5 +54,103 @@ module.exports = {
       this.name = 'ERR_NOXERVEAGENT_NODE_CONNECTOR_NOT_AVALIABLE';
       this.message = message;
     }
+  },
+  'ERR_NOXERVEAGENT_NODE_INTERFACE_START': class ERR_NOXERVEAGENT_NODE_INTERFACE_START extends Error {
+    constructor(message, ...params) {
+      // Pass remaining arguments (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_NODE_INTERFACE_START);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_NODE_INTERFACE_START';
+      this.message = message;
+    }
+  },
+  'ERR_NOXERVEAGENT_NODE_TUNNEL_GET_EMITTER': class ERR_NOXERVEAGENT_NODE_TUNNEL_GET_EMITTER extends Error {
+    constructor(message, ...params) {
+      // Pass remaining arguments (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_NODE_TUNNEL_GET_EMITTER);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_NODE_TUNNEL_GET_EMITTER';
+      this.message = message;
+    }
+  },
+  'ERR_NOXERVEAGENT_NODE_TUNNEL_SETTINGS': class ERR_NOXERVEAGENT_NODE_TUNNEL_SETTINGS extends Error {
+    constructor(message, ...params) {
+      // Pass remaining arguments (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_NODE_TUNNEL_SETTINGS);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_NODE_TUNNEL_SETTINGS';
+      this.message = message;
+    }
+  },
+  'ERR_NOXERVEAGENT_NODE_CREATE_TUNNEL': class ERR_NOXERVEAGENT_NODE_CREATE_TUNNEL extends Error {
+    constructor(message, ...params) {
+      // Pass remaining arguments (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_NODE_CREATE_TUNNEL);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_NODE_CREATE_TUNNEL';
+      this.message = message;
+    }
+  },
+  'ERR_NOXERVEAGENT_NSDT_CREATE_CALLABLE_STRUCTURE': class ERR_NOXERVEAGENT_NSDT_CREATE_CALLABLE_STRUCTURE extends Error {
+    constructor(message, ...params) {
+      // Pass remaining arguments (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_NSDT_CREATE_CALLABLE_STRUCTURE);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_NSDT_CREATE_CALLABLE_STRUCTURE';
+      this.message = message;
+    }
+  },
+  'ERR_NOXERVEAGENT_PROTOCOL_NSDT_EMBEDDED': class ERR_NOXERVEAGENT_PROTOCOL_NSDT_EMBEDDED extends Error {
+    constructor(message, ...params) {
+      // Pass remaining arguments (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_PROTOCOL_NSDT_EMBEDDED);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_PROTOCOL_NSDT_EMBEDDED';
+      this.message = message;
+    }
+  },
+  'ERR_NOXERVEAGENT_PROTOCOL': class ERR_NOXERVEAGENT_PROTOCOL extends Error {
+    constructor(message, ...params) {
+      // Pass remaining arguments (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_PROTOCOL);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_PROTOCOL';
+      this.message = message;
+    }
   }
 };

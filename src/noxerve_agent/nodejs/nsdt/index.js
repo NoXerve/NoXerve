@@ -12,6 +12,7 @@
  */
 
 const CallableStructure = require('./callable_structure');
+const Errors = require('../errors');
 
 // NSTD cheatsheet
 // Code | Type
@@ -27,7 +28,7 @@ const CallableStructure = require('./callable_structure');
  */
 function NSDT(settings) {
   /**
-   * @memberof module:NSDT
+   * @memberof module:NSDTErrors
    * @type {object}
    * @private
    */
@@ -56,8 +57,7 @@ function NSDT(settings) {
 NSDT.prototype.createCallableStructure = function(name_to_function_dictionary, callback) {
   for(const index in name_to_function_dictionary) {
     if(typeof(name_to_function_dictionary[index]) !== 'function') {
-      // [Flag] Uncatogorized error.
-      throw new Error('every value of your dictionary must be callable');
+      throw new Errors.ERR_NOXERVEAGENT_NSDT_CREATE_CALLABLE_STRUCTURE('Every value of your dictionary must be callable');
       return;
     }
   }

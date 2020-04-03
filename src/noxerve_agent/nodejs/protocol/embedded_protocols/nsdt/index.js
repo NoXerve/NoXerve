@@ -115,8 +115,7 @@ NSDTEmbeddedProtocol.prototype.encode = function(noxerve_supported_data_type_obj
   if (blob.length < MaxBytesLength) {
     return Buf.concat([type, blob]);
   } else {
-    // [Flag] Uncatogorized error.
-    throw true;
+    throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_NSDT_EMBEDDED('NSDTEmbeddedProtocol encod error. Exceeded MaxBytesLength.');
   }
 }
 
@@ -235,8 +234,7 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
         }
 
         if(!function_name_include) {
-          // [Flag] Uncatogorized error.
-          throw new Error('');
+          throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_NSDT_EMBEDDED('Such function (' + function_name + ') does not exist in this callable structure.');
         }
 
         const concat_bytes_list = [

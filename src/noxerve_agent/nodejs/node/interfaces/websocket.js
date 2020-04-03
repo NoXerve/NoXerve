@@ -86,9 +86,8 @@ Interface.prototype.start = function(callback) {
   // Catch error.
   try {
     if (this._started || this._closed) {
-      // [Flag] Uncatogorized Error.
       called_callback = true;
-      callback(true);
+      callback(new Errors.ERR_NOXERVEAGENT_NODE_INTERFACE_START('Interface is either started or closed.'));
     } else {
       this._server = new Websocket.Server({
         port: this._settings.port,
