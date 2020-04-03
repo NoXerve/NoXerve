@@ -57,16 +57,23 @@ function CallableStructureLocal(settings) {
    };
 }
 
-// For nsdt protocol detecting.
-// [Flag] Unfinished annotaion.
+/**
+ * @memberof module:CallableStructureLocal
+ * @description For nsdt protocol detecting.
+ */
 CallableStructureLocal.prototype.isCallableStructure = true;
 
-// [Flag] Unfinished annotaion.
+/**
+ * @memberof module:CallableStructureLocal
+ */
 CallableStructureLocal.prototype.close = function() {
   this._event_listeners['initiative-close']();
 };
 
-// [Flag] Unfinished annotaion.
+/**
+ * @memberof module:CallableStructureLocal
+ * @return {array} function_name_list
+ */
 CallableStructureLocal.prototype.returnFunctionNameList = function() {
   return Object.keys(this._name_to_function_dictionary);
 };

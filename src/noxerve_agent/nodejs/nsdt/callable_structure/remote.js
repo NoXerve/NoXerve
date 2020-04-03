@@ -36,7 +36,10 @@ function CallableStructureRemote(settings) {
 }
 
 // For nsdt protocol detecting.
-// [Flag] Unfinished annotaion.
+/**
+ * @memberof module:CallableStructureLocal
+ * @description For nsdt protocol detecting.
+ */
 CallableStructureRemote.prototype.isCallableStructure = true;
 
 CallableStructureRemote.prototype.call = function(function_name, ...params) {
