@@ -112,7 +112,7 @@ Worker.prototype.importMyWorkerAuthenticityData = function(worker_id, worker_aut
  * @description Import all worker ids and its corresponeding interfaces.
  */
 Worker.prototype.importWorkerPeersSettings = function(worker_peers_settings, callback) {
-  this._event_listeners['workers-settings-import'](worker_peers_settings, callback);
+  this._event_listeners['worker-peers-settings-import'](worker_peers_settings, callback);
 }
 
 /**

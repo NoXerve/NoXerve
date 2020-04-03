@@ -194,21 +194,19 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
       const on_a_worker_response = (worker_id, error, response_bytes, response_next) => {
         if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
           if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
-            // [Flag] Uncatogorized errors.
             response_next(false, true);
+
           } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
-            // [Flag] Uncatogorized errors.
-            response_next('Authenticication error', false);
+            response_next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authenticication error.'), false);
+
           } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
-            // [Flag] Uncatogorized errors.
-            response_next('Unknown error', false);
+            response_next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown error.'), false);
+
           } else {
-            // [Flag] Uncatogorized errors.
-            response_next('Unknown protocol', false);
+            response_next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
           }
         } else {
-          // [Flag] Uncatogorized errors.
-          response_next('Unknown protocol', false);
+          response_next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
         }
       };
 
@@ -230,21 +228,19 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
       const on_a_worker_response = (worker_id, error, response_bytes, response_next) => {
         if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
           if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
-            // [Flag] Uncatogorized errors.
             response_next(false, true);
+
           } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
-            // [Flag] Uncatogorized errors.
-            response_next('Authenticication error', false);
+            response_next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authenticication error.'), false);
+
           } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
-            // [Flag] Uncatogorized errors.
-            response_next('Unknown error', false);
+            response_next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown error.'), false);
+
           } else {
-            // [Flag] Uncatogorized errors.
-            response_next('Unknown protocol', false);
+            response_next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
           }
         } else {
-          // [Flag] Uncatogorized errors.
-          response_next('Unknown protocol', false);
+          response_next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
         }
       };
 
@@ -407,27 +403,20 @@ WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_wo
 WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
   worker_id, synchronize_information, acknowledge_synchronization, finish_handshake) {
   if(!this._worker_peers_settings[worker_id]) {
-    // [Flag] Uncatogorized error.
-    finish_handshake('No such worker Id.');
+    finish_handshake(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker id.'));
     return;
   }
   const interfaces = this._worker_peers_settings[worker_id].interfaces;
-  // Stage 0: If loop to the end call acknowledge_synchronization with error.
-  // Stage 1: If next_loop then call finish_handshake with error.
-  let stage = 0;
+
   let index = 0;
   const open_handshanke_errors = [];
   const loop_next = () => {
     index++;
-    if (stage === 1) {
-      // [Flag] Uncatogorized error.
-      finish_handshake(true);
-    } else if (index < interfaces.length) {
+    if (index < interfaces.length) {
       loop();
     }
     // No more next loop. Exit.
     else {
-      // [Flag] Uncatogorized error.
       acknowledge_synchronization(open_handshanke_errors, null, () => {});
     }
   };
@@ -446,7 +435,6 @@ WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
         // Return acknowledge_information(not acknowledge).
         next(false);
       } else {
-        stage = 1;
 
         // acknowledge_synchronization obtained from parameters.
         return acknowledge_synchronization(open_handshanke_error, synchronize_acknowledgement_information, next);
@@ -655,14 +643,13 @@ WorkerProtocol.prototype.start = function(callback) {
       this._my_worker_authenticity_data_bytes = this._nsdt_embedded_protocol.encode(worker_authenticity_information);
       callback(false);
     }
-    // [Flag] Uncatogorized error.
-    else callback(true);
+
+    else callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker authenticity data without worker id.'));
   });
 
-  this._worker_module.on('workers-settings-import', (worker_peers_settings, callback) => {
+  this._worker_module.on('worker-peers-settings-import', (worker_peers_settings, callback) => {
     if (this._my_worker_id === null) {
-      // [Flag] Uncatogorized error.
-      callback('You have to import auth data first.');
+      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('You have to import authenticity data first.'));
       return;
     }
 
@@ -681,15 +668,13 @@ WorkerProtocol.prototype.start = function(callback) {
 
       // Check worker id is integer.
       if (worker_id === NaN) {
-        // [Flag] Uncatogorized error.
-        callback(parseInt(index));
+        callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker peers settings without worker id.'));
         return;
       } else {
         // Check required field is included.
         for (const index2 in required_fields) {
           if (!keys.includes(required_fields[index2])) {
-            // [Flag] Uncatogorized error.
-            callback(required_fields[index2]);
+            callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker peers settings missing field "'+required_fields[index2]+'".'));
             return;
           }
         }
@@ -700,8 +685,7 @@ WorkerProtocol.prototype.start = function(callback) {
     }
 
     if (!include_myself) {
-      // [Flag] Uncatogorized error.
-      callback(this._my_worker_id);
+      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker peers settings must include myself.'));
       return;
     }
     this._worker_peers_settings = worker_peers_settings;
@@ -754,18 +738,15 @@ WorkerProtocol.prototype.start = function(callback) {
           synchronize_acknowledgement_information[1] === this._ProtocolCodes.reject[0]
         ) {
           if (synchronize_acknowledgement_information[2] === this._ProtocolCodes.authentication_reason_reject_2_bytes[1]) {
-
-            // [Flag] Uncatogorized error.
-            callback('worker authentication error.');
+            callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authenticication error.'));
             next(false);
-          } else {
 
-            // [Flag] Uncatogorized error.
-            callback('Unknown error');
+          } else {
+            callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown error.'));
             next(false);
           }
         } else {
-          callback('Unknown protocol');
+          callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'));
           next(false);
         }
       };
@@ -780,8 +761,7 @@ WorkerProtocol.prototype.start = function(callback) {
               callback(error, worker_socket);
             });
           } else {
-            // [Flag] Uncatogorized error.
-            callback('Remote worker authentication failed.');
+            callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Remote worker authentication failed.'));
           }
         }
       };
@@ -823,8 +803,7 @@ WorkerProtocol.prototype.start = function(callback) {
         }
         // No more next loop. Exit.
         else {
-          // [Flag] Uncatogorized error.
-          me_join_callback('looped over interfaces but no success.');
+          me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Could not create handshakes via imported interfaces.'));
         }
       };
 
@@ -884,8 +863,7 @@ WorkerProtocol.prototype.start = function(callback) {
       };
       loop();
     } else {
-      // [Flag] Uncatogorized error.
-      me_join_callback('this worker has already joined.');
+      me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('This worker has already joined.'));
     }
   });
 
