@@ -103,8 +103,7 @@ ActivityProtocol.prototype.start = function(callback) {
       }
       // No more next loop. Exit.
       else {
-        // [Flag] Uncatogorized error.
-        create_activity_callback(true);
+        create_activity_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY('Create activity error. Could not connect to any interfaces.'));
       }
     };
     const loop = () => {

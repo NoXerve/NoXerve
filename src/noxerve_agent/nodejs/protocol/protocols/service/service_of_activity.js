@@ -15,6 +15,7 @@
 
 const Utils = require('../../../utils');
 const Buf = require('../../../buffer');
+const Errors = require('../../../errors');
 
 /**
  * @constructor module:ServiceOfActivityProtocol
@@ -211,8 +212,7 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
             const yielding_id = data.slice(0, 4);
             const yielding_id_base64 = yielding_id.toString('base64');
 
-            // [Flag] Uncatogorized error.
-            yielding_handler_dict[yielding_id_base64](true, null, true);
+            yielding_handler_dict[yielding_id_base64](new Errors.ERR_NOXERVEAGENT_PROTOCOL_SERVICE('Yielding protocol error.'), null, true);
             // EOF, delete the callback no longer useful.
             delete yielding_handler_dict[yielding_id_base64];
           }

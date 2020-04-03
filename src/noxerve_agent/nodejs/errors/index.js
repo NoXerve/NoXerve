@@ -152,5 +152,47 @@ module.exports = {
       this.name = 'ERR_NOXERVEAGENT_PROTOCOL';
       this.message = message;
     }
+  },
+  'ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY': class ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY extends Error {
+    constructor(message, ...params) {
+      // Pass remaining arguments (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY';
+      this.message = message;
+    }
+  },
+  'ERR_NOXERVEAGENT_PROTOCOL_SERVICE': class ERR_NOXERVEAGENT_PROTOCOL_SERVICE extends Error {
+    constructor(message, ...params) {
+      // Pass remaining arguments (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_PROTOCOL_SERVICE);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_PROTOCOL_SERVICE';
+      this.message = message;
+    }
+  },
+  'ERR_NOXERVEAGENT_PROTOCOL_WORKER': class ERR_NOXERVEAGENT_PROTOCOL_WORKER extends Error {
+    constructor(message, ...params) {
+      // Pass remaining arguments (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_PROTOCOL_WORKER);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_PROTOCOL_WORKER';
+      this.message = message;
+    }
   }
 };

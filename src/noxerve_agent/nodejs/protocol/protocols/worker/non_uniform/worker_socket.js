@@ -151,7 +151,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
 
           const protocol_code = data[0];
           data = data.slice(1);
-          
+
           if(protocol_code === this._ProtocolCodes.nsdt_embedded[0]) {
             nsdt_emit_data(data);
           }
@@ -255,8 +255,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
             const yielding_id = data.slice(0, 4);
             const yielding_id_base64 = yielding_id.toString('base64');
 
-            // [Flag] Uncatogorized error.
-            yielding_handler_dict[yielding_id_base64](true, null, true);
+            yielding_handler_dict[yielding_id_base64](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Yielding protocol error.'), null, true);
             // EOF, delete the callback no longer useful.
             delete yielding_handler_dict[yielding_id_base64];
 
@@ -280,8 +279,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
             const function_callback_id = data.slice(0, 4);
             const function_callback_id_base64 = function_callback_id.toString('base64');
 
-            // [Flag] Uncatogorized error.
-            function_callback_dict[function_callback_id_base64](true, null, true);
+            function_callback_dict[function_callback_id_base64](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker function call error.'), null, true);
 
             // EOF, delete the callback no longer useful.
             delete function_callback_dict[function_callback_id_base64];
@@ -342,8 +340,7 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
             const yielding_id = data.slice(0, 4);
             const yielding_id_base64 = data.slice(0, 4).toString('base64');
 
-            // [Flag] Uncatogorized error.
-            yielding_start_callback_dict[yielding_id_base64](true);
+            yielding_start_callback_dict[yielding_id_base64](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Yielding request error.'));
             // EOF, delete the callback no longer useful.
             delete yielding_handler_dict[yielding_id_base64];
           }

@@ -14,6 +14,7 @@
 
 const Utils = require('../../../utils');
 const Buf = require('../../../buffer');
+const Errors = require('../../../errors');
 
 /**
  * @constructor module:ActivityOfServiceProtocol
@@ -160,8 +161,7 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
             const service_function_callback_id = data.slice(0, 4);
             const service_function_callback_id_base64 = service_function_callback_id.toString('base64');
 
-            // [Flag] Uncatogorized error.
-            service_function_callback_dict[service_function_callback_id_base64](true, null, true);
+            service_function_callback_dict[service_function_callback_id_base64](new Errors.ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY('Service function call error.'), null, true);
 
             // EOF, delete the callback no longer useful.
             delete service_function_callback_dict[service_function_callback_id_base64];
@@ -223,8 +223,7 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
             const yielding_id = data.slice(0, 4);
             const yielding_id_base64 = data.slice(0, 4).toString('base64');
 
-            // [Flag] Uncatogorized error.
-            yielding_start_callback_dict[yielding_id_base64](true);
+            yielding_start_callback_dict[yielding_id_base64](new Errors.ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY('Yielding request error.'));
             // EOF, delete the callback no longer useful.
             delete yielding_handler_dict[yielding_id_base64];
           }
