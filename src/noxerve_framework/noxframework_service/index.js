@@ -11,6 +11,9 @@
  * @module NoxFrameworkService
  */
 
+ const FS = require('fs');
+
+
 function NoxFrameworkService(noxerve_agent, preloader_parameters) {
   this._noxerve_agent = noxerve_agent;
   this._preloader_parameters = preloader_parameters;

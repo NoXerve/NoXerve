@@ -18,7 +18,7 @@ console.log('dP    dP `88888P\' `88888P\' dP\'  `dP `8888P88');
 console.log('                                         .88');
 console.log('                                     d8888P');
 console.log('');
-console.log('NoXerveFramework ©2019-2020 nooxy org.');
+console.log('NoXerveFramework ©2020-2019 nooxy org.');
 console.log('');
 
 console.log('NoXerve Framework service process id: ' + process.pid);
@@ -35,25 +35,27 @@ const message_codes = {
 
 const NoXerveFrameworkService = require('../noxframework_service');
 const FS = require('fs');
-const { execSync } = require("child_process");
+const {
+  execSync
+} = require("child_process");
 const readline = require("readline");
 
 const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
+  input: process.stdin,
+  output: process.stdout
 });
 
 let noxframework_service_instance;
 
-process.on('message', (message)=> {
+process.on('message', (message) => {
   const message_code = message.message_code;
   const data = message.data;
 
-  if(message_code === message_codes.close_noxframework_service) {
+  if (message_code === message_codes.close_noxframework_service) {
     let close_executed_next_execute = 0;
-    const close_executed_next_execute_plus_one = ()=> {
+    const close_executed_next_execute_plus_one = () => {
       close_executed_next_execute++;
-      if(close_executed_next_execute === 2) {
+      if (close_executed_next_execute === 2) {
         process.send({
           message_code: message_codes.close_noxframework_service_comfirm
         });
@@ -64,8 +66,7 @@ process.on('message', (message)=> {
       close_executed_next_execute_plus_one();
     });
     close_executed_next_execute_plus_one();
-  }
-  else if(message_code === message_codes.start_noxframework_service) {
+  } else if (message_code === message_codes.start_noxframework_service) {
     process.chdir(data.working_directory);
     console.log('NoXerve Framework service working directory:', data.working_directory);
 
@@ -74,36 +75,48 @@ process.on('message', (message)=> {
     };
 
     const start_noxframework_service = () => {
-      const noxerve_agent = new (require(data.noxerve_agent_library_directory+'/nodejs'))(noxerve_agent_settings);
+      // Create nessasary directories.
+      if (!FS.existsSync(data.settings.service.services_path)) {
+        FS.mkdirSync(data.settings.service.services_path);
+      }
+      if (!FS.existsSync(data.settings.service.services_files_path)) {
+        FS.mkdirSync(data.settings.service.services_files_path);
+      }
+      if (!FS.existsSync(data.settings.service.services_files_path + '/noxframework')) {
+        FS.mkdirSync(data.settings.service.services_files_path + '/noxframework');
+      }
+
+      // change workingdir
+      process.chdir(data.settings.service.services_files_path + '/noxframework');
+
+      const noxerve_agent = new(require(data.noxerve_agent_library_directory + '/nodejs'))(noxerve_agent_settings);
       let start_executed_next_execute = 0;
 
       // Setting up relaunch function for NoXerveFrameworkService.
-      data.relaunchPreloader = ()=> {
-        if(start_executed_next_execute === 2) {
+      data.relaunchPreloader = () => {
+        if (start_executed_next_execute === 2) {
           process.send({
             message_code: message_codes.request_preloader_relaunch
           });
-        }
-        else {
+        } else {
           //
           throw new Error('"relaunchPreloader" is not available until serivce start function executed.');
         }
       };
-      data.closePreloader = ()=> {
-        if(start_executed_next_execute === 2) {
+      data.closePreloader = () => {
+        if (start_executed_next_execute === 2) {
           process.send({
             message_code: message_codes.request_preloader_close
           });
-        }
-        else {
+        } else {
           throw new Error('"relaunchPreloader" is not available until serivce start function executed.');
         }
       };
       noxframework_service_instance = new NoXerveFrameworkService(noxerve_agent, data);
 
-      const start_executed_next_execute_plus_one = ()=> {
+      const start_executed_next_execute_plus_one = () => {
         start_executed_next_execute++;
-        if(start_executed_next_execute === 2) {
+        if (start_executed_next_execute === 2) {
           process.send({
             message_code: message_codes.start_noxframework_service_comfirm
           });
@@ -116,30 +129,33 @@ process.on('message', (message)=> {
       start_executed_next_execute_plus_one();
     };
 
-    if(data.settings.secured_node) {
-      if(!FS.existsSync(data.settings.rsa_2048_key_pair_path.private)) {
-        console.log('Secured node is on. However, RSA 2048 key pair is not generated at "'+ data.working_directory + '".');
-        rl.question('Help you generate? [y/n]', (answer)=> {
-          if(answer === 'y' || answer === 'Y' ) {
+    if (data.settings.secured_node) {
+      if (!FS.existsSync(data.settings.rsa_2048_key_pair_path.private)) {
+        console.log('Secured node is on. However, RSA 2048 key pair is not generated at "' + data.working_directory + '".');
+        rl.question('Help you generate? [y/n]', (answer) => {
+          if (answer === 'y' || answer === 'Y') {
             let succeed = false;
             try {
               execSync('openssl genrsa -out private.pem 2048');
               execSync('openssl rsa -in private.pem -outform PEM -pubout -out public.pem');
-              console.log('RSA 2048 key pair generated at "'+ data.working_directory + '".');
+              console.log('RSA 2048 key pair generated at "' + data.working_directory + '".');
               succeed = true;
-            }
-            catch(error) {
+            } catch (error) {
               console.log('openssl error.');
               console.log(error);
               process.send({
                 message_code: message_codes.request_launcher_terminate
               });
             }
-            if(succeed) start_noxframework_service();
+            if (succeed) start_noxframework_service();
+          }
+          else {
+            process.send({
+              message_code: message_codes.request_launcher_terminate
+            });
           }
         });
-      }
-      else {
+      } else {
         noxerve_agent_settings.rsa_2048_key_pair = {
           public: FS.readFileSync(data.settings.rsa_2048_key_pair_path.public, 'utf8'),
           private: FS.readFileSync(data.settings.rsa_2048_key_pair_path.private, 'utf8'),
@@ -147,8 +163,10 @@ process.on('message', (message)=> {
         start_noxframework_service();
       }
     }
-  }
-  else if(message_code === message_codes.terminate_noxframework_service) {
+    else {
+      start_noxframework_service();
+    }
+  } else if (message_code === message_codes.terminate_noxframework_service) {
     process.exit();
   }
 });
@@ -157,5 +175,4 @@ process.on('SIGINT', () => {
   console.log('NoService runtime Caught interrupt signal.');
 });
 
-process.on('SIGTERM', () => {
-});
+process.on('SIGTERM', () => {});

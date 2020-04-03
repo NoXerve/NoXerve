@@ -5,10 +5,15 @@
   },
 
   "secured_node": true,
-
+  
   "rsa_2048_key_pair_path": {
     "public": "./public.pem",
     "private": "./private.pem"
+  },
+
+  "service": {
+    "services_path": "./services",
+    "services_files_path": "./service_files"
   },
 
   "noxerve_framework_space_settings": {
