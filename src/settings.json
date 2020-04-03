@@ -1,4 +1,16 @@
 {
+  "launch_settings": {
+    "launch_fail_retry_counts": 3,
+    "relaunch_interval_ms": 1000
+  },
+
+  "secured_node": true,
+
+  "rsa_2048_key_pair_path": {
+    "public": "./public.pem",
+    "private": "./private.pem"
+  },
+
   "noxerve_framework_space_settings": {
 
   },

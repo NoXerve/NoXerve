@@ -7,5 +7,16 @@
 
 'use strict';
 
-const NoXerveAgent = require('./noxerve_agent');
-const NoXerveFramework = require('./noserve_framework');
+const FS = require('fs');
+const Launcher = require('./noxerve_framework/launcher');
+const Path = require("path");
+const working_directory = Path.resolve("./");
+const noxerve_agent_library_directory = Path.resolve("./noxerve_agent");
+
+const launcher = new Launcher({
+  settings: JSON.parse(FS.readFileSync('./settings.json', 'utf8')),
+  working_directory: working_directory,
+  noxerve_agent_library_directory: noxerve_agent_library_directory
+});
+
+launcher.launch();
