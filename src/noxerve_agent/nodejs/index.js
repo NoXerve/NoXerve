@@ -18,7 +18,7 @@ const Activity = require('./service/activity');
 const NSDT = require('./nsdt');
 const Protocol = require('./protocol');
 const Node = require('./node');
-// let SecuredNode = require('./node/secured_node');
+const SecuredNode = require('./node/secured_node');
 
 
 /**
@@ -62,15 +62,26 @@ function NoXerveAgent(settings) {
    */
   this._activity_module = new Activity();
 
-  /**
-   * @memberof module:NoXerveAgent
-   * @type {object}
-   * @see module:Node
-   * @private
-   * @description Module for tunneling.
-   */
-  this._node_module = new Node();
-
+  if(settings.secured_node === true) {
+    /**
+     * @memberof module:NoXerveAgent
+     * @type {object}
+     * @see module:Node
+     * @private
+     * @description Module for tunneling.
+     */
+    this._node_module = new SecuredNode({rsa_2048_key_pair: settings.rsa_2048_key_pair});
+  }
+  else {
+    /**
+     * @memberof module:NoXerveAgent
+     * @type {object}
+     * @see module:Node
+     * @private
+     * @description Module for tunneling.
+     */
+    this._node_module = new Node();
+  }
   /**
    * @memberof module:NoXerveAgent
    * @type {object}

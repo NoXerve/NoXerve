@@ -289,7 +289,6 @@ Protocol.prototype.start = function(callback) {
 
           tunnel.on('ready', () => {
             ready_state = true;
-            console.log(123);
           });
           tunnel.on('data', (data) => {
             if (stage === 0) {

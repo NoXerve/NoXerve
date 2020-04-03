@@ -118,7 +118,10 @@ Node.prototype._newTunnel = function(interface_name, from_interface, from_connec
       }
     });
   } catch (error) {
-    callback(error);
+    if(!called_callback) callback(error);
+    else {
+      throw error;
+    }
   }
 }
 

@@ -8,6 +8,8 @@
 
 'use strict';
 
+const fs = require('fs');
+
 console.log('[Tester] Start testing...');
 
 let Tests = [
@@ -39,7 +41,12 @@ let finish = (test_name) => {
 
 const NSDT = new(require('../nsdt'))({});
 let NoXerveAgent = new(require('../index'))({});
-let Node = new(require('../node'))();
+let Node = new(require('../node/secured_node'))({
+  rsa_2048_key_pair: {
+    public: fs.readFileSync('./public.pem', 'utf8'),
+    private: fs.readFileSync('./private.pem', 'utf8'),
+  }
+});
 let Node2 = new(require('../node'))();
 let Activity = new(require('../service/activity'))();
 let Service = new(require('../service/service'))();
@@ -79,24 +86,24 @@ let tunnel_test = (tunnel) => {
   tunnel.on('ready', () => {
     if (tunnel.returnValue('from_connector')) {
       console.log('[Node module] Tunnel created from connector. Ready.');
-      tunnel.send('Sent from connector.', (error) => {
+      tunnel.send(Buffer.from('Sent from connector.'), (error) => {
         console.log('[Node module] "Sent from interface." sent.');
       });
     }
     if (tunnel.returnValue('from_interface')) {
       console.log('[Node module] Tunnel created from interface. Ready.');
-      tunnel.send('Sent from interface.', (error) => {
+      tunnel.send(Buffer.from('Sent from interface.'), (error) => {
         console.log('[Node module] "Sent from interface." sent.');
       });
     }
   });
   tunnel.on('data', (data) => {
     if (tunnel.returnValue('from_connector')) {
-      console.log('[Node module] Tunnel created from connector received data: "', data, '"');
+      console.log('[Node module] Tunnel created from connector received data: "', data.toString('utf8'), '"');
       finish('node_interface_send_test');
     }
     if (tunnel.returnValue('from_interface')) {
-      console.log('[Node module] Tunnel created from interface received data: "', data, '"');
+      console.log('[Node module] Tunnel created from interface received data: "', data.toString('utf8'), '"');
       finish('node_connector_send_test');
     }
   });

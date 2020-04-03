@@ -15,6 +15,7 @@ const Node = require('./index');
 const Crypto = require('crypto');
 const RandomBytesBytesCount = 16;
 const Tunnel = require('./tunnel');
+const Buf = require('../buffer');
 
 /**
  * @constructor module:SecuredNode
@@ -71,9 +72,74 @@ function SecuredNode(settings) {
    * @type {function}
    * @private
    */
-  this._aes_cbc_256_key_iv_and_checksum_derivation_function = (aes_cbc_256_shared_key, to_be_encrypted) => {
+  this._aes_cbc_256_encrypt_function = (aes_cbc_256_shared_key, data) => {
+    const salt = Crypto.randomBytes(8);
+    const to_be_encrypted = Buf.concat([
+      salt,
+      data
+    ]);
 
+    // aes_cbc_256_shared_key
+    // =>
+    // aes_cbc_256_shared_key_first_half_16bytes aes_cbc_256_shared_key_second_half_16bytes
+
+    // Seperate key into two parts for checksum and later aes key.
+    const aes_cbc_256_shared_key_first_half_16bytes = aes_cbc_256_shared_key.slice(0, 16);
+    const aes_cbc_256_shared_key_second_half_16bytes = aes_cbc_256_shared_key.slice(16);
+
+    // Checksum and kdf.
+
+    // aes_cbc_256_shared_key_second_half_16bytes + to_be_encrypted
+    // =>
+    // aes_cbc_256_shared_key_second_half_16bytes_and_to_be_encrypted_sha256
+    const aes_cbc_256_shared_key_second_half_16bytes_and_to_be_encrypted_sha256 = Crypto.createHash('sha256').update(Buf.concat([aes_cbc_256_shared_key_second_half_16bytes, to_be_encrypted])).digest();
+
+    // aes kdf
+    // aes_cbc_256_shared_key_first_half_16bytes + aes_cbc_256_shared_key_second_half_16bytes_and_to_be_encrypted_sha256_first_half
+    // =>
+    // sha256_for_aes256
+    const sha256_for_aes256 = Crypto.createHash('sha256').update(Buf.concat([aes_cbc_256_shared_key_first_half_16bytes, aes_cbc_256_shared_key_second_half_16bytes_and_to_be_encrypted_sha256])).digest();
+
+    // AES 256 cbc mode settings.
+    // key: sha256_for_aes256,
+    // iv: sha256_for_aes256,
+    // checksum: aes_cbc_256_shared_key_second_half_16bytes_and_to_be_encrypted_sha256
+    const cipher = Crypto.createCipheriv('aes-256-cbc', sha256_for_aes256, sha256_for_aes256.slice(0, 16));
+
+    return Buf.concat([
+      aes_cbc_256_shared_key_second_half_16bytes_and_to_be_encrypted_sha256,
+      cipher.update(to_be_encrypted),
+      cipher.final()
+    ]);
   };
+
+  /**
+   * @memberof module:SecuredNode
+   * @type {function}
+   * @private
+   */
+  this._aes_cbc_256_decrypt_function = (aes_cbc_256_shared_key, encrypted_bytes) => {
+    // aes_cbc_256_shared_key
+    // =>
+    // aes_cbc_256_shared_key_first_half_16bytes aes_cbc_256_shared_key_second_half_16bytes
+
+    // Seperate key into two parts for checksum and later aes key.
+    const aes_cbc_256_shared_key_first_half_16bytes = aes_cbc_256_shared_key.slice(0, 16);
+    const aes_cbc_256_shared_key_second_half_16bytes = aes_cbc_256_shared_key.slice(16);
+
+    const aes_cbc_256_shared_key_second_half_16bytes_and_to_be_decrypted_sha256 = encrypted_bytes.slice(0, 32);
+
+    const to_be_decrypted = encrypted_bytes.slice(32);
+    // aes kdf
+    const sha256_for_aes256 = Crypto.createHash('sha256').update(Buf.concat([aes_cbc_256_shared_key_first_half_16bytes, aes_cbc_256_shared_key_second_half_16bytes_and_to_be_decrypted_sha256])).digest();
+
+    const decipher = Crypto.createDecipheriv('aes-256-cbc', sha256_for_aes256, sha256_for_aes256.slice(0, 16));
+
+    // Return and remove salt.
+    const decrypted_data = Buf.concat([decipher.update(to_be_decrypted), decipher.final()]).slice(8);
+
+    return decrypted_data;
+  }
 
   /**
    * @memberof module:SecuredNode
@@ -103,7 +169,7 @@ function SecuredNode(settings) {
       // Create new tunnel.
       const secured_tunnel = new Tunnel({
         send: (data, callback) => {
-
+          tunnel.send(this._aes_cbc_256_encrypt_function(aes_cbc_256_shared_key, data), callback);
         },
         close: (callback) => {
           tunnel.close(callback);
@@ -112,10 +178,10 @@ function SecuredNode(settings) {
 
       secured_tunnel.setValue('interface_name', 'secured_node_wrapped');
       secured_tunnel.setValue('interface_secured', true);
-      secured_tunnel.setValue('from_interface', secured_tunnel.returnValue('from_interface'));
-      secured_tunnel.setValue('from_connector', secured_tunnel.returnValue('from_connector'));
+      secured_tunnel.setValue('from_interface', tunnel.returnValue('from_interface'));
+      secured_tunnel.setValue('from_connector', tunnel.returnValue('from_connector'));
 
-      secured_tunnel.getEmitter((error, emitter) => {
+      secured_tunnel.getEmitter((error, secured_tunnel_emitter) => {
         if (error) callback(error);
         else {
           const rsa_2048_public_key_utf8_encoded = Buf.from(this._rsa_2048_key_pair.public, 'utf8');
@@ -127,11 +193,19 @@ function SecuredNode(settings) {
 
             tunnel.on('data', (data) => {
               if (data[0] === this._secured_node_protocol_code[0]) {
-                const decrypted_data = Crypto.privateDecrypt(this._rsa_2048_key_pair.public, data.slice(1));
+
+
+                const decrypted_data = Crypto.privateDecrypt(this._rsa_2048_key_pair.private, data.slice(1));
                 const remote_random_bytes = decrypted_data.slice(8); // remove salt.
                 aes_cbc_256_shared_key = this._aes_cbc_256_shared_key_derivation_function(rsa_2048_public_key_utf8_encoded, remote_random_bytes);
                 tunnel.on('data', (data)=> {
-                  secured_tunnel_emitter('data', data);
+                  try {
+                    const decrypted_data = this._aes_cbc_256_decrypt_function(aes_cbc_256_shared_key, data);
+                    secured_tunnel_emitter('data', decrypted_data);
+                  }
+                  catch(error) {
+                    secured_tunnel_emitter('error', error);
+                  }
                 });
                 tunnel.on('close', ()=> {
                   secured_tunnel_emitter('close');
@@ -218,14 +292,7 @@ SecuredNode.prototype.createTunnel = function(interface_name, interface_connect_
         // Create new tunnel.
         const secured_tunnel = new Tunnel({
           send: (data, callback) => {
-            const salt = Crypto.randomBytes(8);
-            const to_be_encrypted = Buf.concat([
-              salt,
-              data
-            ]);
-            const key_and_iv = this._aes_cbc_256_key_iv_and_checksum_derivation_function();
-            const cipher = Crypto.createCipheriv('aes-256-cbc', key, iv);
-            const crypted = Buf.concat([iv, cipher.update(Buf.concat([salt, toEncrypt])), cipher.final()]);
+            tunnel.send(this._aes_cbc_256_encrypt_function(aes_cbc_256_shared_key, data), callback);
           },
           close: (callback) => {
             tunnel.close(callback);
@@ -234,8 +301,8 @@ SecuredNode.prototype.createTunnel = function(interface_name, interface_connect_
 
         secured_tunnel.setValue('interface_name', 'secured_node_wrapped');
         secured_tunnel.setValue('interface_secured', true);
-        secured_tunnel.setValue('from_interface', secured_tunnel.returnValue('from_interface'));
-        secured_tunnel.setValue('from_connector', secured_tunnel.returnValue('from_connector'));
+        secured_tunnel.setValue('from_interface', tunnel.returnValue('from_interface'));
+        secured_tunnel.setValue('from_connector', tunnel.returnValue('from_connector'));
 
         secured_tunnel.getEmitter((error, secured_tunnel_emitter) => {
           if (error) callback(error);
@@ -245,7 +312,13 @@ SecuredNode.prototype.createTunnel = function(interface_name, interface_connect_
                 if(data[0] === this._secured_node_comfirm_protocol_code[0]) {
                   if(aes_cbc_256_shared_key) {
                     tunnel.on('data', (data)=> {
-                      secured_tunnel_emitter('data', data);
+                      try {
+                        const decrypted_data = this._aes_cbc_256_decrypt_function(aes_cbc_256_shared_key, data);
+                        secured_tunnel_emitter('data', decrypted_data);
+                      }
+                      catch(error) {
+                        secured_tunnel_emitter('error', error);
+                      }
                     });
                     tunnel.on('close', ()=> {
                       secured_tunnel_emitter('close');
@@ -255,7 +328,7 @@ SecuredNode.prototype.createTunnel = function(interface_name, interface_connect_
                     });
 
                     // Finished.
-                    callback(secured_tunnel);
+                    callback(false, secured_tunnel);
                     secured_tunnel_emitter('ready');
                   }
                   else {

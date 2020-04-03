@@ -8,6 +8,8 @@
 
  'use strict';
 
+ const fs = require('fs');
+
 console.log('[Tester] Start testing...');
 
 let Tests = [
@@ -35,7 +37,13 @@ let finish = (test_name) => {
 };
 
 let Utils = require('../utils');
-let NoXerveAgent = new(require('../index'))({});
+let NoXerveAgent = new(require('../index'))({
+  secured_node: true,
+  rsa_2048_key_pair: {
+    public: fs.readFileSync('./public.pem', 'utf8'),
+    private: fs.readFileSync('./private.pem', 'utf8'),
+  }
+});
 
 NoXerveAgent.start((error)=> {
   if (error) console.log('[NoXerveAgent] start error.', error);
