@@ -42,7 +42,9 @@ const readline = require("readline");
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
+  // Nodejs bugs interface still exists after readline even closed.
+  terminal: false
 });
 
 let noxframework_service_instance;
@@ -175,6 +177,8 @@ process.on('message', (message) => {
               message_code: message_codes.request_launcher_terminate
             });
           }
+          rl.close();
+          rl.removeAllListeners();
         });
       } else {
         noxerve_agent_settings.rsa_2048_key_pair = {

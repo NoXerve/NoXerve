@@ -16,7 +16,8 @@ const my_worker_settings_path = './my_worker_settings.json';
 
 const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
+    // terminal: false
 });
 
 module.exports.isMyWorkerFilesInitailized = function() {
@@ -27,7 +28,7 @@ module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_param
   const worker_peers_settings_initialize = (next)=> {
     if (!FS.existsSync(worker_peers_settings_path)) {
       console.log('Has not set up worker peer settings.');
-      rl.question('Do you want to:\n 1. Setup as the first worker.\n 2. Join other worker peers? \nInput a number: ', (answer) => {
+      rl.question('Do you want to:\n 1. Setup as the first worker.\n 2. Join other worker peers? \nInput a number: \n', (answer) => {
         if(answer === '1') {
           FS.writeFileSync(my_worker_settings_path, JSON.stringify({
             worker_id: 1,
@@ -59,6 +60,7 @@ module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_param
     if(error) callback(error);
     else {
       FS.writeFileSync(initailized_lock_path, '');
+      callback(false);
     }
   });
 }

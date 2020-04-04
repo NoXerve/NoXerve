@@ -50,9 +50,10 @@ NoxFrameworkService.prototype.start = function(finish_start) {
     });
   }
   else {
-    console.log('NoxFramework Service not initailized. Initializing...');
+    console.log('NoxFramework Service files not initailized. Initializing...');
     Initializer.initailizeMyWorkerFiles(this._noxerve_agent, this._preloader_parameters, (error) => {
       if_error_close_preloader(error, ()=> {
+        console.log('NoxFramework Service files Initialized.');
         this._noxerve_agent.start((error) => {
           if_error_close_preloader(error, ()=> {
             initailize_noxerve_agent_worker();
