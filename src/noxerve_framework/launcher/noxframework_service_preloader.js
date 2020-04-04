@@ -11,12 +11,12 @@ process.title = 'NoXerve Framework service';
 
 console.log('');
 console.log('');
-console.log('88d888b. .d8888b. .d8888b. dP.  .dP dP    dP  TM');
-console.log('88\'  `88 88\'  `88 88\'  `88  `8bd8\'  88    88');
-console.log('88    88 88.  .88 88.  .88  .d88b.  88.  .88');
-console.log('dP    dP `88888P\' `88888P\' dP\'  `dP `8888P88');
-console.log('                                         .88');
-console.log('                                     d8888P');
+console.log('88d888b. .d8888b. .d8888b. dP.  .dP 8b    .8P  TM');
+console.log('88\'  `88 88\'  `88 88\'  `88  `8bd8\'  `8b   88');
+console.log('88    88 88.  .88 88.  .88  .d88b.   `8b d8\'');
+console.log('dP    dP `88888P\' `88888P\' dP\'  `dP   `88P\'');
+console.log('                                       d8\'');
+console.log('                                    888P\'');
 console.log('');
 console.log('NoXerveFramework ©2020-2019 nooxy org.');
 console.log('');
