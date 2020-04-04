@@ -70,17 +70,18 @@ Launcher.prototype.launch = function() {
   const start_noxframework_service_subprocess = () => {
     // Close noxframework service.
     process.on('SIGTERM', () => {
+      start_noxframework_service_subprocess_to_be_relaunched = false;
       subprocess.send({
-        message_code: message_codes.close_noxframework_service
+        message_code: message_codes.terminate_noxframework_service
       });
       process.exit();
     });
 
     process.on('SIGINT', () => {
+      start_noxframework_service_subprocess_to_be_relaunched = false;
       subprocess.send({
         message_code: message_codes.close_noxframework_service
       });
-      process.exit();
     });
 
     const subprocess = Fork(require.resolve('./noxframework_service_preloader'), {

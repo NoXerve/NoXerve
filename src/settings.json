@@ -5,7 +5,39 @@
   },
 
   "secured_node": true,
-  
+
+  "interfaces": [
+    {
+    "interface_name": "WebSocket",
+    "interface_settings": {
+      "host": "0.0.0.0",
+      "port": 43100
+    }},
+    {
+    "interface_name": "WebSocket",
+    "interface_settings": {
+      "host": "0.0.0.0",
+      "port": 43101
+    }}
+  ],
+
+  "interfaces_connect_settings": [
+    {
+    "interface_name": "WebSocket",
+    "interface_connect_settings": {
+      "host": "0.0.0.0",
+      "port": 43100
+    }},
+    {
+    "interface_name": "WebSocket",
+    "interface_connect_settings": {
+      "host": "0.0.0.0",
+      "port": 43101
+    }}
+  ],
+
+  "worker_authentication_token": "please_change_this_text_for_security",
+
   "rsa_2048_key_pair_path": {
     "public": "./public.pem",
     "private": "./private.pem"
@@ -13,7 +45,7 @@
 
   "service": {
     "services_path": "./services",
-    "services_files_path": "./service_files"
+    "workers_files_path": "./workers_files"
   },
 
   "noxerve_framework_space_settings": {

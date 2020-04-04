@@ -43,17 +43,17 @@ function Worker(settings) {
         callback(error);
       }
     },
-    'worker-peer-authentication': (remote_worker_id, worker_authenticity_information) => {
-      return false;
+    'worker-peer-authentication': (worker_id, worker_authenticity_information, is_valid) => {
+      is_valid(false);
     },
     'worker-socket-ready': (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, worker_socket) => {
       this._event_listeners['worker-socket-create-' + worker_socket_purpose_name](worker_socket_purpose_parameter, remote_worker_id, worker_socket);
     },
-    'worker-peer-join-request': (remote_worker_id, worker_peer_interfaces, worker_peer_detail, next) => {
-      this._event_listeners['worker-peer-join'](remote_worker_id, worker_peer_interfaces, worker_peer_detail, next);
+    'worker-peer-join-request': (remote_worker_id, worker_peer_interfaces_connect_settings, worker_peer_detail, next) => {
+      this._event_listeners['worker-peer-join'](remote_worker_id, worker_peer_interfaces_connect_settings, worker_peer_detail, next);
     },
-    'worker-peer-update-request': (remote_worker_id, worker_peer_interfaces, worker_peer_detail, next) => {
-      this._event_listeners['worker-peer-update'](remote_worker_id, worker_peer_interfaces, worker_peer_detail, next);
+    'worker-peer-update-request': (remote_worker_id, worker_peer_interfaces_connect_settings, worker_peer_detail, next) => {
+      this._event_listeners['worker-peer-update'](remote_worker_id, worker_peer_interfaces_connect_settings, worker_peer_detail, next);
     },
     'worker-peer-leave-request': (remote_worker_id, next) => {
       this._event_listeners['worker-peer-leave'](remote_worker_id, next);
@@ -163,8 +163,8 @@ Worker.prototype.onWorkerSocketCreate = function(worker_socket_purpose_name, lis
  * @param {module:Worker~callback_of_join_me} callback
  * @description Join myself into workers cluster.
  */
-Worker.prototype.joinMe = function(remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authentication_data, callback) {
-  this._event_listeners['me-join'](remote_worker_interfaces, my_worker_interfaces, my_worker_detail, my_worker_authentication_data, callback);
+Worker.prototype.joinMe = function(remote_worker_interfaces_connect_setting, my_worker_interfaces_connect_settings, my_worker_detail, my_worker_authentication_data, callback) {
+  this._event_listeners['me-join'](remote_worker_interfaces_connect_setting, my_worker_interfaces_connect_settings, my_worker_detail, my_worker_authentication_data, callback);
 }
 
 /**
@@ -178,8 +178,8 @@ Worker.prototype.joinMe = function(remote_worker_interfaces, my_worker_interface
  * @param {module:Worker~callback_of_update_me} callback
  * @description Update this worker with new informations.
  */
-Worker.prototype.updateMe = function(my_worker_interfaces, my_worker_detail, callback) {
-  this._event_listeners['me-update'](my_worker_interfaces, my_worker_detail, callback);
+Worker.prototype.updateMe = function(my_worker_interfaces_connect_settings, my_worker_detail, callback) {
+  this._event_listeners['me-update'](my_worker_interfaces_connect_settings, my_worker_detail, callback);
 }
 
 /**

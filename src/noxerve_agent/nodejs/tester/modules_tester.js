@@ -156,7 +156,7 @@ Node2.createInterface('WebSocket', {
 
   let worker_peers_settings = {
     1: {
-      interfaces: [{
+      interfaces_connect_settings: [{
         interface_name: 'WebSocket',
         interface_connect_settings: {
           host: '0.0.0.0',

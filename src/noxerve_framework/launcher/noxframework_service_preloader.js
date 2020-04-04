@@ -11,8 +11,8 @@ process.title = 'NoXerve Framework service';
 
 console.log('');
 console.log('');
-console.log('88d888b. .d8888b. .d8888b. dP.  .dP 8b    .8P  TM');
-console.log('88\'  `88 88\'  `88 88\'  `88  `8bd8\'  `8b   88');
+console.log('88d888b. .d8888b. .d8888b. dP.  .dP 8b     88\' TM');
+console.log('88\'  `88 88\'  `88 88\'  `88  `8bd8\'  `8b   88\'');
 console.log('88    88 88.  .88 88.  .88  .d88b.   `8b d8\'');
 console.log('dP    dP `88888P\' `88888P\' dP\'  `dP   `88P\'');
 console.log('                                       d8\'');
@@ -21,7 +21,7 @@ console.log('');
 console.log('NoXerveFramework ©2020-2019 nooxy org.');
 console.log('');
 
-console.log('NoXerve Framework service process id: ' + process.pid);
+console.log('NoXerveFramework service process id: ' + process.pid);
 const message_codes = {
   start_noxframework_service: 0x01,
   start_noxframework_service_comfirm: 0x02,
@@ -68,7 +68,7 @@ process.on('message', (message) => {
     close_executed_next_execute_plus_one();
   } else if (message_code === message_codes.start_noxframework_service) {
     process.chdir(data.working_directory);
-    console.log('NoXerve Framework service working directory:', data.working_directory);
+    console.log('NoXerveFramework service working directory:', data.working_directory);
 
     let noxerve_agent_settings = {
       secured_node: data.settings.start_noxframework_service_comfirm
@@ -79,54 +79,75 @@ process.on('message', (message) => {
       if (!FS.existsSync(data.settings.service.services_path)) {
         FS.mkdirSync(data.settings.service.services_path);
       }
-      if (!FS.existsSync(data.settings.service.services_files_path)) {
-        FS.mkdirSync(data.settings.service.services_files_path);
+      if (!FS.existsSync(data.settings.service.workers_files_path)) {
+        FS.mkdirSync(data.settings.service.workers_files_path);
       }
-      if (!FS.existsSync(data.settings.service.services_files_path + '/noxframework')) {
-        FS.mkdirSync(data.settings.service.services_files_path + '/noxframework');
+      if (!FS.existsSync(data.settings.service.workers_files_path + '/noxframework')) {
+        FS.mkdirSync(data.settings.service.workers_files_path + '/noxframework');
       }
 
       // change workingdir
-      process.chdir(data.settings.service.services_files_path + '/noxframework');
+      process.chdir(data.settings.service.workers_files_path + '/noxframework');
 
       const noxerve_agent = new(require(data.noxerve_agent_library_directory + '/nodejs'))(noxerve_agent_settings);
       let start_executed_next_execute = 0;
 
-      // Setting up relaunch function for NoXerveFrameworkService.
-      data.relaunchPreloader = () => {
-        if (start_executed_next_execute === 2) {
-          process.send({
-            message_code: message_codes.request_preloader_relaunch
-          });
-        } else {
-          //
-          throw new Error('"relaunchPreloader" is not available until serivce start function executed.');
-        }
+      let index = 0;
+      // Setup interfaces
+      const initialize_interfaces = (callback) => {
+        const _interface = data.settings.interfaces[index];
+        noxerve_agent.createInterface(_interface.interface_name, _interface.interface_settings, (err, id) => {
+          if (err) console.log('Create interface error.', err);
+          loop_next(callback);
+        })
       };
-      data.closePreloader = () => {
-        if (start_executed_next_execute === 2) {
-          process.send({
-            message_code: message_codes.request_preloader_close
-          });
-        } else {
-          throw new Error('"relaunchPreloader" is not available until serivce start function executed.');
-        }
-      };
-      noxframework_service_instance = new NoXerveFrameworkService(noxerve_agent, data);
 
-      const start_executed_next_execute_plus_one = () => {
-        start_executed_next_execute++;
-        if (start_executed_next_execute === 2) {
-          process.send({
-            message_code: message_codes.start_noxframework_service_comfirm
-          });
+      const loop_next = (callback) => {
+        index++;
+        if (index < data.settings.interfaces.length) {
+          initialize_interfaces(callback);
+        } else {
+          callback();
         }
       };
 
-      noxframework_service_instance.start(() => {
+      initialize_interfaces(()=> {
+        // Setting up relaunch function for NoXerveFrameworkService.
+        data.relaunchPreloader = () => {
+          if (start_executed_next_execute === 2) {
+            process.send({
+              message_code: message_codes.request_preloader_relaunch
+            });
+          } else {
+            //
+            throw new Error('"relaunchPreloader" is not available until serivce start function executed.');
+          }
+        };
+        data.closePreloader = () => {
+          if (start_executed_next_execute === 2) {
+            process.send({
+              message_code: message_codes.request_preloader_close
+            });
+          } else {
+            throw new Error('"closePreloader" is not available until serivce start function executed.');
+          }
+        };
+        noxframework_service_instance = new NoXerveFrameworkService(noxerve_agent, data);
+
+        const start_executed_next_execute_plus_one = () => {
+          start_executed_next_execute++;
+          if (start_executed_next_execute === 2) {
+            process.send({
+              message_code: message_codes.start_noxframework_service_comfirm
+            });
+          }
+        };
+
+        noxframework_service_instance.start(() => {
+          start_executed_next_execute_plus_one();
+        });
         start_executed_next_execute_plus_one();
       });
-      start_executed_next_execute_plus_one();
     };
 
     if (data.settings.secured_node) {
@@ -172,7 +193,7 @@ process.on('message', (message) => {
 });
 
 process.on('SIGINT', () => {
-  console.log('NoService runtime Caught interrupt signal.');
+  console.log('NoXerve Framework service runtime Caught interrupt signal.');
 });
 
 process.on('SIGTERM', () => {});

@@ -59,7 +59,7 @@ NoXerveAgent.start((error)=> {
     // Only myself one worker. For multiple worker test got worker directory.
     let worker_peers_settings = {
       1: {
-        interfaces: [{
+        interfaces_connect_settings: [{
           interface_name: 'WebSocket',
           interface_connect_settings: {
             host: '0.0.0.0',

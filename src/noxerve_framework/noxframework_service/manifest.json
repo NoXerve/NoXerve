@@ -1,0 +1,9 @@
+{
+  "service_name": "noxframework",
+
+  "display_name": "NoXerveFramework",
+
+  "description": "Providing ablilties to create, manipulate or modify NoXerve services.",
+
+  "version": "0.0.0",
+}

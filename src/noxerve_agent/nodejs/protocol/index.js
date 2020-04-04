@@ -89,7 +89,7 @@ function Protocol(settings) {
     */
   this._openHandshake = (interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake) => {
     this._node_module.createTunnel(interface_name, interface_connect_settings, (error, tunnel) => {
-      if (error) {if(acknowledge_synchronization) acknowledge_synchronization(error);}
+      if (error) {if(acknowledge_synchronization) acknowledge_synchronization(error, null, ()=> {});}
       else {
         // Use stage variable to identify current handshake progress.
         // Avoiding proccess executed wrongly.
