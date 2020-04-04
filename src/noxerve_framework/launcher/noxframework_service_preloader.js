@@ -177,8 +177,8 @@ process.on('message', (message) => {
               message_code: message_codes.request_launcher_terminate
             });
           }
-          rl.close();
-          rl.removeAllListeners();
+          // rl.close();
+          // rl.removeAllListeners();
         });
       } else {
         noxerve_agent_settings.rsa_2048_key_pair = {
