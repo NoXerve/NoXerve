@@ -48,10 +48,10 @@
     "workers_files_path": "./workers_files"
   },
 
-  "noxerve_framework_space_settings": {
+  "noxservicesystem_system_space_settings": {
 
   },
-  "noxerve_user_space_settings": {
+  "noxservicesystem_user_space_settings": {
 
   }
 }
