@@ -1,7 +1,7 @@
 {
-  "service_name": "noxframework",
+  "service_name": "noxservicesystem",
 
-  "display_name": "NoXerveFramework",
+  "display_name": "NoxServiceSystem",
 
   "description": "Providing ablilties to create, manipulate or modify NoXerve services.",
 

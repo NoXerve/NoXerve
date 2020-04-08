@@ -1,5 +1,5 @@
 /**
- * @file NoxFramework Service index file. [index.js]
+ * @file NoxServiceSystem Service index file. [index.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
  * @copyright 2019-2020 nooxy. All Rights Reserved.
@@ -8,19 +8,19 @@
 'use strict';
 
 /**
- * @module NoxFrameworkService
+ * @module NoxServiceSystemService
  */
 
 const FS = require('fs');
 const Initializer = require('./initializer');
 
-function NoxFrameworkService(noxerve_agent, preloader_parameters) {
+function NoxServiceSystemService(noxerve_agent, preloader_parameters) {
   this._noxerve_agent = noxerve_agent;
   this._preloader_parameters = preloader_parameters;
 }
 
-NoxFrameworkService.prototype.start = function(finish_start) {
-  console.log('NoxFramework Service started.');
+NoxServiceSystemService.prototype.start = function(finish_start) {
+  console.log('NoxServiceSystem Service started.');
 
   const if_error_close_preloader = (error, next) => {
     if(error) {
@@ -50,10 +50,10 @@ NoxFrameworkService.prototype.start = function(finish_start) {
     });
   }
   else {
-    console.log('NoxFramework Service files not initailized. Initializing...');
+    console.log('NoxServiceSystem Service files not initailized. Initializing...');
     Initializer.initailizeMyWorkerFiles(this._noxerve_agent, this._preloader_parameters, (error) => {
       if_error_close_preloader(error, ()=> {
-        console.log('NoxFramework Service files Initialized.');
+        console.log('NoxServiceSystem Service files Initialized.');
         this._noxerve_agent.start((error) => {
           if_error_close_preloader(error, ()=> {
             initailize_noxerve_agent_worker();
@@ -65,9 +65,9 @@ NoxFrameworkService.prototype.start = function(finish_start) {
 
 }
 
-NoxFrameworkService.prototype.close = function(finish_close) {
-  console.log('NoxFramework Service closed.');
+NoxServiceSystemService.prototype.close = function(finish_close) {
+  console.log('NoxServiceSystem Service closed.');
   finish_close();
 }
 
-module.exports = NoxFrameworkService;
+module.exports = NoxServiceSystemService;

@@ -1,5 +1,5 @@
 /**
- * @file NoXerveFramework launch file. [launch.js]
+ * @file NoxServiceSystem service preloader file. [noxservicesystem.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
  * @copyright 2019-2020 nooxy. All Rights Reserved.
@@ -18,22 +18,22 @@ console.log('dP    dP `88888P\' `88888P\' dP\'  `dP   `88P\'');
 console.log('                                       d8\'');
 console.log('                                    888P\'');
 console.log('');
-console.log('NoXerveFramework ©2020-2019 nooxy org.');
+console.log('NoXerveServiceSystem ©2020-2019 nooxy org.');
 console.log('');
 
-console.log('NoXerveFramework service process id: ' + process.pid);
+console.log('NoxServiceSystem service process id: ' + process.pid);
 const message_codes = {
-  start_noxframework_service: 0x01,
-  start_noxframework_service_comfirm: 0x02,
-  close_noxframework_service: 0x03,
-  close_noxframework_service_comfirm: 0x04,
-  terminate_noxframework_service: 0x05,
+  start_noxservicesystem_service: 0x01,
+  start_noxservicesystem_service_comfirm: 0x02,
+  close_noxservicesystem_service: 0x03,
+  close_noxservicesystem_service_comfirm: 0x04,
+  terminate_noxservicesystem_service: 0x05,
   request_preloader_close: 0xff,
   request_preloader_terminate: 0xfe,
   request_preloader_relaunch: 0xfd
 }
 
-const NoXerveFrameworkService = require('../noxframework_service');
+const NoxServiceSystemService = require('../noxservicesystem_service');
 const FS = require('fs');
 const {
   execSync
@@ -47,36 +47,36 @@ const rl = readline.createInterface({
   terminal: false
 });
 
-let noxframework_service_instance;
+let noxservicesystem_service_instance;
 
 process.on('message', (message) => {
   const message_code = message.message_code;
   const data = message.data;
 
-  if (message_code === message_codes.close_noxframework_service) {
+  if (message_code === message_codes.close_noxservicesystem_service) {
     let close_executed_next_execute = 0;
     const close_executed_next_execute_plus_one = () => {
       close_executed_next_execute++;
       if (close_executed_next_execute === 2) {
         process.send({
-          message_code: message_codes.close_noxframework_service_comfirm
+          message_code: message_codes.close_noxservicesystem_service_comfirm
         });
       }
     };
 
-    noxframework_service_instance.close(() => {
+    noxservicesystem_service_instance.close(() => {
       close_executed_next_execute_plus_one();
     });
     close_executed_next_execute_plus_one();
-  } else if (message_code === message_codes.start_noxframework_service) {
+  } else if (message_code === message_codes.start_noxservicesystem_service) {
     process.chdir(data.working_directory);
-    console.log('NoXerveFramework service working directory:', data.working_directory);
+    console.log('NoxServiceSystem service working directory:', data.working_directory);
 
     let noxerve_agent_settings = {
-      secured_node: data.settings.start_noxframework_service_comfirm
+      secured_node: data.settings.start_noxservicesystem_service_comfirm
     };
 
-    const start_noxframework_service = () => {
+    const start_noxservicesystem_service = () => {
       // Create nessasary directories.
       if (!FS.existsSync(data.settings.service.services_path)) {
         FS.mkdirSync(data.settings.service.services_path);
@@ -84,12 +84,12 @@ process.on('message', (message) => {
       if (!FS.existsSync(data.settings.service.workers_files_path)) {
         FS.mkdirSync(data.settings.service.workers_files_path);
       }
-      if (!FS.existsSync(data.settings.service.workers_files_path + '/noxframework')) {
-        FS.mkdirSync(data.settings.service.workers_files_path + '/noxframework');
+      if (!FS.existsSync(data.settings.service.workers_files_path + '/noxservicesystem')) {
+        FS.mkdirSync(data.settings.service.workers_files_path + '/noxservicesystem');
       }
 
       // change workingdir
-      process.chdir(data.settings.service.workers_files_path + '/noxframework');
+      process.chdir(data.settings.service.workers_files_path + '/noxservicesystem');
 
       const noxerve_agent = new(require(data.noxerve_agent_library_directory + '/nodejs'))(noxerve_agent_settings);
       let start_executed_next_execute = 0;
@@ -114,7 +114,7 @@ process.on('message', (message) => {
       };
 
       initialize_interfaces(()=> {
-        // Setting up relaunch function for NoXerveFrameworkService.
+        // Setting up relaunch function for NoxServiceSystemService.
         data.relaunchPreloader = () => {
           if (start_executed_next_execute === 2) {
             process.send({
@@ -134,18 +134,18 @@ process.on('message', (message) => {
             throw new Error('"closePreloader" is not available until serivce start function executed.');
           }
         };
-        noxframework_service_instance = new NoXerveFrameworkService(noxerve_agent, data);
+        noxservicesystem_service_instance = new NoxServiceSystemService(noxerve_agent, data);
 
         const start_executed_next_execute_plus_one = () => {
           start_executed_next_execute++;
           if (start_executed_next_execute === 2) {
             process.send({
-              message_code: message_codes.start_noxframework_service_comfirm
+              message_code: message_codes.start_noxservicesystem_service_comfirm
             });
           }
         };
 
-        noxframework_service_instance.start(() => {
+        noxservicesystem_service_instance.start(() => {
           start_executed_next_execute_plus_one();
         });
         start_executed_next_execute_plus_one();
@@ -170,7 +170,7 @@ process.on('message', (message) => {
                 message_code: message_codes.request_launcher_terminate
               });
             }
-            if (succeed) start_noxframework_service();
+            if (succeed) start_noxservicesystem_service();
           }
           else {
             process.send({
@@ -185,13 +185,13 @@ process.on('message', (message) => {
           public: FS.readFileSync(data.settings.rsa_2048_key_pair_path.public, 'utf8'),
           private: FS.readFileSync(data.settings.rsa_2048_key_pair_path.private, 'utf8'),
         };
-        start_noxframework_service();
+        start_noxservicesystem_service();
       }
     }
     else {
-      start_noxframework_service();
+      start_noxservicesystem_service();
     }
-  } else if (message_code === message_codes.terminate_noxframework_service) {
+  } else if (message_code === message_codes.terminate_noxservicesystem_service) {
     process.exit();
   }
 });

@@ -1,9 +1,9 @@
 /**
- * @file NoxFramework Service initializer file. [initializer.js]
+ * @file NoxServiceSystem Service initializer file. [initializer.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
  * @copyright 2019-2020 nooxy. All Rights Reserved.
- * @description Check if NoXerveFrameworkService initailized.
+ * @description Check if NoxServiceSystemService initailized.
  */
 
 'use strict';
@@ -39,11 +39,11 @@ module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_param
             1 : {
               interfaces_connect_settings: preloader_parameters.settings.interfaces_connect_settings,
               detail: {
-                name: 'The first NoxFramework service worker.'
+                name: 'The first NoxServiceSystem service worker.'
               }
             }
           }, null, 2));
-          console.log('NoxFramework service "worker_peers_settings" file not exist. Created service settings file "worker_peers_settings.json".');
+          console.log('NoxServiceSystem service "worker_peers_settings" file not exist. Created service settings file "worker_peers_settings.json".');
           next(false);
         }
         else if(answer === '2') {
