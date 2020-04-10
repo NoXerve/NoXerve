@@ -96,9 +96,10 @@ NoXerveAgent.start((error)=> {
             yield_data(Buffer.from([5, 4, 3, 0, 1]));
             return_data('hehe');
           });
-          worker_socket.call('func1', {foo: 'call from onWorkerSocketCreate'}, (err, data, eof)=> {
+          worker_socket.call('func1', {foo: 'call from onWorkerSocketCreate'}, (err, data, eof, acknowledge)=> {
             console.log('[Worker module] "func1" Return value: ', data);
             if(eof) finish('worker_func1_call_test');
+            if(acknowledge) acknowledge('ack');
           });
           worker_socket.handleYielding('field2', (yielding_handler_parameter, ready_yielding) => {
             console.log('[Worker module] "field2" handleYielding started.');
@@ -116,9 +117,11 @@ NoXerveAgent.start((error)=> {
             console.log('[Worker module] "field1" yielding_start_parameter value: ', yielding_start_parameter);
 
             yield_data(321);
-            yield_data({foo: 321});
-            yield_data(Buffer.from([5, 4, 3, 0, 1]));
-            finish_yield('hehe');
+            yield_data({foo: 321}, (acknowledge_information)=> {
+              console.log('[Worker module] "field1" acknowledge_information.', acknowledge_information);
+              yield_data(Buffer.from([5, 4, 3, 0, 1]));
+              finish_yield('hehe');
+            });
           });
         });
 
@@ -133,9 +136,11 @@ NoXerveAgent.start((error)=> {
             worker_socket.define('func1', (service_function_parameter, return_data, yield_data) => {
               console.log('[Worker module] WorkerSocket function on createWorkerSocket called.');
               yield_data(123);
-              yield_data({foo: 123});
-              yield_data(Buffer.from([5, 4, 3, 2, 1]));
-              return_data('haha');
+              yield_data({foo: 123}, (acknowledge_information)=> {
+                console.log('[Worker module] WorkerSocket function on createWorkerSocket. acknowledge_information', acknowledge_information);
+                yield_data(Buffer.from([5, 4, 3, 2, 1]));
+                return_data('haha');
+              });
             });
             worker_socket.call('func2', {foo: 'call from createWorkerSocket'}, (err, data, eof)=> {
               console.log('[Worker module] "func2" Return value: ', data);
@@ -144,8 +149,9 @@ NoXerveAgent.start((error)=> {
             worker_socket.handleYielding('field1', (yielding_handler_parameter, ready_yielding) => {
               console.log('[Worker module] "field1" handleYielding started.');
               console.log('[Worker module] Parameters value: ', yielding_handler_parameter);
-              ready_yielding('"field1" ok for yielding.', (error, data, eof)=> {
+              ready_yielding('"field1" ok for yielding.', (error, data, eof, acknowledge)=> {
                 if(error) console.log('[Worker module] "field1" Yielding error.', error);
+                if(acknowledge) acknowledge('ack');
                 console.log('[Worker module] "field1" Yielded value: ', data);
                 if(eof) {
                   finish('worker_field1_yield_test');
@@ -180,7 +186,8 @@ NoXerveAgent.start((error)=> {
       service_of_activity.handleYielding('field1', (yielding_handler_parameter, ready_yielding) => {
         console.log('[Service module] Service handleYielding started.');
         console.log('[Service module] Parameters value: ', yielding_handler_parameter);
-        ready_yielding('service ok for yielding.', (error, data, eof)=> {
+        ready_yielding('service ok for yielding.', (error, data, eof, acknowledge)=> {
+          if(acknowledge) acknowledge('ack');
           if(error) console.log('[Service module] Yielding error.', error);
           console.log('[Service module] Yielded value: ', data);
           if(eof) finish('service_yield_test');
@@ -203,10 +210,14 @@ NoXerveAgent.start((error)=> {
         // service_of_activity.close();
         yield_data({bar: 13579});
         yield_data(Utils.random8Bytes());
-        yield_data(callable_struture);
-        yield_data(Buffer.from([1, 2, 3, 4, 5]));
-        return_data({bar: 'last round'});
-        finish('service_function_test');
+
+        // Test acknowledgement.
+        yield_data(callable_struture, (acknowledge_information) => {
+          console.log('[Service module] Service function acknowledge_information: ', acknowledge_information);
+          yield_data(Buffer.from([1, 2, 3, 4, 5]));
+          return_data({bar: 'last round'});
+          finish('service_function_test');
+        });
       });
     });
     // **** Service Module Test End ****
@@ -233,13 +244,16 @@ NoXerveAgent.start((error)=> {
           console.log('[Activity module] yielding_start_parameter value: ', yielding_start_parameter);
 
           yield_data(123);
-          yield_data({foo: 123});
-          yield_data(Buffer.from([5, 4, 3, 2, 1]));
-          finish_yield('haha');
+          yield_data({foo: 123}, (acknowledge_information) => {
+            console.log('[Activity module] Yield acknowledge_information.', acknowledge_information);
+            yield_data(Buffer.from([5, 4, 3, 2, 1]));
+            finish_yield('haha');
+          });
         });
-        activity_of_service.call('test_func', {foo: 'call from activity'}, (error, data, eof)=> {
+        activity_of_service.call('test_func', {foo: 'call from activity'}, (error, data, eof, acknowledge)=> {
           if (error) console.log('[Activity module] Call error.', error);
           console.log('[Activity module] Return value: ', data);
+          if(acknowledge) acknowledge('ack');
 
           // Twice
           if(data.isCallableStructure) {
@@ -250,7 +264,9 @@ NoXerveAgent.start((error)=> {
           }
 
           // Twice
-          if(eof) activity_of_service.call('test_func', {foo: 'call from activity'}, (err, data, eof)=> {
+          if(eof) activity_of_service.call('test_func', {foo: 'call from activity'}, (err, data, eof, acknowledge)=> {
+            if(acknowledge) acknowledge('ack');
+
             console.log('[Activity module] Returned value: ', data);
             if(eof) setTimeout(()=>{activity_of_service.close()}, 1500);
           });

@@ -161,7 +161,7 @@ initialize_interfaces(() => {
       yield_data(Buffer.from([5, 4, 3, 0, 1]));
       return_data('hehe');
     });
-    worker_socket.call('func1', {foo: 'call from onWorkerSocketCreate'}, (err, data, eof)=> {
+    worker_socket.call('func1', {foo: 'call from onWorkerSocketCreate'}, (err, data, eof, acknowledge)=> {
       console.log('[Worker ' + my_worker_id + '] "func1" Return value: ', data);
       // Twice
       if(data.isCallableStructure) {
@@ -171,6 +171,7 @@ initialize_interfaces(() => {
       }
 
       if(eof) console.log('finished worker_func1_call_test');
+      if(acknowledge) acknowledge('ack');
     });
     worker_socket.handleYielding('field2', (yielding_handler_parameter, ready_yielding) => {
       console.log('[Worker ' + my_worker_id + '] "field2" handleYielding started.');
@@ -188,9 +189,11 @@ initialize_interfaces(() => {
       console.log('[Worker ' + my_worker_id + '] "field1" yielding_start_parameter value: ', yielding_start_parameter);
 
       yield_data(321);
-      yield_data({foo: 321});
-      yield_data(Buffer.from([5, 4, 3, 0, 1]));
-      finish_yield('hehe');
+      yield_data({foo: 321}, (acknowledge_information)=> {
+        console.log('[Worker module] "field1" acknowledge_information.', acknowledge_information);
+        yield_data(Buffer.from([5, 4, 3, 0, 1]));
+        finish_yield('hehe');
+      });
     });
   });
 
