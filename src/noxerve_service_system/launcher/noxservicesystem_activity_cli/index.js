@@ -38,7 +38,7 @@ process.on('message', (message) => {
           else {
             console.log('CLI(PID: '+process.pid+') connected to NoxServiceSystem service.');
             rl.question('(NoxServiceSystem CLI) >>> ', (answer)=> {
-              console.log('CLI has not completed yet.', );
+              console.log('CLI has not completed yet.', answer);
             });
           }
         });

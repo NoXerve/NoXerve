@@ -101,6 +101,7 @@ Node.prototype._newTunnel = function(interface_name, from_interface, from_connec
       close: close,
       send: send
     });
+    
     tunnel.setValue('interface_name', interface_name);
     tunnel.setValue('interface_secured', AvaliableInterfaces[interface_name].secured);
     tunnel.setValue('from_interface', from_interface);
