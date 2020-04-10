@@ -13,6 +13,8 @@
 
 const FS = require('fs');
 const Initializer = require('./initializer');
+const Manifest = require('./manifest.json');
+
 
 function NoxServiceSystemService(noxerve_agent, preloader_parameters) {
   this._noxerve_agent = noxerve_agent;
@@ -20,7 +22,8 @@ function NoxServiceSystemService(noxerve_agent, preloader_parameters) {
 }
 
 NoxServiceSystemService.prototype.start = function(finish_start) {
-  console.log('NoxServiceSystem Service started.');
+  console.log(Manifest.display_name + ' service(version ' + Manifest.version + ') worker started.');
+  console.log(Manifest.description);
 
   const if_error_close_preloader = (error, next) => {
     if(error) {
@@ -66,7 +69,7 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
 }
 
 NoxServiceSystemService.prototype.close = function(finish_close) {
-  console.log('NoxServiceSystem Service closed.');
+  console.log('NoxServiceSystem service worker closed.');
   finish_close();
 }
 

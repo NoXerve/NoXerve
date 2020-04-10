@@ -84,7 +84,7 @@ Launcher.prototype.launch = function() {
       });
     });
 
-    const subprocess = Fork(require.resolve('./noxservicesystem_service_preloader'), {
+    const subprocess = Fork(require.resolve('./noxservicesystem_service_worker_preloader'), {
       stdio: [process.stdin, process.stdout, process.stderr, 'ipc']
     });
 

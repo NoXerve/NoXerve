@@ -3,7 +3,7 @@
 
   "display_name": "NoxServiceSystem",
 
-  "description": "Providing ablilties to create, manipulate or modify NoXerve services.",
+  "description": "NoxServiceSystem providing ablilties to create, manipulate or modify NoXerve services and it's workers.",
 
-  "version": "0.0.0",
+  "version": "0.0.0"
 }

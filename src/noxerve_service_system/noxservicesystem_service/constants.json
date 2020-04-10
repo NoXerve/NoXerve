@@ -1,0 +1,5 @@
+{
+  "noxservicesystem_my_worker_initailized_locker_path": "./initailized.lock",
+  "noxservicesystem_worker_peers_settings_path": "./worker_peers_settings.json",
+  "noxservicesystem_my_worker_settings_path": "./my_worker_settings.json"
+}

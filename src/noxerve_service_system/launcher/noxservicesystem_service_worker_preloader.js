@@ -21,7 +21,7 @@ console.log('');
 console.log('NoXerveServiceSystem ©2020-2019 nooxy org.');
 console.log('');
 
-console.log('NoxServiceSystem service process id: ' + process.pid);
+console.log('NoxServiceSystem service worker process id: ' + process.pid);
 const message_codes = {
   start_noxservicesystem_service: 0x01,
   start_noxservicesystem_service_comfirm: 0x02,
@@ -70,7 +70,7 @@ process.on('message', (message) => {
     close_executed_next_execute_plus_one();
   } else if (message_code === message_codes.start_noxservicesystem_service) {
     process.chdir(data.working_directory);
-    console.log('NoxServiceSystem service working directory:', data.working_directory);
+    console.log('NoxServiceSystem service worker working directory:', data.working_directory);
 
     let noxerve_agent_settings = {
       secured_node: data.settings.start_noxservicesystem_service_comfirm

@@ -1,0 +1,13 @@
+{
+  "service_name": "noxserviceset",
+
+  "display_name": "NoxServiceSet",
+
+  "description": "NoxServiceSet description.",
+
+  "version": "0.0.0",
+
+  "plarforms": {
+    "nodejs": "0.0.0"
+  }
+}
