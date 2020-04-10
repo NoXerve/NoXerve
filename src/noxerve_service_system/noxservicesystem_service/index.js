@@ -22,8 +22,8 @@ function NoxServiceSystemService(noxerve_agent, preloader_parameters) {
 }
 
 NoxServiceSystemService.prototype.start = function(finish_start) {
-  console.log(Manifest.display_name + ' service(version ' + Manifest.version + ') worker started.');
-  console.log(Manifest.description);
+  console.log(Manifest.service_display_name + ' service(version ' + Manifest.service_version + ') worker started.');
+  console.log(Manifest.service_description);
 
   const if_error_close_preloader = (error, next) => {
     if(error) {
@@ -32,6 +32,9 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
       setTimeout(() => {this._preloader_parameters.closePreloader()}, 100);
     }
     else {
+      this._noxerve_agent.Service.onActivityCreate('default', (parameter, service_of_activity)=> {
+        // service_of_activity.define('');
+      });
       next();
     }
   };
@@ -40,7 +43,7 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
   const initailize_noxerve_agent_worker = () => {
     Initializer.initailizeNoXerveAgentWorker(this._noxerve_agent, this._preloader_parameters, (error) => {
       if_error_close_preloader(error, ()=> {
-
+        finish_start();
       });
     });
   };

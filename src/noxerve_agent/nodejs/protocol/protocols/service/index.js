@@ -78,7 +78,11 @@ function ServiceProtocol(settings) {
  * @private
  */
 ServiceProtocol.prototype._ProtocolCodes = {
-  service_and_activity: Buf.from([0x01])
+  service_and_activity: Buf.from([0x01]),
+  accept: Buf.from([0x01]),
+  reject: Buf.from([0x00]),
+  unknown_reason_reject_2_bytes: Buf.from([0x00, 0x01]),
+  not_exist_reason_reject_2_bytes: Buf.from([0x00, 0x02]),
 }
 
 /**
@@ -121,9 +125,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
   // Format:
   // service-activity byte
   // 0x01
-
-  if (synchronize_information[0] === this._ProtocolCodes.service_and_activity[0]
-  ) {
+  if (synchronize_information[0] === this._ProtocolCodes.service_and_activity[0]) {
     // const generated_activity_id = Utils.random8Bytes();
     // const generated_activity_id_base64 = generated_activity_id.toString('base64');
 
@@ -131,7 +133,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
     const activity_purpose_parameter = this._nsdt_embedded_protocol.decode(synchronize_information.slice(5));
 
     onError((error) => {
-      console.log(error);
+      console.log('Serivce protocol verbose.', error);
     });
 
     onAcknowledge((acknowledge_information, tunnel) => {
@@ -142,7 +144,6 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
             this._service_module.emitEventListener('service-of-activity-ready', activity_purpose_name, activity_purpose_parameter, service_of_activity)
           }
           catch(error) {
-            console.log(error);
             tunnel.close();
           }
         });
@@ -151,11 +152,23 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
       }
     });
 
-    // Send 8 bytes id;
-    next(Buf.concat([
-      this._ProtocolCodes.service_and_activity,
-      // generated_activity_id
-    ]));
+    if(this._service_module.emitEventListener('service-of-activity-purpose-exist', activity_purpose_name)) {
+      // Send 8 bytes id;
+      next(Buf.concat([
+        this._ProtocolCodes.service_and_activity,
+        this._ProtocolCodes.accept,
+        // generated_activity_id
+      ]));
+    }
+    else {
+      // Send 8 bytes id;
+      next(Buf.concat([
+        this._ProtocolCodes.service_and_activity,
+        this._ProtocolCodes.not_exist_reason_reject_2_bytes,
+        // generated_activity_id
+      ]));
+    }
+
 
   } else next(false);
 }

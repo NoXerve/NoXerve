@@ -1,13 +1,15 @@
 {
   "service_name": "noxserviceset",
 
-  "display_name": "NoxServiceSet",
+  "service_display_name": "NoxServiceSet",
 
-  "description": "NoxServiceSet description.",
+  "service_id": "org.noxerve.noxserviceset",
 
-  "version": "0.0.0",
+  "service_description": "NoxServiceSet description.",
 
-  "plarforms": {
+  "service_version": "0.0.0",
+
+  "supported_plarforms": {
     "nodejs": "0.0.0"
   }
 }

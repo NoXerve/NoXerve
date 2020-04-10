@@ -78,7 +78,11 @@ function ActivityProtocol(settings) {
  * @private
  */
 ActivityProtocol.prototype._ProtocolCodes = {
-  service_and_activity: Buf.from([0x01])
+  service_and_activity: Buf.from([0x01]),
+  accept: Buf.from([0x01]),
+  reject: Buf.from([0x00]),
+  unknown_reason_reject_2_bytes: Buf.from([0x00, 0x01]),
+  not_exist_reason_reject_2_bytes: Buf.from([0x00, 0x02]),
 }
 
 /**
@@ -97,9 +101,6 @@ ActivityProtocol.prototype.start = function(callback) {
 
     // Shuffle for clientwise loadbalancing.
     const shuffled_interface_connect_settings_list = Utils.shuffleArray(interface_connect_settings_list);
-
-    // Get activity_id from synchronize_acknowledgement_information;
-    let activity_id;
 
     // Synchronize information for handshake
     const activity_purpose_name_4bytes = this._hash_manager.hashString4Bytes(activity_purpose_name);
@@ -129,6 +130,7 @@ ActivityProtocol.prototype.start = function(callback) {
 
       const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
         if (open_handshanke_error) {
+
           // Unable to open handshake. Next loop.
           loop_next();
 
@@ -137,17 +139,23 @@ ActivityProtocol.prototype.start = function(callback) {
         } else {
           // Handshake opened. Check if synchronize_acknowledgement_information valid.
           try {
-            if(synchronize_acknowledgement_information[0] === this._ProtocolCodes.service_and_activity[0]) {
-              activity_id = synchronize_acknowledgement_information;
+            if(synchronize_acknowledgement_information[0] === this._ProtocolCodes.service_and_activity[0] && synchronize_acknowledgement_information[1] === this._ProtocolCodes.accept[0]) {
+
               // Acknowledgement information for handshake
-              // Format:
-              // acknowledge byte
-              // 0x01(ok)
-              // 0x00(not ok)
               const acknowledge_information = this._ProtocolCodes.service_and_activity;
 
               // Return acknowledge binary.
               next(acknowledge_information);
+            }
+            else if(synchronize_acknowledgement_information[0] === this._ProtocolCodes.service_and_activity[0] && synchronize_acknowledgement_information[1] === this._ProtocolCodes.reject[0]) {
+              if(synchronize_acknowledgement_information[2] === this._ProtocolCodes.not_exist_reason_reject_2_bytes[1]) {
+                create_activity_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY('Create activity error. Service for such purpose does not exist.'));
+                next(false);
+              }
+              else {
+                create_activity_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY('Create activity error. Rejected for unknown reason.'));
+                next(false);
+              }
             }
             else {
               loop_next();

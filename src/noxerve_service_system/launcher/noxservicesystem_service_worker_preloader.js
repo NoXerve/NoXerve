@@ -73,7 +73,7 @@ process.on('message', (message) => {
     console.log('NoxServiceSystem service worker working directory:', data.working_directory);
 
     let noxerve_agent_settings = {
-      secured_node: data.settings.start_noxservicesystem_service_comfirm
+      secured_node: data.settings.secured_node
     };
 
     const start_noxservicesystem_service = () => {
@@ -92,63 +92,70 @@ process.on('message', (message) => {
       process.chdir(data.settings.service.workers_files_path + '/noxservicesystem');
 
       const noxerve_agent = new(require(data.noxerve_agent_library_directory + '/nodejs'))(noxerve_agent_settings);
-      let start_executed_next_execute = 0;
-
-      let index = 0;
-      // Setup interfaces
-      const initialize_interfaces = (callback) => {
-        const _interface = data.settings.interfaces[index];
-        noxerve_agent.createInterface(_interface.interface_name, _interface.interface_settings, (err, id) => {
-          if (err) console.log('Create interface error.', err);
-          loop_next(callback);
-        })
-      };
-
-      const loop_next = (callback) => {
-        index++;
-        if (index < data.settings.interfaces.length) {
-          initialize_interfaces(callback);
-        } else {
-          callback();
+      noxerve_agent.start((error) => {
+        if(error) {
+          throw error;
         }
-      };
+        else {
+          let start_executed_next_execute = 0;
 
-      initialize_interfaces(()=> {
-        // Setting up relaunch function for NoxServiceSystemService.
-        data.relaunchPreloader = () => {
-          if (start_executed_next_execute === 2) {
-            process.send({
-              message_code: message_codes.request_preloader_relaunch
-            });
-          } else {
-            //
-            throw new Error('"relaunchPreloader" is not available until serivce start function executed.');
-          }
-        };
-        data.closePreloader = () => {
-          if (start_executed_next_execute === 2) {
-            process.send({
-              message_code: message_codes.request_preloader_close
-            });
-          } else {
-            throw new Error('"closePreloader" is not available until serivce start function executed.');
-          }
-        };
-        noxservicesystem_service_instance = new NoxServiceSystemService(noxerve_agent, data);
+          let index = 0;
+          // Setup interfaces
+          const initialize_interfaces = (callback) => {
+            const _interface = data.settings.interfaces[index];
+            noxerve_agent.createInterface(_interface.interface_name, _interface.interface_settings, (err, id) => {
+              if (err) console.log('Create interface error.', err);
+              loop_next(callback);
+            })
+          };
 
-        const start_executed_next_execute_plus_one = () => {
-          start_executed_next_execute++;
-          if (start_executed_next_execute === 2) {
-            process.send({
-              message_code: message_codes.start_noxservicesystem_service_comfirm
-            });
-          }
-        };
+          const loop_next = (callback) => {
+            index++;
+            if (index < data.settings.interfaces.length) {
+              initialize_interfaces(callback);
+            } else {
+              callback();
+            }
+          };
 
-        noxservicesystem_service_instance.start(() => {
-          start_executed_next_execute_plus_one();
-        });
-        start_executed_next_execute_plus_one();
+          initialize_interfaces(()=> {
+            // Setting up relaunch function for NoxServiceSystemService.
+            data.relaunchPreloader = () => {
+              if (start_executed_next_execute === 2) {
+                process.send({
+                  message_code: message_codes.request_preloader_relaunch
+                });
+              } else {
+                //
+                throw new Error('"relaunchPreloader" is not available until serivce start function executed.');
+              }
+            };
+            data.closePreloader = () => {
+              if (start_executed_next_execute === 2) {
+                process.send({
+                  message_code: message_codes.request_preloader_close
+                });
+              } else {
+                throw new Error('"closePreloader" is not available until serivce start function executed.');
+              }
+            };
+            noxservicesystem_service_instance = new NoxServiceSystemService(noxerve_agent, data);
+
+            const start_executed_next_execute_plus_one = () => {
+              start_executed_next_execute++;
+              if (start_executed_next_execute === 2) {
+                process.send({
+                  message_code: message_codes.start_noxservicesystem_service_comfirm
+                });
+              }
+            };
+
+            noxservicesystem_service_instance.start(() => {
+              start_executed_next_execute_plus_one();
+            });
+            start_executed_next_execute_plus_one();
+          });
+        }
       });
     };
 

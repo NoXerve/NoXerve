@@ -20,6 +20,10 @@ const message_codes = {
   request_preloader_relaunch: 0xfd
 }
 
+const cli_message_codes = {
+  start: 0x01
+}
+
 const Fork = require('child_process').fork;
 
 /**
@@ -84,6 +88,10 @@ Launcher.prototype.launch = function() {
       });
     });
 
+    const cli_subprocess = Fork(require.resolve('./noxservicesystem_activity_cli'), {
+      stdio: [process.stdin, process.stdout, process.stderr, 'ipc']
+    });
+
     const subprocess = Fork(require.resolve('./noxservicesystem_service_worker_preloader'), {
       stdio: [process.stdin, process.stdout, process.stderr, 'ipc']
     });
@@ -112,6 +120,14 @@ Launcher.prototype.launch = function() {
         });
 
       } else if (message_code === message_codes.start_noxservicesystem_service_comfirm) {
+        cli_subprocess.send({
+          message_code: cli_message_codes.start,
+          data: {
+            working_directory: this._working_directory,
+            noxerve_agent_library_directory: this._noxerve_agent_library_directory,
+            settings: this._settings
+          }
+        });
         start_noxservicesystem_service_subprocess_to_be_relaunched = true;
         start_noxservicesystem_service_subprocess_retried_counts = 0;
 
@@ -122,9 +138,10 @@ Launcher.prototype.launch = function() {
       }
     });
 
-    subprocess.on('exit', (code) => {
+    const on_process_exit = (code) => {
+      cli_subprocess.kill();
       if (start_noxservicesystem_service_subprocess_to_be_relaunched === false) {
-        console.log('Launcher has recieve close signal from core.');
+        console.log('Launcher has recieve close signal from subprocess.');
         process.exit();
       } else if (start_noxservicesystem_service_subprocess_retried_counts === parseInt(this._launch_settings.launch_fail_retry_counts)) {
         console.log('Launcher has retried launching ' + start_noxservicesystem_service_subprocess_retried_counts + ' times. Aborted.');
@@ -136,7 +153,10 @@ Launcher.prototype.launch = function() {
         process.exit();
       }
       start_noxservicesystem_service_subprocess_retried_counts++;
-    });
+    };
+
+    subprocess.on('exit', on_process_exit);
+    cli_subprocess.on('exit', on_process_exit);
 
     // Start noxservicesystem service.
     subprocess.send({

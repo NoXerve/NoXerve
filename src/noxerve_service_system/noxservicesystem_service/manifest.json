@@ -1,9 +1,11 @@
 {
   "service_name": "noxservicesystem",
 
-  "display_name": "NoxServiceSystem",
+  "service_display_name": "NoxServiceSystem",
 
-  "description": "NoxServiceSystem providing ablilties to create, manipulate or modify NoXerve services and it's workers.",
+  "service_id": "org.noxerve.noxservicesystem",
 
-  "version": "0.0.0"
+  "service_description": "NoxServiceSystem providing ablilties to create, manipulate or modify NoXerve services and it's workers.",
+
+  "service_version": "0.0.0"
 }

@@ -116,7 +116,7 @@ function WorkerProtocol(settings) {
  * @private
  */
 WorkerProtocol.prototype._ProtocolCodes = {
-  worker_affairs: Buf.from([0x01]),
+  worker_affairs: Buf.from([0x02]),
   worker_affairs_worker_peer_join_request_respond: Buf.from([0x01]),
   worker_affairs_worker_peer_update_request_respond: Buf.from([0x02]),
   worker_affairs_worker_peer_leave_request_respond: Buf.from([0x03]),
@@ -125,7 +125,7 @@ WorkerProtocol.prototype._ProtocolCodes = {
   worker_affairs_worker_peer_leave_broadcast: Buf.from([0x06]),
   worker_affairs_worker_peer_operation_comfirm_broadcast: Buf.from([0x07]),
   worker_affairs_worker_peer_operation_cancel_broadcast: Buf.from([0x08]),
-  worker_socket: Buf.from([0x02]),
+  worker_socket: Buf.from([0x03]),
   accept: Buf.from([0x01]),
   reject: Buf.from([0x00]),
   unknown_reason_reject_2_bytes: Buf.from([0x00, 0x01]),

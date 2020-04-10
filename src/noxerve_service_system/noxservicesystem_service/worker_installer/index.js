@@ -12,10 +12,10 @@
  */
 
 function WorkerInstaller(settings) {
-  
+
 }
 
-WorkerInstaller.prototype.installWorker = function() {
+WorkerInstaller.prototype.installWorker = function(service_name) {
 
 }
 
