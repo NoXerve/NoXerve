@@ -248,7 +248,7 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
         if (error) {
           console.log(error, inner_finished_worker_id_list);
         }
-        if(operation_type === 'leave') {
+        if (operation_type === 'leave') {
           // Reset worker.
           this._my_worker_id = null;
           this._my_worker_id_4bytes = null;
@@ -290,14 +290,13 @@ WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = func
   const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
   const remote_worker_peer_authenticity_bytes = synchronize_information.slice(6, 6 + remote_worker_peer_authenticity_bytes_length);
   this._validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_id) => {
-    if((operation_type === 'update' || operation_type === 'leave') && !Object.keys(this._worker_peers_settings).includes(remote_worker_peer_id+'')) {
+    if ((operation_type === 'update' || operation_type === 'leave') && !Object.keys(this._worker_peers_settings).includes(remote_worker_peer_id + '')) {
       next(Buf.concat([
         this._ProtocolCodes.worker_affairs,
         worker_peer_opreation_byte,
         this._ProtocolCodes.authentication_reason_reject_2_bytes // Reject. Authenticication error.
       ]));
-    }
-    else if (is_authenticity_valid) {
+    } else if (is_authenticity_valid) {
       const bytes_offseted = synchronize_information.slice(6 + remote_worker_peer_authenticity_bytes_length);
       const target_worker_peer_worker_id = Buf.decodeUInt32BE(bytes_offseted.slice(0, 4));
       const new_worker_peer_interfaces_connect_settings_bytes_length = (operation_type === 'leave') ? null : Buf.decodeUInt32BE(bytes_offseted.slice(4, 8));
@@ -330,10 +329,10 @@ WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = func
           };
         } else if (operation_type === 'update') {
           // If null preserve settings.
-          if(!new_worker_peer_interfaces_connect_settings) {
+          if (!new_worker_peer_interfaces_connect_settings) {
             new_worker_peer_interfaces_connect_settings = this._worker_peers_settings[target_worker_peer_worker_id].interfaces_connect_settings;
           }
-          if(!new_worker_peer_detail) {
+          if (!new_worker_peer_detail) {
             new_worker_peer_detail = this._worker_peers_settings[target_worker_peer_worker_id].detail;
           }
           this._worker_peers_settings[target_worker_peer_worker_id].new_settings = {
@@ -364,8 +363,7 @@ WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = func
         };
         if (operation_type === 'leave') {
           this._worker_module.emitEventListener(event_listener_name, target_worker_peer_worker_id, next_of_worker_module);
-        }
-        else {
+        } else {
           this._worker_module.emitEventListener(event_listener_name, target_worker_peer_worker_id, new_worker_peer_interfaces_connect_settings, new_worker_peer_detail, next_of_worker_module);
         }
       }
@@ -401,12 +399,12 @@ WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_wo
  * @private
  */
 WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
-  worker_id, synchronize_information, acknowledge_synchronization, finish_handshake) {
-  if(!this._worker_peers_settings[worker_id]) {
-    finish_handshake(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker id.'));
+  target_worker_peer_worker_id, synchronize_information, acknowledge_synchronization, finish_handshake) {
+  if (!this._worker_peers_settings[target_worker_peer_worker_id]) {
+    finish_handshake(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker id(' + target_worker_peer_worker_id + ').'));
     return;
   }
-  const interfaces_connect_settings = this._worker_peers_settings[worker_id].interfaces_connect_settings;
+  const interfaces_connect_settings = this._worker_peers_settings[target_worker_peer_worker_id].interfaces_connect_settings;
 
   let index = 0;
   const open_handshanke_errors = [];
@@ -642,9 +640,7 @@ WorkerProtocol.prototype.start = function(callback) {
       this._my_worker_id_4bytes = Buf.encodeUInt32BE(worker_id);
       this._my_worker_authenticity_data_bytes = this._nsdt_embedded_protocol.encode(worker_authenticity_information);
       callback(false);
-    }
-
-    else callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker authenticity data without worker id.'));
+    } else callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker authenticity data without worker id.'));
   });
 
   this._worker_module.on('worker-peers-settings-import', (worker_peers_settings, callback) => {
@@ -674,7 +670,7 @@ WorkerProtocol.prototype.start = function(callback) {
         // Check required field is included.
         for (const index2 in required_fields) {
           if (!keys.includes(required_fields[index2])) {
-            callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker peers settings missing field "'+required_fields[index2]+'".'));
+            callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker peers settings missing field "' + required_fields[index2] + '".'));
             return;
           }
         }
@@ -868,10 +864,10 @@ WorkerProtocol.prototype.start = function(callback) {
   });
 
   this._worker_module.on('me-update', (my_worker_new_interfaces_connect_settings, my_new_worker_detail, me_update_callback) => {
-    if(!my_worker_new_interfaces_connect_settings) {
+    if (!my_worker_new_interfaces_connect_settings) {
       my_worker_new_interfaces_connect_settings = null;
     }
-    if(!my_new_worker_detail) {
+    if (!my_new_worker_detail) {
       my_new_worker_detail = null;
     }
 
@@ -893,11 +889,10 @@ WorkerProtocol.prototype.start = function(callback) {
       Buf.encodeUInt32BE(this._my_worker_id)
     ]);
 
-    this._broadcastWorkerAffairsWorkerPeerOperation('leave', this._my_worker_id, worker_affairs_worker_peer_leave_broadcast_bytes, (error)=> {
-      if(error) {
+    this._broadcastWorkerAffairsWorkerPeerOperation('leave', this._my_worker_id, worker_affairs_worker_peer_leave_broadcast_bytes, (error) => {
+      if (error) {
         me_leave_callback(error);
-      }
-      else {
+      } else {
         me_leave_callback(error);
       }
     });
@@ -911,7 +906,11 @@ WorkerProtocol.prototype.start = function(callback) {
   });
 
   this._worker_module.on('worker-peer-detail-get', (target_worker_peer_worker_id, callback) => {
-    callback(false, this._worker_peers_settings[target_worker_peer_worker_id].detail);
+    if (this._worker_peers_settings[target_worker_peer_worker_id]) {
+      callback(false, this._worker_peers_settings[target_worker_peer_worker_id].detail);
+    } else {
+      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker id(' + target_worker_peer_worker_id + ').'));
+    }
   });
 
   // this._worker_module.on('', () => {});
