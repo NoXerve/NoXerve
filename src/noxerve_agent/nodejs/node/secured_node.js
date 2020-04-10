@@ -182,10 +182,14 @@ function SecuredNode(settings) {
       secured_tunnel.setValue('from_connector', tunnel.returnValue('from_connector'));
 
       secured_tunnel.getEmitter((error, secured_tunnel_emitter) => {
-        if (error) callback(error);
+        if (error) {
+          console.log(error);
+          tunnel.close()
+        }
         else {
           const rsa_2048_public_key_utf8_encoded = Buf.from(this._rsa_2048_key_pair.public, 'utf8');
           tunnel.on('ready', () => {
+
             const upgrade_secured_node_bytes = Buf.concat([
               this._secured_node_protocol_code,
               rsa_2048_public_key_utf8_encoded
@@ -193,8 +197,6 @@ function SecuredNode(settings) {
 
             tunnel.on('data', (data) => {
               if (data[0] === this._secured_node_protocol_code[0]) {
-
-
                 const decrypted_data = Crypto.privateDecrypt(this._rsa_2048_key_pair.private, data.slice(1));
                 const remote_random_bytes = decrypted_data.slice(8); // remove salt.
                 aes_cbc_256_shared_key = this._aes_cbc_256_shared_key_derivation_function(rsa_2048_public_key_utf8_encoded, remote_random_bytes);

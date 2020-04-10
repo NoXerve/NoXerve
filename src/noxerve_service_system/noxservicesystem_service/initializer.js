@@ -8,15 +8,8 @@
 
 'use strict';
 
-const readline = require("readline");
 const FS = require('fs');
 const Constants = require('./constants.json');
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    // terminal: false
-});
 
 module.exports.isMyWorkerFilesInitailized = function() {
   return FS.existsSync(Constants.noxservicesystem_my_worker_initailized_locker_path);
@@ -25,8 +18,16 @@ module.exports.isMyWorkerFilesInitailized = function() {
 module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_parameters, callback) {
   const worker_peers_settings_initialize = (next)=> {
     if (!FS.existsSync(Constants.noxservicesystem_worker_peers_settings_path)) {
+      const readline = require("readline");
+      const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout,
+          // terminal: false
+      });
+
       console.log('Has not set up worker peer settings.');
       rl.question('Do you want to:\n 1. Setup as the first worker.\n 2. Join other worker peers? \nInput a number: \n', (answer) => {
+        rl.close();
         if(answer === '1') {
           FS.writeFileSync(Constants.noxservicesystem_my_worker_settings_path, JSON.stringify({
             worker_id: 1,

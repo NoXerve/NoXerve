@@ -118,6 +118,7 @@ Node.prototype._newTunnel = function(interface_name, from_interface, from_connec
       }
     });
   } catch (error) {
+    // console.log(called_callback, error);
     if(!called_callback) callback(error);
     else {
       throw error;
@@ -214,7 +215,13 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
       // Fill in proper interface information for interface itself.
       // AvaliableInterfaces[interface_name].interface_name provide a "standard"
       // interface name.
-      this._newTunnel(AvaliableInterfaces[interface_name].interface_name, true, false, send, close, new_tunnel_callback);
+      try {
+        this._newTunnel(AvaliableInterfaces[interface_name].interface_name, true, false, send, close, new_tunnel_callback);
+      }
+      catch(error) {
+        console.log(error);
+        this._event_listeners['interface-error'](error);
+      }
     });
 
     // Start interface

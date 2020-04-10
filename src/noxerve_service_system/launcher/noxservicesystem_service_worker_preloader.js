@@ -38,14 +38,6 @@ const FS = require('fs');
 const {
   execSync
 } = require("child_process");
-const readline = require("readline");
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  // Nodejs bugs interface still exists after readline even closed.
-  terminal: false
-});
 
 let noxservicesystem_service_instance;
 
@@ -77,6 +69,11 @@ process.on('message', (message) => {
     };
 
     const start_noxservicesystem_service = () => {
+      noxerve_agent_settings.rsa_2048_key_pair = {
+        public: FS.readFileSync(data.settings.rsa_2048_key_pair_path.public, 'utf8'),
+        private: FS.readFileSync(data.settings.rsa_2048_key_pair_path.private, 'utf8'),
+      };
+      
       // Create nessasary directories.
       if (!FS.existsSync(data.settings.service.services_path)) {
         FS.mkdirSync(data.settings.service.services_path);
@@ -161,8 +158,18 @@ process.on('message', (message) => {
 
     if (data.settings.secured_node) {
       if (!FS.existsSync(data.settings.rsa_2048_key_pair_path.private)) {
+        const readline = require("readline");
+
+        const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout,
+          // Nodejs bugs interface still exists after readline even closed.
+          terminal: false
+        });
+
         console.log('Secured node is on. However, RSA 2048 key pair is not generated at "' + data.working_directory + '".');
         rl.question('Help you generate? [y/n]', (answer) => {
+          rl.close();
           if (answer === 'y' || answer === 'Y') {
             let succeed = false;
             try {
@@ -184,14 +191,9 @@ process.on('message', (message) => {
               message_code: message_codes.request_launcher_terminate
             });
           }
-          // rl.close();
           // rl.removeAllListeners();
         });
       } else {
-        noxerve_agent_settings.rsa_2048_key_pair = {
-          public: FS.readFileSync(data.settings.rsa_2048_key_pair_path.public, 'utf8'),
-          private: FS.readFileSync(data.settings.rsa_2048_key_pair_path.private, 'utf8'),
-        };
         start_noxservicesystem_service();
       }
     }

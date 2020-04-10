@@ -32,11 +32,13 @@ process.on('message', (message) => {
       const noxerve_agent = new(require(data.noxerve_agent_library_directory + '/nodejs'))(noxerve_agent_settings);
       noxerve_agent.start((error)=> {
         if(error) throw error;
+        console.log('CLI(PID: '+process.pid+') started NoXerveAgent.');
         noxerve_agent.Activity.createActivity(data.settings.interfaces_connect_settings, 'default', null, (error, noxservicesystem_service) => {
           if(error) console.log(error);
           else {
+            console.log('CLI(PID: '+process.pid+') connected to NoxServiceSystem service.');
             rl.question('(NoxServiceSystem CLI) >>> ', (answer)=> {
-
+              console.log('CLI has not completed yet.', );
             });
           }
         });
