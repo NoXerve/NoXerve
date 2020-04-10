@@ -160,8 +160,8 @@ initialize_interfaces(()=> {
     Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
       if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
 
-      Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
-        console.log('[Worker ' + my_worker_id + '] onWorkerSocketCreate OK.', parameters, remote_worker_id, worker_socket);
+      Worker.onWorkerSocketCreate('purpose 1', (parameter, remote_worker_id, worker_socket)=> {
+        console.log('[Worker ' + my_worker_id + '] onWorkerSocketCreate OK.', parameter, remote_worker_id, worker_socket);
         worker_socket.on('close', () => {
           console.log('[Worker ' + my_worker_id + '] WorkerSocket from onWorkerSocketCreate closed.');
         });

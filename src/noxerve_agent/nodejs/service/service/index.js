@@ -43,9 +43,9 @@ function Service(settings) {
         callback(error);
       }
     },
-    'service-of-activity-ready': (service_of_activity) => {
-      this._event_listeners.connect(service_of_activity);
-    }
+    'service-of-activity-ready': (activity_purpose_name, activity_purpose_parameter, service_of_activity) => {
+      this._event_listeners['activity-create-' + activity_purpose_name](activity_purpose_parameter, service_of_activity);
+    },
   };
 };
 
@@ -87,6 +87,22 @@ Service.prototype.close = function(callback) {
  */
 Service.prototype.on = function(event_name, listener) {
   this._event_listeners[event_name] = listener;
+}
+
+/**
+ * @callback module:Service~callback_of_on_activity_create
+ * @param {noxerve_supported_data_type} activity_purpose_parameter - The purpose for this activity. Along with it's parameter.
+ * @param {object} service_of_activity
+ */
+/**
+ * @memberof module:Service
+ * @param {string} activity_purpose_name - The purpose for this activity.
+ * @param {module:Service~callback_of_on_activity_create} listener
+ * @description Handle activity emitted from remote.
+ */
+Service.prototype.onActivityCreate = function(activity_purpose_name, listener) {
+  this._event_listeners['activity-create-' + activity_purpose_name] = listener;
+  this._event_listeners['hash-string-request'](activity_purpose_name);
 }
 
 /**

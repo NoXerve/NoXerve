@@ -268,8 +268,8 @@ Node2.createInterface('WebSocket', {
   // **** Worker Module Test End ****
 
   // **** Service Module Test Start ****
-  Service.on('connect', (service_of_activity) => {
-    console.log('[Service module] Activity created.');
+  Service.onActivityCreate('default', (parameter, service_of_activity) => {
+    console.log('[Service module] Activity(default) created. parameter: ', parameter);
     service_of_activity.on('close', ()=> {
       console.log('[Service module] Service closed.');
     });
@@ -315,7 +315,7 @@ Node2.createInterface('WebSocket', {
       host: '0.0.0.0',
       port: 12345
     }
-  }], (error, activity_of_service) => {
+  }], 'default', {a: 'parameter a'}, (error, activity_of_service) => {
 
     if (error) console.log('[Activity module] Activity create error.', error);
     else {

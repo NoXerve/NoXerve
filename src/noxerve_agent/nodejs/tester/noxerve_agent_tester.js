@@ -172,8 +172,8 @@ NoXerveAgent.start((error)=> {
     // **** Worker Module Test End ****
 
     // **** Service Module Test Start ****
-    NoXerveAgent.Service.on('connect', (service_of_activity) => {
-      console.log('[Service module] Activity created.');
+    NoXerveAgent.Service.onActivityCreate('default', (parameter, service_of_activity) => {
+      console.log('[Service module] Activity(default) created. Parameter:', parameter);
       service_of_activity.on('close', ()=> {
         console.log('[Service module] Service closed.');
       });
@@ -220,7 +220,7 @@ NoXerveAgent.start((error)=> {
         host: '0.0.0.0',
         port: 12345
       }
-    }], (error, activity_of_service) => {
+    }], 'default', {a: 'parameter a'}, (error, activity_of_service) => {
       if (error) console.log('[Activity module] Activity create error.', error);
       else {
         console.log('[Activity module] Activity created.');

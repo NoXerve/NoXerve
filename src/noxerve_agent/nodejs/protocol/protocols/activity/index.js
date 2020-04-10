@@ -42,6 +42,20 @@ function ActivityProtocol(settings) {
    * @memberof module:ActivityProtocol
    * @type {object}
    * @private
+   */
+  this._hash_manager = settings.hash_manager;
+
+  /**
+   * @memberof module:ActivityProtocol
+   * @type {object}
+   * @private
+   */
+  this._nsdt_embedded_protocol = settings.embedded_protocols['nsdt_embedded'];
+
+  /**
+   * @memberof module:ActivityProtocol
+   * @type {object}
+   * @private
    * @description Open a handshake.
    */
   this._open_handshake_function = settings.open_handshake;
@@ -79,7 +93,7 @@ ActivityProtocol.prototype._ProtocolCodes = {
 ActivityProtocol.prototype.start = function(callback) {
 
   // Create activity from activity module.
-  this._activity_module.on('activity-create', (interface_connect_settings_list, create_activity_callback) => {
+  this._activity_module.on('activity-create', (interface_connect_settings_list, activity_purpose_name, activity_parameter, create_activity_callback) => {
 
     // Shuffle for clientwise loadbalancing.
     const shuffled_interface_connect_settings_list = Utils.shuffleArray(interface_connect_settings_list);
@@ -88,10 +102,13 @@ ActivityProtocol.prototype.start = function(callback) {
     let activity_id;
 
     // Synchronize information for handshake
-    // Format:
-    // service-activity byte
-    // 0x01
-    const synchronize_information = this._ProtocolCodes.service_and_activity;
+    const activity_purpose_name_4bytes = this._hash_manager.hashString4Bytes(activity_purpose_name);
+    const activity_parameter_bytes = this._nsdt_embedded_protocol.encode(activity_parameter);
+    const synchronize_information = Buf.concat([
+      this._ProtocolCodes.service_and_activity,
+      activity_purpose_name_4bytes,
+      activity_parameter_bytes
+    ]);
 
     // Proceed tunnel creations loop.
     let index = 0;

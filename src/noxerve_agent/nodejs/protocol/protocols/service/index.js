@@ -50,6 +50,20 @@ function ServiceProtocol(settings) {
    * @memberof module:ServiceProtocol
    * @type {object}
    * @private
+   */
+  this._hash_manager = settings.hash_manager;
+
+  /**
+   * @memberof module:ServiceProtocol
+   * @type {object}
+   * @private
+   */
+  this._nsdt_embedded_protocol = settings.embedded_protocols['nsdt_embedded'];
+
+  /**
+   * @memberof module:ServiceProtocol
+   * @type {object}
+   * @private
    * @description ServiceOfActivityProtocol submodule.
    */
   this._service_of_activity_protocol = new ServiceOfActivityProtocol({
@@ -77,6 +91,9 @@ ServiceProtocol.prototype._ProtocolCodes = {
  * @description Start running ServiceProtocol.
  */
 ServiceProtocol.prototype.start = function(callback) {
+  this._service_module.on('hash-string-request', (activity_purpose_name) => {
+    this._hash_manager.hashString4Bytes(activity_purpose_name);
+  });
   if (callback) callback(false);
 }
 
@@ -105,20 +122,29 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
   // service-activity byte
   // 0x01
 
-  if (synchronize_information.length === 1 &&
-    synchronize_information[0] === this._ProtocolCodes.service_and_activity[0]
+  if (synchronize_information[0] === this._ProtocolCodes.service_and_activity[0]
   ) {
-    const generated_activity_id = Utils.random8Bytes();
-    const generated_activity_id_base64 = generated_activity_id.toString('base64');
+    // const generated_activity_id = Utils.random8Bytes();
+    // const generated_activity_id_base64 = generated_activity_id.toString('base64');
+
+    const activity_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(1, 5));
+    const activity_purpose_parameter = this._nsdt_embedded_protocol.decode(synchronize_information.slice(5));
 
     onError((error) => {
+      console.log(error);
     });
 
     onAcknowledge((acknowledge_information, tunnel) => {
       if (acknowledge_information[0] === this._ProtocolCodes.service_and_activity[0]) {
         this._service_module.emitEventListener('service-of-activity-request', (error, service_of_activity) => {
           this._service_of_activity_protocol.handleTunnel(error, service_of_activity, tunnel);
-          this._service_module.emitEventListener('service-of-activity-ready', service_of_activity)
+          try {
+            this._service_module.emitEventListener('service-of-activity-ready', activity_purpose_name, activity_purpose_parameter, service_of_activity)
+          }
+          catch(error) {
+            console.log(error);
+            tunnel.close();
+          }
         });
       } else {
         tunnel.close();
@@ -128,7 +154,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
     // Send 8 bytes id;
     next(Buf.concat([
       this._ProtocolCodes.service_and_activity,
-      generated_activity_id
+      // generated_activity_id
     ]));
 
   } else next(false);

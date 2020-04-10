@@ -154,6 +154,9 @@ function NoXerveAgent(settings) {
   this.Service = {
     on: (event_name, listener) => {
       this._service_module.on(event_name, listener);
+    },
+    onActivityCreate: (activity_purpose_name, listener) => {
+      this._service_module.onActivityCreate(activity_purpose_name, listener);
     }
   };
 
@@ -164,8 +167,8 @@ function NoXerveAgent(settings) {
    * @description API intended to provide functions for the role of service.
    */
   this.Activity = {
-    createActivity: (interface_connect_settings_list, callback) => {
-      this._activity_module.createActivity(interface_connect_settings_list, callback);
+    createActivity: (interface_connect_settings_list, activity_purpose_name, activity_purpose_arguments, callback) => {
+      this._activity_module.createActivity(interface_connect_settings_list, activity_purpose_name, activity_purpose_arguments, callback);
     }
   };
 
