@@ -15,8 +15,11 @@ process.on('disconnect', ()=> {
 const Node = new(require('../../node'))();
 const NSDT = new(require('../../nsdt'))();
 const Worker = new(require('../../worker'))();
+const FS = require('fs');
 
+const static_global_random_seed_4096bytes = FS.readFileSync('./static_global_random_seed_4096bytes');
 const my_worker_id = 1;
+console.log('[Worker ' + my_worker_id + '] static_global_random_seed_4096bytes.', static_global_random_seed_4096bytes);
 
 const my_worker_detail = {
   name: 'worker 1'
@@ -154,79 +157,82 @@ initialize_interfaces(()=> {
     next(false, on_cancel);
   });
 
-  Worker.importMyWorkerAuthenticityData(my_worker_id, 'whatsoever_auth1', (error)=> {
-    if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);
-    Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
-      if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
-      process.on('message', (msg)=> {
-        if(msg === '4') {
-          Worker.getWorkerPeerDetail(3, (error, detail) => {
-            if (error) {
-              console.log('[Worker ' + my_worker_id + '] getWorkerPeerDetail error.', error);
-            }
-            console.log('[Worker ' + my_worker_id + '] getWorkerPeerDetail.', detail);
-          });
-          Worker.createWorkerSocket('purpose 1', {p: 1}, 3, (error, worker_socket)=> {
-            if (error) {
-              console.log('[Worker ' + my_worker_id + '] createWorkerSocket error.', error);
-            }
-            else {
-              worker_socket.on('close', () => {
-                console.log('[Worker ' + my_worker_id + '] WorkerSocket from createWorkerSocket closed.');
-              });
-              worker_socket.define('func1', (service_function_parameter, return_data, yield_data) => {
-                console.log('[Worker ' + my_worker_id + '] WorkerSocket function on createWorkerSocket called.');
-                const callable_struture = NSDT.createCallableStructure({haha: (callback)=> {
-                  console.log('[NSDT module] NSDT haha called.');
-                  const callable_struture_2 = NSDT.createCallableStructure({nah: ()=> {}});
-                  callback(callable_struture, callable_struture_2, 321);
-                }});
-
-                callable_struture.on('close', ()=> {
-                  console.log('[NSDT module] NSDT haha closed.');
+  Worker.importStaticGlobalRandomSeed(static_global_random_seed_4096bytes, (error)=> {
+    if (error) console.log('[Worker ' + my_worker_id + '] importStaticGlobalRandomSeed error.', error);
+    Worker.importMyWorkerAuthenticityData(my_worker_id, 'whatsoever_auth1', (error)=> {
+      if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);
+      Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
+        if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
+        process.on('message', (msg)=> {
+          if(msg === '4') {
+            Worker.getWorkerPeerDetail(3, (error, detail) => {
+              if (error) {
+                console.log('[Worker ' + my_worker_id + '] getWorkerPeerDetail error.', error);
+              }
+              console.log('[Worker ' + my_worker_id + '] getWorkerPeerDetail.', detail);
+            });
+            Worker.createWorkerSocket('purpose 1', {p: 1}, 3, (error, worker_socket)=> {
+              if (error) {
+                console.log('[Worker ' + my_worker_id + '] createWorkerSocket error.', error);
+              }
+              else {
+                worker_socket.on('close', () => {
+                  console.log('[Worker ' + my_worker_id + '] WorkerSocket from createWorkerSocket closed.');
                 });
+                worker_socket.define('func1', (service_function_parameter, return_data, yield_data) => {
+                  console.log('[Worker ' + my_worker_id + '] WorkerSocket function on createWorkerSocket called.');
+                  const callable_struture = NSDT.createCallableStructure({haha: (callback)=> {
+                    console.log('[NSDT module] NSDT haha called.');
+                    const callable_struture_2 = NSDT.createCallableStructure({nah: ()=> {}});
+                    callback(callable_struture, callable_struture_2, 321);
+                  }});
 
-                yield_data(callable_struture);
+                  callable_struture.on('close', ()=> {
+                    console.log('[NSDT module] NSDT haha closed.');
+                  });
 
-                yield_data(123);
-                yield_data({foo: 123}, (acknowledge_information)=> {
-                  console.log('[Worker module] WorkerSocket function on createWorkerSocket. acknowledge_information', acknowledge_information);
+                  yield_data(callable_struture);
+
+                  yield_data(123);
+                  yield_data({foo: 123}, (acknowledge_information)=> {
+                    console.log('[Worker module] WorkerSocket function on createWorkerSocket. acknowledge_information', acknowledge_information);
+                    yield_data(Buffer.from([5, 4, 3, 2, 1]));
+                    return_data('haha');
+                  });
+                });
+                worker_socket.call('func2', {foo: 'call from createWorkerSocket'}, (err, data, eof)=> {
+                  console.log('[Worker ' + my_worker_id + '] "func2" Return value: ', data);
+                  if(eof) console.log('finished worker_func2_call_test');
+                });
+                worker_socket.handleYielding('field1', (yielding_handler_parameter, ready_yielding) => {
+                  console.log('[Worker ' + my_worker_id + '] "field1" handleYielding started.');
+                  console.log('[Worker ' + my_worker_id + '] Parameters value: ', yielding_handler_parameter);
+                  ready_yielding('"field1" ok for yielding.', (error, data, eof, acknowledge)=> {
+                    if(error) console.log('[Worker ' + my_worker_id + '] "field1" Yielding error.', error);
+                    console.log('[Worker ' + my_worker_id + '] "field1" Yielded value: ', data);
+                    if(acknowledge) acknowledge('ack');
+                    if(eof) {
+                      console.log('finished worker_field1_yield_test');
+                      setTimeout(()=>{worker_socket.close()}, 1500);
+                    };
+                  });
+                });
+                worker_socket.startYielding('field2', 'yield from createWorkerSocket', (error, yielding_start_parameter, finish_yield, yield_data) => {
+                  if (error) console.log('[Worker ' + my_worker_id + '] "field2" Yield error.', error);
+                  console.log('[Worker ' + my_worker_id + '] "field2" yielding_start_parameter value: ', yielding_start_parameter);
+
+                  yield_data(123);
+                  yield_data({foo: 123});
                   yield_data(Buffer.from([5, 4, 3, 2, 1]));
-                  return_data('haha');
+                  finish_yield('haha');
                 });
-              });
-              worker_socket.call('func2', {foo: 'call from createWorkerSocket'}, (err, data, eof)=> {
-                console.log('[Worker ' + my_worker_id + '] "func2" Return value: ', data);
-                if(eof) console.log('finished worker_func2_call_test');
-              });
-              worker_socket.handleYielding('field1', (yielding_handler_parameter, ready_yielding) => {
-                console.log('[Worker ' + my_worker_id + '] "field1" handleYielding started.');
-                console.log('[Worker ' + my_worker_id + '] Parameters value: ', yielding_handler_parameter);
-                ready_yielding('"field1" ok for yielding.', (error, data, eof, acknowledge)=> {
-                  if(error) console.log('[Worker ' + my_worker_id + '] "field1" Yielding error.', error);
-                  console.log('[Worker ' + my_worker_id + '] "field1" Yielded value: ', data);
-                  if(acknowledge) acknowledge('ack');
-                  if(eof) {
-                    console.log('finished worker_field1_yield_test');
-                    setTimeout(()=>{worker_socket.close()}, 1500);
-                  };
-                });
-              });
-              worker_socket.startYielding('field2', 'yield from createWorkerSocket', (error, yielding_start_parameter, finish_yield, yield_data) => {
-                if (error) console.log('[Worker ' + my_worker_id + '] "field2" Yield error.', error);
-                console.log('[Worker ' + my_worker_id + '] "field2" yielding_start_parameter value: ', yielding_start_parameter);
-
-                yield_data(123);
-                yield_data({foo: 123});
-                yield_data(Buffer.from([5, 4, 3, 2, 1]));
-                finish_yield('haha');
-              });
-              console.log('[Worker ' + my_worker_id + '] createWorkerSocket OK.', worker_socket);
-            }
-          });
-        }
+                console.log('[Worker ' + my_worker_id + '] createWorkerSocket OK.', worker_socket);
+              }
+            });
+          }
+        });
+        process.send('ready');
       });
-      process.send('ready');
     });
   });
 });

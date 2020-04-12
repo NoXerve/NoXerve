@@ -13,6 +13,7 @@
 
 const Errors = require('../errors');
 const WorkerSocket = require('./non_uniform/worker_socket');
+const GlobalDeterministicRandomManager = require('./global_deterministic_random_manager');
 
 /**
  * @constructor module:Worker
@@ -43,6 +44,17 @@ function Worker(settings) {
         callback(error);
       }
     },
+    'global-deterministic-random-manager-request': (static_global_random_seed_4096bytes, callback) => {
+      try {
+        const global_deterministic_random_manager = new GlobalDeterministicRandomManager({
+          static_global_random_seed_4096bytes: static_global_random_seed_4096bytes
+        });
+        callback(false, global_deterministic_random_manager);
+      } catch (error) {
+        console.log(error);
+        callback(error);
+      }
+    },
     'worker-peer-authentication': (worker_id, worker_authenticity_information, is_valid) => {
       is_valid(false);
     },
@@ -58,6 +70,11 @@ function Worker(settings) {
     'worker-peer-leave-request': (remote_worker_id, next) => {
       this._event_listeners['worker-peer-leave'](remote_worker_id, next);
     },
+
+    // Required listener default setted.
+    'error': (error)=> {
+      console.log(error);
+    }
   };
 };
 
@@ -88,17 +105,31 @@ Worker.prototype.close = function(callback) {
 }
 
 /**
- * @callback module:Worker~callback_of_
+ * @callback module:Worker~callback_of_import_my_worker_authenticity_data
  * @param {error} error
  */
 /**
  * @memberof module:Worker
  * @param {integer} worker_id
  * @param {noxerve_supported_data_type} worker_information
- * @param {module:Worker~callback_of_} callback
+ * @param {module:Worker~callback_of_import_my_worker_authenticity_data} callback
  */
 Worker.prototype.importMyWorkerAuthenticityData = function(worker_id, worker_authenticity_information, callback) {
   this._event_listeners['my-worker-authenticity-data-import'](worker_id, worker_authenticity_information, callback);
+}
+
+/**
+ * @callback module:Worker~callback_of_import_static_global_random_seed
+ * @param {error} error
+ * @param {object} global_deterministic_random_manager
+ */
+/**
+ * @memberof module:Worker
+ * @param {buffer} static_global_random_seed_4096bytes
+ * @param {module:Worker~callback_of_import_static_global_random_seed} callback
+ */
+Worker.prototype.importStaticGlobalRandomSeed = function(static_global_random_seed_4096bytes, callback) {
+  this._event_listeners['static-global-random-seed-import'](static_global_random_seed_4096bytes, callback);
 }
 
 /**

@@ -201,11 +201,12 @@ initialize_interfaces(() => {
     if(msg === '1') {
       Worker.joinMe(worker_1_interfaces_for_joining_me, my_worker_interfaces_connect_settings,
         my_worker_detail, 'join_me_auth',
-        (error, _worker_id, _worker_peers_settings) => {
+        (error, _worker_id, _worker_peers_settings, static_global_random_seed_4096bytes) => {
           if(error) console.log('[Worker ' + my_worker_id + '] joinMe error.', error);
           else {
             my_worker_id = _worker_id;
             console.log('[Worker ' + my_worker_id + '] new worker settings.', _worker_id, JSON.stringify(_worker_peers_settings, null, 2));
+            console.log('[Worker ' + my_worker_id + '] obtained static_global_random_seed_4096bytes.', static_global_random_seed_4096bytes);
             worker_peers_settings = _worker_peers_settings;
             Worker.importMyWorkerAuthenticityData(_worker_id, 'whatsoever_auth'+my_worker_id, (error) => {
               if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);

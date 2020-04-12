@@ -15,8 +15,12 @@
 const Node = new(require('../../node'))();
 const NSDT = new(require('../../nsdt'))();
 const Worker = new(require('../../worker'))();
+const FS = require('fs');
 
+const static_global_random_seed_4096bytes = FS.readFileSync('./static_global_random_seed_4096bytes');
 const my_worker_id = 2;
+
+console.log('[Worker ' + my_worker_id + '] static_global_random_seed_4096bytes.', static_global_random_seed_4096bytes);
 
 const my_worker_detail = {
   name: 'worker 2'
@@ -154,50 +158,52 @@ initialize_interfaces(()=> {
     next(false, on_cancel);
   });
 
+  Worker.importStaticGlobalRandomSeed(static_global_random_seed_4096bytes, (error)=> {
+    if (error) console.log('[Worker ' + my_worker_id + '] importStaticGlobalRandomSeed error.', error);
+    Worker.importMyWorkerAuthenticityData(my_worker_id, 'whatsoever_auth2', (error)=> {
+      if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);
+      Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
+        if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
 
-  Worker.importMyWorkerAuthenticityData(my_worker_id, 'whatsoever_auth2', (error)=> {
-    if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);
-    Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
-      if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
+        Worker.onWorkerSocketCreate('purpose 1', (parameter, remote_worker_id, worker_socket)=> {
+          console.log('[Worker ' + my_worker_id + '] onWorkerSocketCreate OK.', parameter, remote_worker_id, worker_socket);
+          worker_socket.on('close', () => {
+            console.log('[Worker ' + my_worker_id + '] WorkerSocket from onWorkerSocketCreate closed.');
+          });
+          worker_socket.define('func2', (service_function_parameter, return_data, yield_data) => {
+            console.log('[Worker ' + my_worker_id + '] WorkerSocket function on createWorkerSocket called.');
+            yield_data(321);
+            yield_data({foo: 321});
+            yield_data(Buffer.from([5, 4, 3, 0, 1]));
+            return_data('hehe');
+          });
+          worker_socket.call('func1', {foo: 'call from onWorkerSocketCreate'}, (err, data, eof)=> {
+            console.log('[Worker ' + my_worker_id + '] "func1" Return value: ', data);
+            if(eof) console.log('finished worker_func1_call_test');
+          });
+          worker_socket.handleYielding('field2', (yielding_handler_parameter, ready_yielding) => {
+            console.log('[Worker ' + my_worker_id + '] "field2" handleYielding started.');
+            console.log('[Worker ' + my_worker_id + '] Parameters value: ', yielding_handler_parameter);
+            ready_yielding('"field2" ok for yielding.', (error, data, eof)=> {
+              if(error) console.log('[Worker ' + my_worker_id + '] "field1" Yielding error.', error);
+              console.log('[Worker ' + my_worker_id + '] "field2" Yielded value: ', data);
+              if(eof) {
+                console.log('finished worker_field2_yield_test');
+              };
+            });
+          });
+          worker_socket.startYielding('field1', 'yield from createWorkerSocket', (error, yielding_start_parameter, finish_yield, yield_data) => {
+            if (error) console.log('[Worker ' + my_worker_id + '] "field1" Yield error.', error);
+            console.log('[Worker ' + my_worker_id + '] "field1" yielding_start_parameter value: ', yielding_start_parameter);
 
-      Worker.onWorkerSocketCreate('purpose 1', (parameter, remote_worker_id, worker_socket)=> {
-        console.log('[Worker ' + my_worker_id + '] onWorkerSocketCreate OK.', parameter, remote_worker_id, worker_socket);
-        worker_socket.on('close', () => {
-          console.log('[Worker ' + my_worker_id + '] WorkerSocket from onWorkerSocketCreate closed.');
-        });
-        worker_socket.define('func2', (service_function_parameter, return_data, yield_data) => {
-          console.log('[Worker ' + my_worker_id + '] WorkerSocket function on createWorkerSocket called.');
-          yield_data(321);
-          yield_data({foo: 321});
-          yield_data(Buffer.from([5, 4, 3, 0, 1]));
-          return_data('hehe');
-        });
-        worker_socket.call('func1', {foo: 'call from onWorkerSocketCreate'}, (err, data, eof)=> {
-          console.log('[Worker ' + my_worker_id + '] "func1" Return value: ', data);
-          if(eof) console.log('finished worker_func1_call_test');
-        });
-        worker_socket.handleYielding('field2', (yielding_handler_parameter, ready_yielding) => {
-          console.log('[Worker ' + my_worker_id + '] "field2" handleYielding started.');
-          console.log('[Worker ' + my_worker_id + '] Parameters value: ', yielding_handler_parameter);
-          ready_yielding('"field2" ok for yielding.', (error, data, eof)=> {
-            if(error) console.log('[Worker ' + my_worker_id + '] "field1" Yielding error.', error);
-            console.log('[Worker ' + my_worker_id + '] "field2" Yielded value: ', data);
-            if(eof) {
-              console.log('finished worker_field2_yield_test');
-            };
+            yield_data(321);
+            yield_data({foo: 321});
+            yield_data(Buffer.from([5, 4, 3, 0, 1]));
+            finish_yield('hehe');
           });
         });
-        worker_socket.startYielding('field1', 'yield from createWorkerSocket', (error, yielding_start_parameter, finish_yield, yield_data) => {
-          if (error) console.log('[Worker ' + my_worker_id + '] "field1" Yield error.', error);
-          console.log('[Worker ' + my_worker_id + '] "field1" yielding_start_parameter value: ', yielding_start_parameter);
-
-          yield_data(321);
-          yield_data({foo: 321});
-          yield_data(Buffer.from([5, 4, 3, 0, 1]));
-          finish_yield('hehe');
-        });
+        process.send('ready');
       });
-      process.send('ready');
     });
   });
 });

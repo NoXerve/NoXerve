@@ -52,7 +52,7 @@ function HashManager(settings) {
 HashManager.prototype.hashString4Bytes = function(string) {
   let result = this._string_to_hash[string];
   if (!result) {
-    result = Utils.hashString4BytesMd5(string);
+    result = Utils.hash4BytesMd5(string);
     this._string_to_hash[string] = result;
     this._hash_to_string[result.toString('base64')] = string;
   }

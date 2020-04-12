@@ -6,10 +6,17 @@
  * @description Start testing by enter command "node tester.js".
  */
 
- 'use strict';
+'use strict';
 
 const readline = require("readline");
 const child_process = require('child_process');
+const FS = require('fs');
+const Crypto = require('crypto');
+
+// set static_global_random_seed_4096bytes
+if(!FS.existsSync('./static_global_random_seed_4096bytes')) {
+  FS.writeFileSync('./static_global_random_seed_4096bytes', Crypto.randomBytes(4096));
+}
 
 const rl = readline.createInterface({
     input: process.stdin,

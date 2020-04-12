@@ -64,6 +64,22 @@ function WorkerProtocol(settings) {
    * @memberof module:WorkerProtocol
    * @type {buffer}
    * @private
+   * @description static_global_random_seed_4096bytes for GlobalDeterministicRandomManager.
+   */
+  this._static_global_random_seed_4096bytes;
+
+  /**
+   * @memberof module:WorkerProtocol
+   * @type {buffer}
+   * @private
+   * @description static_global_random_seed_checksum_4bytes.
+   */
+  this._static_global_random_seed_checksum_4bytes;
+
+  /**
+   * @memberof module:WorkerProtocol
+   * @type {buffer}
+   * @private
    * @description Worker authenticity data. Avoid being hacked. Provide in handshake communication.
    */
   this._my_worker_authenticity_data_bytes;
@@ -543,6 +559,7 @@ WorkerProtocol.prototype._encodeAuthenticityBytes = function() {
   return Buf.concat([
     this._my_worker_id_4bytes,
     this._worker_peers_ids_checksum_4bytes,
+    this._static_global_random_seed_checksum_4bytes,
     this._my_worker_authenticity_data_bytes
   ]);
 }
@@ -555,10 +572,13 @@ WorkerProtocol.prototype._encodeAuthenticityBytes = function() {
 WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authenticity_bytes, callback) {
   const remote_worker_peer_id = Buf.decodeUInt32BE(remote_authenticity_bytes.slice(0, 4));
   const remote_worker_peers_ids_checksum_4bytes = remote_authenticity_bytes.slice(4, 8);
-  const remote_worker_peer_authenticity_data = this._nsdt_embedded_protocol.decode(remote_authenticity_bytes.slice(8));
+  const remote_worker_peers_static_global_random_seed_checksum_4bytes = remote_authenticity_bytes.slice(8, 12);
+  const remote_worker_peer_authenticity_data = this._nsdt_embedded_protocol.decode(remote_authenticity_bytes.slice(12));
 
   // Check worker_peers_ids_checksum_4bytes.
-  if (Utils.areBuffersEqual(this._worker_peers_ids_checksum_4bytes, remote_worker_peers_ids_checksum_4bytes)) {
+  if (Utils.areBuffersEqual(this._worker_peers_ids_checksum_4bytes, remote_worker_peers_ids_checksum_4bytes) &&
+    Utils.areBuffersEqual(this._static_global_random_seed_checksum_4bytes, remote_worker_peers_static_global_random_seed_checksum_4bytes)
+  ) {
     // Emit worker authentication from worker module.
     this._worker_module.emitEventListener('worker-peer-authentication', remote_worker_peer_id, remote_worker_peer_authenticity_data, (is_authenticity_valid) => {
       try {
@@ -634,6 +654,14 @@ WorkerProtocol.prototype._setWorkerPeerWorkerAffairUnLocked = function(worker_id
  * @description Start running WorkerProtocol.
  */
 WorkerProtocol.prototype.start = function(callback) {
+  this._worker_module.on('static-global-random-seed-import', (static_global_random_seed_4096bytes, callback) => {
+    if (static_global_random_seed_4096bytes && Buf.isBuffer(static_global_random_seed_4096bytes) && static_global_random_seed_4096bytes.length === 4096) {
+      this._static_global_random_seed_4096bytes = static_global_random_seed_4096bytes;
+      this._static_global_random_seed_checksum_4bytes = Utils.hash4BytesMd5(static_global_random_seed_4096bytes);
+      callback(false);
+    } else callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported static global random seed buffer must have exactly 4096 bytes.'));
+  });
+
   this._worker_module.on('my-worker-authenticity-data-import', (worker_id, worker_authenticity_information, callback) => {
     if (worker_id) {
       this._my_worker_id = worker_id;
@@ -822,13 +850,16 @@ WorkerProtocol.prototype.start = function(callback) {
               if (synchronize_acknowledgement_information[2] === this._ProtocolCodes.accept[0]) {
                 // Accept.
                 const new_worker_id = Buf.decodeUInt32BE(synchronize_acknowledgement_information.slice(3, 7));
-                const worker_peers_settings = this._nsdt_embedded_protocol.decode(synchronize_acknowledgement_information.slice(7));
+                const static_global_random_seed_4096bytes = synchronize_acknowledgement_information.slice(7, 7 + 4096);
+                const worker_peers_settings = this._nsdt_embedded_protocol.decode(synchronize_acknowledgement_information.slice(7 + 4096));
 
                 // Update worker peers settings
                 this._worker_peers_settings = worker_peers_settings;
+                this._static_global_random_seed_4096bytes = static_global_random_seed_4096bytes;
+                this._static_global_random_seed_checksum_4bytes = Utils.hash4BytesMd5(static_global_random_seed_4096bytes);
                 this._updateWorkerPeersIdsChecksum4Bytes(Object.keys(worker_peers_settings));
 
-                me_join_callback(false, new_worker_id, worker_peers_settings);
+                me_join_callback(false, new_worker_id, worker_peers_settings, static_global_random_seed_4096bytes);
               } else if (Utils.areBuffersEqual(synchronize_acknowledgement_information.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
                 me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown error.'));
               } else if (Utils.areBuffersEqual(synchronize_acknowledgement_information.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
@@ -944,6 +975,17 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
     });
 
     if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond[0]) {
+      // Corrupted settings.
+      if (!this._static_global_random_seed_4096bytes || this._static_global_random_seed_4096bytes.length !== 4096) {
+        next(Buf.concat([
+          this._ProtocolCodes.worker_affairs,
+          this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
+          this._ProtocolCodes.unknown_reason_reject_2_bytes
+        ]));
+        this._worker_module.emitEventListener('error', new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected worker join due to static_global_random_seed_4096bytes settings wrongly set.'));
+        return;
+      }
+
       const new_worker_authentication_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
       const new_worker_authentication_data = this._nsdt_embedded_protocol.decode(synchronize_information.slice(6, 6 + new_worker_authentication_bytes_length));
       try {
@@ -1001,6 +1043,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
                   this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
                   this._ProtocolCodes.accept, // Accept.
                   Buf.encodeUInt32BE(new_worker_id),
+                  this._static_global_random_seed_4096bytes,
                   this._nsdt_embedded_protocol.encode(worker_peers_settings)
                 ]));
               }
