@@ -12,6 +12,7 @@
  */
 
 const Errors = require('../../../../errors');
+const ScopeMaxPeersCount = 512;
 
 /**
  * @constructor module:Scope
@@ -29,10 +30,10 @@ function Scope(settings) {
 
   /**
    * @memberof module:Scope
-   * @type {object}
+   * @type {boolean}
    * @private
    */
-  this._stateful = settings.stateful;
+  this._complete = false;
 
   /**
    * @memberof module:Scope
@@ -40,15 +41,77 @@ function Scope(settings) {
    * @private
    */
   this._event_listeners = {
-    'passively-close': ()=> {
+    'passively-close': () => {
       this._closed = true;
       const close_handler = this._event_listeners['close'];
-      if(close_handler) close_handler();
+      if (close_handler) close_handler();
+    },
+
+    // not complete. Such as a peer lose connection.
+    'defect': () => {
+
+    },
+
+    'activity-create': () => {
+
+    },
+
+    'data': (scope_id, data) => {
+
     }
   };
+
+  /**
+   * @memberof module:Scope
+   * @type {object}
+   * @private
+   */
+   this._my_scope_peer_id;
 }
 
-Scope.prototype.start = function(callback) {
+Scope.prototype.onActivityCreate = function(listener) {
+
+}
+
+Scope.prototype.send = function(scope_peer_id_list, data, callback) {
+
+}
+
+Scope.prototype.multicast = function(scope_peer_id_list, data, callback) {
+  if (this._complete) {
+
+  } else {
+    if (callback) callback();
+  }
+}
+
+Scope.prototype.broadcast = function(data, callback) {
+  if (this._complete) {
+
+  } else {
+    if (callback) callback();
+  }
+}
+
+Scope.prototype.onDefect = function(listener) {
+
+}
+
+// Connection peers.
+Scope.prototype.makeComplete = function(callback) {
+
+}
+
+Scope.prototype.joinPeer = function(callback) {
+  const scope_peer_id;
+}
+
+Scope.prototype.leavePeer = function(scope_peer_id, callback) {
+
+}
+
+// Note that this synchronize is protocol's "synchronize". Not data synchronization.
+Scope.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
 
 }
 

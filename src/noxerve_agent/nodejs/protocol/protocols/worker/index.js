@@ -157,29 +157,39 @@ WorkerProtocol.prototype._ProtocolCodes = {
 
 // [Flag] Unfinished comments.
 WorkerProtocol.prototype._registerScope = function(scope_name, worker_id_list, callback) {
-  const sorted_worker_id_list = worker_peer_id_list.sort();
-  const worker_ids_hash = Utils.hash4BytesMd5(Buf.concat(
-    sorted_worker_peer_id_list.map(worker_id => Buf.encodeUInt32BE(worker_id))
-  ));
+  // const sorted_worker_id_list = worker_peer_id_list.sort();
+  // const worker_ids_hash = Utils.hash4BytesMd5(Buf.concat(
+  //   sorted_worker_peer_id_list.map(worker_id => Buf.encodeUInt32BE(worker_id))
+  // ));
+
+  // const worker_ids_hash = Utils.hash4BytesMd5(Buf.concat(
+  //   worker_id_list.map(worker_id => Buf.encodeUInt32BE(worker_id))
+  // ));
+  
   const scope_name_hash = Utils.hash4BytesMd5(scope_name);
 
-  const worker_ids_hash_base64 = worker_ids_hash.toString('base64');
+  // const worker_ids_hash_base64 = worker_ids_hash.toString('base64');
   const scope_name_hash_base64 = scope_name_hash.toString('base64');
 
-  const base64_key = worker_ids_hash_base64 + scope_name_hash_base64;
+  // const base64_key = worker_ids_hash_base64 + scope_name_hash_base64;
 
-  if (this._base64_to_scope_dict[base64_key]) {
+  if (this._base64_to_scope_dict[scope_name_hash_base64]) {
     callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('This scope has been registered already.'));
     return;
   }
   else {
     const deregister = () => {
-      delete this._base64_to_scope_dict[base64_key];
+      delete this._base64_to_scope_dict[scope_name_hash_base64];
     };
 
     const scope = new Scope({
       worker_id_list: worker_id_list,
-      deregister: deregister
+      deregister: deregister,
+      open_handshake_function: (scope_peer_id, synchronize_information, acknowledge_synchronization, finish_handshake) => {
+        const target_worker_peer_worker_id = worker_id_list[scope_peer_id];
+        const scope_synchronize_information = Buf.concat([this._ProtocolCodes, synchronize_information]);
+        this._openHandshakeFromWorkerId(target_worker_peer_worker_id);
+      }
     });
 
     // _scopes_with_base64_keys_dict[];
