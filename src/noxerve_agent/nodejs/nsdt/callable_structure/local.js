@@ -45,16 +45,16 @@ function CallableStructureLocal(settings) {
    * @type {object}
    * @private
    */
-   this._event_listeners = {
-     'call-request': (function_name, args) => {
-       this._name_to_function_dictionary[function_name].apply(null, args);
-     },
-     'passively-close': ()=> {
-       this._closed = true;
-       const close_handler = this._event_listeners['close'];
-       if(close_handler) close_handler();
-     }
-   };
+  this._event_listeners = {
+    'call-request': (function_name, args) => {
+      this._name_to_function_dictionary[function_name].apply(null, args);
+    },
+    'passively-close': () => {
+      this._closed = true;
+      const close_handler = this._event_listeners['close'];
+      if (close_handler) close_handler();
+    }
+  };
 }
 
 /**

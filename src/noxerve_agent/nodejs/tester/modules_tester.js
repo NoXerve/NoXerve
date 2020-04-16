@@ -27,6 +27,11 @@ let Tests = [
   'other_test'
 ];
 
+process.on('SIGINT', ()=> {
+  console.log('Tests left:', Tests);
+  process.exit();
+});
+
 let test_count = Tests.length;
 
 let finish = (test_name) => {
@@ -122,22 +127,26 @@ let tunnel_test = (tunnel) => {
 };
 Node.on('tunnel-create', tunnel_test)
 console.log('[Node module] Create interface.');
-Node.createInterface('WebSocket', {
-  host: '0.0.0.0',
-  port: 1234
-}, (err, id) => {
-  if (err) console.log('[Node module] Create interface error.', err);
-  console.log('[Node module] Create tunnel.');
-  Node.createTunnel('WebSocket', {
+
+Node.start(() => {
+  Node.createInterface('WebSocket', {
     host: '0.0.0.0',
     port: 1234
-  }, (err, tunnel) => {
-    if (err) console.log('[Node module] Create tunnel error.', err)
-    else {
-      tunnel_test(tunnel);
-    }
-  });
-})
+  }, (err, id) => {
+    if (err) console.log('[Node module] Create interface error.', err);
+    console.log('[Node module] Create tunnel.');
+    Node.createTunnel('WebSocket', {
+      host: '0.0.0.0',
+      port: 1234
+    }, (err, tunnel) => {
+      if (err) console.log('[Node module] Create tunnel error.', err)
+      else {
+        tunnel_test(tunnel);
+      }
+    });
+  })
+});
+
 
 // **** Node Module Test End ****
 

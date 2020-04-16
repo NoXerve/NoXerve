@@ -24,6 +24,11 @@ let Tests = [
   'nsdt_test'
 ];
 
+process.on('SIGINT', ()=> {
+  console.log('Tests left:', Tests);
+  process.exit();
+});
+
 let test_count = Tests.length;
 
 let finish = (test_name) => {

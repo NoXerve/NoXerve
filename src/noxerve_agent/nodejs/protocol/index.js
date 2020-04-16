@@ -75,105 +75,6 @@ function Protocol(settings) {
   this._hash_manager = new HashManager();
 
   /**
-   * Handshake routine:
-   * open_handshake(initiative)
-   * => synchronize(passive)
-   * => acknowledge_synchronization(initiative finished)
-   * => acknowledge(passive finished)
-   */
-
-   /**
-    * @memberof module:Protocol
-    * @type {object}
-    * @private
-    */
-  this._openHandshake = (interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake) => {
-    this._node_module.createTunnel(interface_name, interface_connect_settings, (error, tunnel) => {
-      if (error) {if(acknowledge_synchronization) acknowledge_synchronization(error, null, ()=> {});}
-      else {
-        // Use stage variable to identify current handshake progress.
-        // Avoiding proccess executed wrongly.
-        // stage -1 => Emitted error.
-        // Be called => stage 0
-        // stage 0 => waiting to acknowledge synchronization.
-        // Error => call acknowledge_synchronization.
-        // stage 1 => waiting to finish up.
-        // Error => call finish_handshake.
-        let stage = 0;
-
-        let ready_state = false;
-
-        tunnel.on('ready', () => {
-          ready_state = true;
-          // Send synchronize_information as tunnel is ready.
-          tunnel.send(synchronize_information);
-        });
-
-        tunnel.on('data', (data) => {
-          if (stage === 0) {
-            // Call acknowledge_synchronization function. Respond with acknowledge_information for remote.
-            acknowledge_synchronization(false, data, (acknowledge_information)=> {
-              // stage 1 => waiting to finish up. If any error happened call
-              // "finish_handshake" from arguments.
-              stage = 1;
-              try {
-                if (acknowledge_information === false) {
-                  stage = -1;
-                  tunnel.close();
-                }
-                else {
-                  tunnel.send(acknowledge_information, (error) => {
-                    if (error) {
-                      stage = -1;
-                      tunnel.close();
-                      finish_handshake(error);
-                    } else {
-                      // Reset events.
-                      tunnel.on('ready', () => {});
-                      tunnel.on('data', () => {});
-                      tunnel.on('error', () => {});
-
-                      // Finish up
-                      finish_handshake(error, tunnel);
-                    }
-                  });
-                }
-              } catch (error) {
-                stage = -1;
-                tunnel.close();
-                finish_handshake(error);
-              }
-            });
-          } else if (stage === 1) {
-            // Nothing happened
-          }
-        });
-
-        tunnel.on('error', (error) => {
-          if (stage === 0) {
-            stage = -1;
-            tunnel.close();
-            acknowledge_synchronization(error, null, ()=> {});
-          } else if (stage === 1) {
-            stage = -1;
-            tunnel.close();
-            finish_handshake(error);
-          }
-        });
-
-        tunnel.on('close', () => {
-          if (stage === 0) {
-            acknowledge_synchronization(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'), null, ()=> {});
-          } else if (stage === 1) {
-            finish_handshake(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
-          }
-        });
-      }
-    });
-  }
-
-
-  /**
    * @memberof module:Protocol
    * @type {object}
    * @private
@@ -213,12 +114,110 @@ function Protocol(settings) {
 
       this._protocol_modules[Protocol.protocol_name] = new(Protocol.module)({
         related_module: this._imported_modules[Protocol.related_module_name],
-        open_handshake: this._openHandshake,
+        open_handshake: this._openHandshake.bind(this),
         hash_manager: this._hash_manager,
         embedded_protocols: this._embedded_protocol_modules
       });
     }
   }
+}
+
+/**
+ * Handshake routine:
+ * open_handshake(initiative)
+ * => synchronize(passive)
+ * => acknowledge_synchronization(initiative finished)
+ * => acknowledge(passive finished)
+ */
+
+ /**
+  * @memberof module:Protocol
+  * @type {object}
+  * @private
+  */
+Protocol.prototype._openHandshake = function (interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake) {
+  this._node_module.createTunnel(interface_name, interface_connect_settings, (error, tunnel) => {
+    if (error) {if(acknowledge_synchronization) acknowledge_synchronization(error, null, ()=> {});}
+    else {
+      // Use stage variable to identify current handshake progress.
+      // Avoiding proccess executed wrongly.
+      // stage -1 => Emitted error.
+      // Be called => stage 0
+      // stage 0 => waiting to acknowledge synchronization.
+      // Error => call acknowledge_synchronization.
+      // stage 1 => waiting to finish up.
+      // Error => call finish_handshake.
+      let stage = 0;
+
+      let ready_state = false;
+
+      tunnel.on('ready', () => {
+        ready_state = true;
+        // Send synchronize_information as tunnel is ready.
+        tunnel.send(synchronize_information);
+      });
+
+      tunnel.on('data', (data) => {
+        if (stage === 0) {
+          // Call acknowledge_synchronization function. Respond with acknowledge_information for remote.
+          acknowledge_synchronization(false, data, (acknowledge_information)=> {
+            // stage 1 => waiting to finish up. If any error happened call
+            // "finish_handshake" from arguments.
+            stage = 1;
+            try {
+              if (acknowledge_information === false) {
+                stage = -1;
+                tunnel.close();
+              }
+              else {
+                tunnel.send(acknowledge_information, (error) => {
+                  if (error) {
+                    stage = -1;
+                    tunnel.close();
+                    finish_handshake(error);
+                  } else {
+                    // Reset events.
+                    tunnel.on('ready', () => {});
+                    tunnel.on('data', () => {});
+                    tunnel.on('error', () => {});
+
+                    // Finish up
+                    finish_handshake(error, tunnel);
+                  }
+                });
+              }
+            } catch (error) {
+              stage = -1;
+              tunnel.close();
+              finish_handshake(error);
+            }
+          });
+        } else if (stage === 1) {
+          // Nothing happened
+        }
+      });
+
+      tunnel.on('error', (error) => {
+        if (stage === 0) {
+          stage = -1;
+          tunnel.close();
+          acknowledge_synchronization(error, null, ()=> {});
+        } else if (stage === 1) {
+          stage = -1;
+          tunnel.close();
+          finish_handshake(error);
+        }
+      });
+
+      tunnel.on('close', () => {
+        if (stage === 0) {
+          acknowledge_synchronization(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'), null, ()=> {});
+        } else if (stage === 1) {
+          finish_handshake(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
+        }
+      });
+    }
+  });
 }
 
 /**

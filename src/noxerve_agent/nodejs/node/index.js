@@ -101,7 +101,7 @@ Node.prototype._newTunnel = function(interface_name, from_interface, from_connec
       close: close,
       send: send
     });
-    
+
     tunnel.setValue('interface_name', interface_name);
     tunnel.setValue('interface_secured', AvaliableInterfaces[interface_name].secured);
     tunnel.setValue('from_interface', from_interface);
@@ -120,7 +120,7 @@ Node.prototype._newTunnel = function(interface_name, from_interface, from_connec
     });
   } catch (error) {
     // console.log(called_callback, error);
-    if(!called_callback) callback(error);
+    if (!called_callback) callback(error);
     else {
       throw error;
     }
@@ -218,8 +218,7 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
       // interface name.
       try {
         this._newTunnel(AvaliableInterfaces[interface_name].interface_name, true, false, send, close, new_tunnel_callback);
-      }
-      catch(error) {
+      } catch (error) {
         console.log(error);
         this._event_listeners['interface-error'](error);
       }

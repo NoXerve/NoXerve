@@ -35,17 +35,17 @@ function Activity(settings) {
    * @type {object}
    * @private
    */
-   this._event_listeners = {
-     // Internal private default events.
-     'activity-of-service-request': (callback) => {
-       try {
-         const activity_of_service = new ActivityOfService();
-         callback(false, activity_of_service);
-       } catch (error) {
-         callback(error);
-       }
-     },
-   };
+  this._event_listeners = {
+    // Internal private default events.
+    'activity-of-service-request': (callback) => {
+      try {
+        const activity_of_service = new ActivityOfService();
+        callback(false, activity_of_service);
+      } catch (error) {
+        callback(error);
+      }
+    },
+  };
 }
 
 /**
@@ -58,7 +58,7 @@ function Activity(settings) {
  * @description Start the activity module.
  */
 Activity.prototype.start = function(callback) {
-  if(callback) callback(false);
+  if (callback) callback(false);
 }
 
 /**
@@ -71,7 +71,7 @@ Activity.prototype.start = function(callback) {
  * @description Close the activity module.
  */
 Activity.prototype.close = function(callback) {
-  if(callback) callback(false);
+  if (callback) callback(false);
 }
 
 /**

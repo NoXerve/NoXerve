@@ -44,10 +44,9 @@ function Service(settings) {
       }
     },
     'service-of-activity-purpose-exist': (activity_purpose_name) => {
-      if(this._event_listeners['activity-create-' + activity_purpose_name]) {
+      if (this._event_listeners['activity-create-' + activity_purpose_name]) {
         return true;
-      }
-      else {
+      } else {
         return false;
       }
     },
@@ -67,7 +66,7 @@ function Service(settings) {
  * @description Start the service module.
  */
 Service.prototype.start = function(callback) {
-  if(callback) callback(false);
+  if (callback) callback(false);
 }
 
 /**
@@ -80,7 +79,7 @@ Service.prototype.start = function(callback) {
  * @description Close the service module.
  */
 Service.prototype.close = function(callback) {
-  if(callback) callback(false);
+  if (callback) callback(false);
 }
 
 /**

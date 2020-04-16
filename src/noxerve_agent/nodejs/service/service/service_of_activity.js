@@ -40,16 +40,16 @@ function ServiceOfActivity(settings) {
    * @private
    */
   this._event_listeners = {
-    'service-function-call-request': (service_function_name, service_function_parameter, return_value, yield_value)=> {
+    'service-function-call-request': (service_function_name, service_function_parameter, return_value, yield_value) => {
       // return_value(error, NSDT), yield(NSDT)
       this._service_functions[service_function_name](service_function_parameter, return_value, yield_value);
     },
-    'passively-close': ()=> {
+    'passively-close': () => {
       this._closed = true;
       const close_handler = this._event_listeners['close'];
-      if(close_handler) close_handler();
+      if (close_handler) close_handler();
     },
-    'yielding-start-request': (field_name, yielding_handler_parameter, ready_yielding)=> {
+    'yielding-start-request': (field_name, yielding_handler_parameter, ready_yielding) => {
       this._yielding_handlers[field_name](yielding_handler_parameter, ready_yielding);
     }
   };

@@ -100,7 +100,7 @@ NSDTEmbeddedProtocol.prototype.encode = function(noxerve_supported_data_type_obj
   let blob;
   let type;
   // Patch undefined.
-  if(typeof(noxerve_supported_data_type_object) === 'undefined') {
+  if (typeof(noxerve_supported_data_type_object) === 'undefined') {
     noxerve_supported_data_type_object = null;
   }
   if (Buf.isBuffer(noxerve_supported_data_type_object)) {
@@ -152,15 +152,14 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
   const encode_runtime = (noxerve_supported_data_type_object) => {
 
     // volatilizing_callbacks(be disappeared after call).
-    if(typeof(noxerve_supported_data_type_object) === 'function') {
+    if (typeof(noxerve_supported_data_type_object) === 'function') {
       const volatilizing_callback_id_8bytes = Utils.random8Bytes();
       volatilizing_callbacks[volatilizing_callback_id_8bytes.toString('base64')] = noxerve_supported_data_type_object;
       return Buf.concat([
         this._ProtocolCodes.volatilizing_callback,
         volatilizing_callback_id_8bytes
       ]);
-    }
-    else if(noxerve_supported_data_type_object && noxerve_supported_data_type_object.isCallableStructure){
+    } else if (noxerve_supported_data_type_object && noxerve_supported_data_type_object.isCallableStructure) {
       const callable_struture_id_8bytes = Utils.random8Bytes();
       const callable_struture_id_8bytes_base64 = callable_struture_id_8bytes.toString('base64');
 
@@ -177,14 +176,14 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
       const function_names = noxerve_supported_data_type_object.returnFunctionNameList();
       const concat_bytes_list = [
         this._ProtocolCodes.callable_struture_define,
-        callable_struture_id_8bytes];
-      for(const index in function_names) {
+        callable_struture_id_8bytes
+      ];
+      for (const index in function_names) {
         concat_bytes_list.push(this._hash_manager.hashString4Bytes(function_names[index]));
       }
 
       return Buf.concat(concat_bytes_list);
-    }
-    else {
+    } else {
       return this.encode(noxerve_supported_data_type_object);
     }
   };
@@ -192,7 +191,7 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
   const decode_runtime = (noxerve_supported_data_type_blob) => {
     const protocol_code = noxerve_supported_data_type_blob[0];
 
-    if(protocol_code === this._ProtocolCodes.volatilizing_callback[0]) {
+    if (protocol_code === this._ProtocolCodes.volatilizing_callback[0]) {
       const volatilizing_callback_id_8bytes = noxerve_supported_data_type_blob.slice(1, 9);
       const call_volatilizing_callback = (...params) => {
         const concat_bytes_list = [
@@ -201,7 +200,7 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
         ];
 
         // Encoding arguments for remote.
-        for(const index in params) {
+        for (const index in params) {
           const arg = params[index];
           const runtime_encoded = encode_runtime(arg);
           concat_bytes_list.push(Buf.encodeUInt32BE(runtime_encoded.length));
@@ -211,11 +210,10 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
         on_data_external_listener(Buf.concat(concat_bytes_list));
       };
       return call_volatilizing_callback;
-    }
-    else if(protocol_code === this._ProtocolCodes.callable_struture_define[0]) {
+    } else if (protocol_code === this._ProtocolCodes.callable_struture_define[0]) {
       const callable_struture_id_8bytes = noxerve_supported_data_type_blob.slice(1, 9);
       let function_name_bytes_list = [];
-      for(let enumerated_bytes_count = 9; enumerated_bytes_count < noxerve_supported_data_type_blob.length; enumerated_bytes_count += 4) {
+      for (let enumerated_bytes_count = 9; enumerated_bytes_count < noxerve_supported_data_type_blob.length; enumerated_bytes_count += 4) {
         function_name_bytes_list.push(noxerve_supported_data_type_blob.slice(enumerated_bytes_count, enumerated_bytes_count + 4));
       }
 
@@ -226,14 +224,14 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
         let function_name_include = false;
 
         // Check is function_name exists.
-        for(const index in function_name_bytes_list) {
-          if(Utils.areBuffersEqual(function_name_bytes_list[index], function_name_4bytes)) {
+        for (const index in function_name_bytes_list) {
+          if (Utils.areBuffersEqual(function_name_bytes_list[index], function_name_4bytes)) {
             function_name_include = true;
             break;
           }
         }
 
-        if(!function_name_include) {
+        if (!function_name_include) {
           throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_NSDT_EMBEDDED('Such function (' + function_name + ') does not exist in this callable structure.');
         }
 
@@ -244,7 +242,7 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
         ];
 
         // Encoding arguments for remote.
-        for(const index in args) {
+        for (const index in args) {
           const arg = args[index];
           const runtime_encoded = encode_runtime(arg);
           concat_bytes_list.push(Buf.encodeUInt32BE(runtime_encoded.length));
@@ -255,8 +253,7 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
       });
 
       return callable_struture_remote;
-    }
-    else return this.decode(noxerve_supported_data_type_blob);
+    } else return this.decode(noxerve_supported_data_type_blob);
   }
 
   const on_data_external = (callback) => {
@@ -265,29 +262,28 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
 
   const emit_data_external = (data) => {
     const protocol_code = data[0];
-    if(protocol_code === this._ProtocolCodes.callable_struture_call[0]) {
+    if (protocol_code === this._ProtocolCodes.callable_struture_call[0]) {
       const callable_struture_id_8bytes = data.slice(1, 9);
       const function_name = this._hash_manager.stringify4BytesHash(data.slice(9, 13));
       let args = [];
 
-      for(let enumerated_bytes_count = 13; enumerated_bytes_count < data.length; ) {
+      for (let enumerated_bytes_count = 13; enumerated_bytes_count < data.length;) {
         const arg_length = Buf.decodeUInt32BE(data.slice(enumerated_bytes_count, enumerated_bytes_count + 4));
-        const arg_bytes =  data.slice(enumerated_bytes_count + 4, enumerated_bytes_count + 4 + arg_length);
+        const arg_bytes = data.slice(enumerated_bytes_count + 4, enumerated_bytes_count + 4 + arg_length);
         enumerated_bytes_count = enumerated_bytes_count + 4 + arg_length;
         args.push(decode_runtime(arg_bytes));
       }
 
       // Call callable_struture.
       callable_strutures[callable_struture_id_8bytes.toString('base64')].emitEventListener('call-request', function_name, args);
-    }
-    else if(protocol_code === this._ProtocolCodes.volatilizing_callback_call[0]) {
+    } else if (protocol_code === this._ProtocolCodes.volatilizing_callback_call[0]) {
       const volatilizing_callback_id_8bytes = data.slice(1, 9);
       const volatilizing_callback_id_base64 = volatilizing_callback_id_8bytes.toString('base64');
       let args = [];
 
-      for(let enumerated_bytes_count = 9; enumerated_bytes_count < data.length; ) {
+      for (let enumerated_bytes_count = 9; enumerated_bytes_count < data.length;) {
         const arg_length = Buf.decodeUInt32BE(data.slice(enumerated_bytes_count, enumerated_bytes_count + 4));
-        const arg_bytes =  data.slice(enumerated_bytes_count + 4, enumerated_bytes_count + 4 + arg_length);
+        const arg_bytes = data.slice(enumerated_bytes_count + 4, enumerated_bytes_count + 4 + arg_length);
         enumerated_bytes_count = enumerated_bytes_count + 4 + arg_length;
         args.push(decode_runtime(arg_bytes));
       }
@@ -299,11 +295,11 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
   };
 
   const destroy = () => {
-    for(const index in callable_strutures) {
+    for (const index in callable_strutures) {
       callable_strutures[index].emitEventListener('passively-close');
       delete callable_strutures[index];
     }
-    for(const index in volatilizing_callbacks) {
+    for (const index in volatilizing_callbacks) {
       delete volatilizing_callbacks[index];
     }
   };

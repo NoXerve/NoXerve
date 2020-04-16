@@ -26,7 +26,7 @@ function Tunnel(settings) {
    */
   this._settings = settings;
 
-  if(!settings.close) {
+  if (!settings.close) {
     // Close method of socket is a nessasary setting.
     throw new Errors.ERR_NOXERVEAGENT_NODE_TUNNEL_SETTINGS('Close function is a nessasary setting of tunnel.');
   }
@@ -37,7 +37,7 @@ function Tunnel(settings) {
    */
   this._close_function = settings.close;
 
-  if(!settings.send) {
+  if (!settings.send) {
     // Send method of socket is a nessasary setting.
     throw new Errors.ERR_NOXERVEAGENT_NODE_TUNNEL_SETTINGS('Send function is a nessasary setting of tunnel.');
   }
@@ -71,8 +71,7 @@ function Tunnel(settings) {
    * @private
    * @description Dictionary of event listeners.
    */
-  this._event_listeners = {
-  };
+  this._event_listeners = {};
 
   /**
    * @memberof module:Tunnel
@@ -88,8 +87,8 @@ function Tunnel(settings) {
    * @private
    * @description Dictionary of event listeners.
    */
-  this._emitter = (event_name, ...param)=> {
-    if(this._event_listeners[event_name]) {
+  this._emitter = (event_name, ...param) => {
+    if (this._event_listeners[event_name]) {
       this._event_listeners[event_name].apply(null, param);
     }
   }
@@ -135,10 +134,9 @@ Tunnel.prototype.returnValue = function(keyword) {
  * @description Get emitter method. Designed for interface module to emit events.
  */
 Tunnel.prototype.getEmitter = function(callback) {
-  if(this._emitter_distributed) {
+  if (this._emitter_distributed) {
     callback(new Errors.ERR_NOXERVEAGENT_NODE_TUNNEL_GET_EMITTER('Emitter cannot be distributed twice.'));
-  }
-  else {
+  } else {
     callback(false, this._emitter);
     this._emitter_distributed = true;
   }

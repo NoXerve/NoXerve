@@ -31,8 +31,7 @@ function CallableStructureRemote(settings) {
    * @type {object}
    * @private
    */
-   this._event_listeners = {
-   };
+  this._event_listeners = {};
 }
 
 // For nsdt protocol detecting.
