@@ -15,7 +15,7 @@ const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
 const WorkerSocketProtocol = require('./non_uniform/worker_socket');
-
+const Scope = require('./non_uniform/scope');
 /**
  * @constructor module:WorkerProtocol
  * @param {object} settings
@@ -74,7 +74,7 @@ function WorkerProtocol(settings) {
    * @private
    * @description static_global_random_seed_checksum_4bytes.
    */
-  this._static_global_random_seed_checksum_4bytes;
+  this._static_global_random_seed_checksum_4bytes = Buf.from([0, 0, 0, 0]);
 
   /**
    * @memberof module:WorkerProtocol
@@ -124,6 +124,13 @@ function WorkerProtocol(settings) {
    * @private
    */
   this._nsdt_embedded_protocol = settings.embedded_protocols['nsdt_embedded'];
+
+  /**
+   * @memberof module:WorkerProtocol
+   * @type {object}
+   * @private
+   */
+  this._base64_to_scope_dict = {};
 }
 
 /**
@@ -146,6 +153,38 @@ WorkerProtocol.prototype._ProtocolCodes = {
   reject: Buf.from([0x00]),
   unknown_reason_reject_2_bytes: Buf.from([0x00, 0x01]),
   authentication_reason_reject_2_bytes: Buf.from([0x00, 0x02])
+}
+
+// [Flag] Unfinished comments.
+WorkerProtocol.prototype._registerScope = function(scope_name, worker_id_list, callback) {
+  const sorted_worker_id_list = worker_peer_id_list.sort();
+  const worker_ids_hash = Utils.hash4BytesMd5(Buf.concat(
+    sorted_worker_peer_id_list.map(worker_id => Buf.encodeUInt32BE(worker_id))
+  ));
+  const scope_name_hash = Utils.hash4BytesMd5(scope_name);
+
+  const worker_ids_hash_base64 = worker_ids_hash.toString('base64');
+  const scope_name_hash_base64 = scope_name_hash.toString('base64');
+
+  const base64_key = worker_ids_hash_base64 + scope_name_hash_base64;
+
+  if (this._base64_to_scope_dict[base64_key]) {
+    callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('This scope has been registered already.'));
+    return;
+  }
+  else {
+    const deregister = () => {
+      delete this._base64_to_scope_dict[base64_key];
+    };
+
+    const scope = new Scope({
+      worker_id_list: worker_id_list,
+      deregister: deregister
+    });
+
+    // _scopes_with_base64_keys_dict[];
+    callback(false, scope);
+  }
 }
 
 /**
@@ -231,7 +270,7 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
           console.log(error, inner_finished_worker_id_list);
         }
       };
-      this._broadcastRequestResponse(finished_worker_id_list, worker_affairs_worker_peer_operation_cancel_broadcast_bytes, on_a_worker_response, inner_on_finish);
+      this._multicastRequestResponse(finished_worker_id_list, worker_affairs_worker_peer_operation_cancel_broadcast_bytes, on_a_worker_response, inner_on_finish);
     } else {
       // Comfirm all operation done.
       const worker_affairs_worker_peer_join_comfirm_broadcast_bytes = Buf.concat([
@@ -275,7 +314,7 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
         }
       };
 
-      this._broadcastRequestResponse(finished_worker_id_list, worker_affairs_worker_peer_join_comfirm_broadcast_bytes, on_a_worker_response, inner_on_finish);
+      this._multicastRequestResponse(finished_worker_id_list, worker_affairs_worker_peer_join_comfirm_broadcast_bytes, on_a_worker_response, inner_on_finish);
     }
     callback(error);
   };
@@ -473,7 +512,7 @@ WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
  * @type {object}
  * @private
  */
-WorkerProtocol.prototype._broadcastRequestResponse = function(worker_id_list, broadcast_bytes, on_a_worker_response, on_finish) {
+WorkerProtocol.prototype._multicastRequestResponse = function(worker_id_list, broadcast_bytes, on_a_worker_response, on_finish) {
 
   // Broadcast worker join start.
   // max concurrent connections.
@@ -547,7 +586,7 @@ WorkerProtocol.prototype._broadcastRequestResponse = function(worker_id_list, br
  */
 WorkerProtocol.prototype._broadcastRequestResponseToAllWorkers = function(broadcast_bytes, on_a_worker_response, on_finish) {
   const worker_id_list = Object.keys(this._worker_peers_settings).map(x => parseInt(x));
-  this._broadcastRequestResponse(worker_id_list, broadcast_bytes, on_a_worker_response, on_finish);
+  this._multicastRequestResponse(worker_id_list, broadcast_bytes, on_a_worker_response, on_finish);
 }
 
 /**
