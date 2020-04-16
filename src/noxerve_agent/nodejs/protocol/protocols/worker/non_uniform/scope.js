@@ -103,7 +103,7 @@ Scope.prototype.makeComplete = function(callback) {
 }
 
 Scope.prototype.joinPeer = function(callback) {
-  const scope_peer_id;
+  let scope_peer_id;
 }
 
 Scope.prototype.leavePeer = function(scope_peer_id, callback) {
