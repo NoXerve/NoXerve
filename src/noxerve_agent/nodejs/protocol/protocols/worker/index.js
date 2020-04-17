@@ -149,6 +149,7 @@ WorkerProtocol.prototype._ProtocolCodes = {
   worker_affairs_worker_peer_operation_comfirm_broadcast: Buf.from([0x07]),
   worker_affairs_worker_peer_operation_cancel_broadcast: Buf.from([0x08]),
   worker_socket: Buf.from([0x03]),
+  worker_scope: Buf.from([0x04]),
   accept: Buf.from([0x01]),
   reject: Buf.from([0x00]),
   unknown_reason_reject_2_bytes: Buf.from([0x00, 0x01]),
@@ -165,7 +166,7 @@ WorkerProtocol.prototype._registerScope = function(scope_name, worker_id_list, c
   // const worker_ids_hash = Utils.hash4BytesMd5(Buf.concat(
   //   worker_id_list.map(worker_id => Buf.encodeUInt32BE(worker_id))
   // ));
-  
+
   const scope_name_hash = Utils.hash4BytesMd5(scope_name);
 
   // const worker_ids_hash_base64 = worker_ids_hash.toString('base64');
@@ -187,8 +188,16 @@ WorkerProtocol.prototype._registerScope = function(scope_name, worker_id_list, c
       deregister: deregister,
       open_handshake_function: (scope_peer_id, synchronize_information, acknowledge_synchronization, finish_handshake) => {
         const target_worker_peer_worker_id = worker_id_list[scope_peer_id];
-        const scope_synchronize_information = Buf.concat([this._ProtocolCodes, synchronize_information]);
-        this._openHandshakeFromWorkerId(target_worker_peer_worker_id);
+        const my_worker_authenticity_bytes = this._encodeAuthenticityBytes();
+
+        const scope_synchronize_information = Buf.concat([
+          this._ProtocolCodes.worker_scope,
+          scope_name_hash,
+          Buf.encodeUInt32BE(my_worker_authentication_data_bytes.length),
+          my_worker_authentication_data_bytes,
+          synchronize_information
+        ]);
+        this._openHandshakeFromWorkerId(target_worker_peer_worker_id, scope_synchronize_information, acknowledge_synchronization, finish_handshake);
       }
     });
 
@@ -772,12 +781,12 @@ WorkerProtocol.prototype.start = function(callback) {
     (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_id, callback) => {
       const worker_socket_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_socket_purpose_name);
       const worker_socket_purpose_parameter_bytes = this._nsdt_embedded_protocol.encode(worker_socket_purpose_parameter);
-      const worker_authenticity_bytes = this._encodeAuthenticityBytes();
+      const my_worker_authenticity_bytes = this._encodeAuthenticityBytes();
 
       const synchronize_information = Buf.concat([
         this._ProtocolCodes.worker_socket,
-        Buf.encodeUInt32BE(worker_authenticity_bytes.length),
-        worker_authenticity_bytes,
+        Buf.encodeUInt32BE(my_worker_authenticity_bytes.length),
+        my_worker_authenticity_bytes,
         worker_socket_purpose_name_4bytes,
         worker_socket_purpose_parameter_bytes
       ]);
@@ -1229,6 +1238,31 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
         ]));
       }
     });
+  } else if (synchronize_information[0] === this._ProtocolCodes.worker_scope[0]) {
+    const scope_name_hash = synchronize_information.slice(1, 5);
+    const scope_name_hash_base64 = scope_name_hash.toString('base64');
+    const scope = this._base64_to_scope_dict[scope_name_hash_base64];
+
+    if(scope) {
+      const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(5, 9));
+      const remote_worker_peer_authenticity_bytes = synchronize_information.slice(9, 9 + remote_worker_peer_authenticity_bytes_length);
+
+      this._validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_id) => {
+        if (is_authenticity_valid) {
+          const scope_synchronize_information = synchronize_information.slice(9 + remote_worker_peer_authenticity_bytes_length);
+          scope.synchronize(scope_synchronize_information, onError, onAcknowledge, next);
+        }
+        else {
+          next(Buf.concat([
+            this._ProtocolCodes.worker_scope,
+            this._ProtocolCodes.authentication_reason_reject_2_bytes // Reject. Authenticication error.
+          ]));
+        }
+      });
+    } else next(Buf.concat([
+      this._ProtocolCodes.worker_scope,
+      this._ProtocolCodes.reject
+    ]));
   } else next(false);
 }
 
