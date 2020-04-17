@@ -5,7 +5,7 @@
 
   "service_id": "org.noxerve.noxservicesystem",
 
-  "service_description": "NoxServiceSystem providing ablilties to create, manipulate or modify NoXerve services and it's workers.",
+  "service_description": "NoxServiceSystem providing ablilties to create, manipulate or modify NoXerve services and its workers.",
 
   "service_version": "0.0.0"
 }

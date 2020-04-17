@@ -78,6 +78,7 @@ function ActivityProtocol(settings) {
  * @private
  */
 ActivityProtocol.prototype._ProtocolCodes = {
+  // Root protocol code
   service_and_activity: Buf.from([0x01]),
   accept: Buf.from([0x01]),
   reject: Buf.from([0x00]),
