@@ -12,12 +12,13 @@
  */
 
 const Errors = require('../../../../errors');
-const ScopeMaxPeersCount = 512;
+const MaxScopePeersCount = 512;
+// const MaxScopePeersConnectionsCount = 512;
 
 /**
  * @constructor module:Scope
  * @param {object} settings
- * @description Scope Object.
+ * @description Scope Object. Scope's state is either completed or defected.
  */
 
 function Scope(settings) {
@@ -28,12 +29,21 @@ function Scope(settings) {
    */
   this._settings = settings;
 
+  this._scope_peers_settings = settings.scope_peers_settings;
+
+  // /**
+  //  * @memberof module:Scope
+  //  * @type {boolean}
+  //  * @private
+  //  */
+  // this._complete = false;
+
   /**
    * @memberof module:Scope
-   * @type {boolean}
+   * @type {object}
    * @private
    */
-  this._complete = false;
+  this._scope_peers_connections_dict = {};
 
   /**
    * @memberof module:Scope
@@ -47,10 +57,10 @@ function Scope(settings) {
       if (close_handler) close_handler();
     },
 
-    // not complete. Such as a peer lose connection.
-    'defect': () => {
-
-    },
+    // // not complete. Such as a peer lose connection.
+    // 'defect': () => {
+    //
+    // },
 
     'activity-create': () => {
 
@@ -58,7 +68,8 @@ function Scope(settings) {
 
     'data': (scope_id, data) => {
 
-    }
+    },
+
   };
 
   /**
@@ -70,40 +81,34 @@ function Scope(settings) {
 }
 
 Scope.prototype.onActivityCreate = function(listener) {
-
+  this._event_listeners['activity-create'] = listener;
 }
 
-Scope.prototype.send = function(scope_peer_id_list, data, callback) {
+Scope.prototype.send = function(scope_peer_id, data, callback) {
 
 }
 
 Scope.prototype.multicast = function(scope_peer_id_list, data, callback) {
-  if (this._complete) {
-
-  } else {
-    if (callback) callback();
-  }
 }
 
 Scope.prototype.broadcast = function(data, callback) {
-  if (this._complete) {
-
-  } else {
-    if (callback) callback();
-  }
 }
 
-Scope.prototype.onDefect = function(listener) {
+// Scope.prototype.onDefect = function(listener) {
+//
+// }
+//
+// // Connection peers.
+// Scope.prototype.makeComplete = function(callback) {
+//
+// }
 
-}
-
-// Connection peers.
-Scope.prototype.makeComplete = function(callback) {
-
-}
-
-Scope.prototype.joinPeer = function(callback) {
+Scope.prototype.joinPeer = function(worker_id, scope_peer_detail, callback) {
   let scope_peer_id;
+}
+
+Scope.prototype.updatePeer = function(scope_peer_id, scope_peer_detail, callback) {
+  
 }
 
 Scope.prototype.leavePeer = function(scope_peer_id, callback) {
