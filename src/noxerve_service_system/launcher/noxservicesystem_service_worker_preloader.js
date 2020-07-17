@@ -18,7 +18,8 @@ console.log('dP    dP `88888P\' `88888P\' dP\'  `dP   `88P\'');
 console.log('                                       d8\'');
 console.log('                                    888P\'');
 console.log('');
-console.log('NoXerveServiceSystem ©2020-2019 nooxy org.');
+console.log('NoXerveServiceSystem');
+console.log('© 2020 nooxy org. All right reserved.');
 console.log('');
 
 console.log('NoxServiceSystem service worker process id: ' + process.pid);
@@ -73,7 +74,7 @@ process.on('message', (message) => {
         public: FS.readFileSync(data.settings.rsa_2048_key_pair_path.public, 'utf8'),
         private: FS.readFileSync(data.settings.rsa_2048_key_pair_path.private, 'utf8'),
       };
-      
+
       // Create nessasary directories.
       if (!FS.existsSync(data.settings.service.services_path)) {
         FS.mkdirSync(data.settings.service.services_path);

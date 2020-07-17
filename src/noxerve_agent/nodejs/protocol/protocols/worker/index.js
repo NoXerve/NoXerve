@@ -596,7 +596,7 @@ WorkerProtocol.prototype._openHandshakeFromWorkerId = function(
  * @type {object}
  * @private
  */
-WorkerProtocol.prototype._multicastRequestResponse = function(worker_id_list, broadcast_bytes, on_a_worker_response, on_finish) {
+WorkerProtocol.prototype._multicastRequestResponse = function(worker_id_list, data_bytes, on_a_worker_response, on_finish) {
 
   // Broadcast worker join start.
   // max concurrent connections.
@@ -640,7 +640,7 @@ WorkerProtocol.prototype._multicastRequestResponse = function(worker_id_list, br
           // Request, response only have 2 progress instead of 3 full handshake.
         };
 
-        this._openHandshakeFromWorkerId(worker_id, broadcast_bytes, acknowledge_synchronization, finish_handshake);
+        this._openHandshakeFromWorkerId(worker_id, data_bytes, acknowledge_synchronization, finish_handshake);
       } else {
         loop_next();
       }
@@ -668,9 +668,9 @@ WorkerProtocol.prototype._multicastRequestResponse = function(worker_id_list, br
  * @type {object}
  * @private
  */
-WorkerProtocol.prototype._broadcastRequestResponseToAllWorkers = function(broadcast_bytes, on_a_worker_response, on_finish) {
+WorkerProtocol.prototype._broadcastRequestResponseToAllWorkers = function(data_bytes, on_a_worker_response, on_finish) {
   const worker_id_list = Object.keys(this._worker_peers_settings).map(x => parseInt(x));
-  this._multicastRequestResponse(worker_id_list, broadcast_bytes, on_a_worker_response, on_finish);
+  this._multicastRequestResponse(worker_id_list, data_bytes, on_a_worker_response, on_finish);
 }
 
 /**

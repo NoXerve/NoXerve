@@ -18,7 +18,7 @@ const MaxScopePeersCount = 512;
 /**
  * @constructor module:Scope
  * @param {object} settings
- * @description Scope Object. Scope's state is either completed or defected.
+ * @description Scope Object.
  */
 
 function Scope(settings) {
@@ -88,32 +88,27 @@ Scope.prototype.send = function(scope_peer_id, data, callback) {
 
 }
 
-Scope.prototype.multicast = function(scope_peer_id_list, data, callback) {
+Scope.prototype.multicastRequestResponse = function(scope_peer_id_list, data_bytes, on_a_worker_response, on_finish) {
 }
 
-Scope.prototype.broadcast = function(data, callback) {
+Scope.prototype.broadcastRequestResponse = function(data_bytes, on_a_worker_response, on_finish) {
 }
 
-// Scope.prototype.onDefect = function(listener) {
+Scope.prototype.on = function(event_name, listener) {
+  this._event_listeners[event_name] = listener;
+}
+
+// Scope.prototype.joinPeer = function(worker_id, scope_peer_detail, callback) {
+//   let scope_peer_id;
+// }
+//
+// Scope.prototype.updatePeer = function(scope_peer_id, scope_peer_detail, callback) {
 //
 // }
 //
-// // Connection peers.
-// Scope.prototype.makeComplete = function(callback) {
+// Scope.prototype.leavePeer = function(scope_peer_id, callback) {
 //
 // }
-
-Scope.prototype.joinPeer = function(worker_id, scope_peer_detail, callback) {
-  let scope_peer_id;
-}
-
-Scope.prototype.updatePeer = function(scope_peer_id, scope_peer_detail, callback) {
-  
-}
-
-Scope.prototype.leavePeer = function(scope_peer_id, callback) {
-
-}
 
 // Note that this synchronize is protocol's "synchronize". Not data synchronization.
 Scope.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
