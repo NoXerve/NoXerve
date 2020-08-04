@@ -12,7 +12,7 @@
  */
 
 const Errors = require('../errors');
-const WorkerSocket = require('./non_uniform/worker_socket');
+const WorkerSocket = require('./worker_objects/worker_socket');
 const GlobalDeterministicRandomManager = require('./global_deterministic_random_manager');
 
 /**

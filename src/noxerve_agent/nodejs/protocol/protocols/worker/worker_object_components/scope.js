@@ -62,11 +62,15 @@ function Scope(settings) {
     //
     // },
 
-    'activity-create': () => {
+    'scope-socket-create': () => {
 
     },
 
     'data': (scope_id, data) => {
+
+    },
+
+    'request': (scope_id, data) => {
 
     },
 
@@ -80,12 +84,11 @@ function Scope(settings) {
    this._my_scope_peer_id;
 }
 
-Scope.prototype.onActivityCreate = function(listener) {
-  this._event_listeners['activity-create'] = listener;
+Scope.prototype.onScopeSocketCreate = function(listener) {
+  this._event_listeners['scope-socket-create'] = listener;
 }
 
-Scope.prototype.send = function(scope_peer_id, data, callback) {
-
+Scope.prototype.createScopeSocket = function() {
 }
 
 Scope.prototype.multicastRequestResponse = function(scope_peer_id_list, data_bytes, on_a_worker_response, on_finish) {
