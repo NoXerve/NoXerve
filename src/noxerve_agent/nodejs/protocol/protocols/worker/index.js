@@ -14,8 +14,8 @@
 const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
-const WorkerSocketProtocol = require('./worker_objects/worker_socket');
-const Scope = require('./worker_object_components/scope');
+const WorkerSocketProtocol = require('./worker_subprotocols/worker_socket');
+const Scope = require('./worker_subprotocols/scope');
 
 /**
  * @constructor module:WorkerProtocol
