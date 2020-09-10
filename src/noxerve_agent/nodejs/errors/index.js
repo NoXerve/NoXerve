@@ -194,5 +194,19 @@ module.exports = {
       this.name = 'ERR_NOXERVEAGENT_PROTOCOL_WORKER';
       this.message = message;
     }
+  },
+  'ERR_NOXERVEAGENT_WORKER': class ERR_NOXERVEAGENT_WORKER extends Error {
+    constructor(message, ...params) {
+      // Pass remaining arguments (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_WORKER);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_WORKER';
+      this.message = message;
+    }
   }
 };

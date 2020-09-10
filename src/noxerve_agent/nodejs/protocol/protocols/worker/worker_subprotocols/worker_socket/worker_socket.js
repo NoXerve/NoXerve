@@ -11,7 +11,7 @@
  * @module WorkerSocket
  */
 
-const Errors = require('../../errors');
+const Errors = require('../../../../../errors');
 
 /**
  * @constructor module:WorkerSocket

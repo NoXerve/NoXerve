@@ -187,95 +187,97 @@ Node2.createInterface('WebSocket', {
         console.log('[Worker module] "worker-peer-authentication" event. ', worker_id, worker_authenticity_information);
         is_valid(true);
       });
-
-      Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
-        console.log('[Worker module] onWorkerSocketCreate OK.', parameters, remote_worker_id, worker_socket);
-        worker_socket.on('close', () => {
-          console.log('[Worker module] WorkerSocket from onWorkerSocketCreate closed.');
-          finish('worker_test');
-        });
-        worker_socket.define('func2', (service_function_parameter, return_data, yield_data) => {
-          console.log('[Worker module] WorkerSocket function on createWorkerSocket called.');
-          yield_data(321);
-          yield_data({foo: 321});
-          yield_data(Buffer.from([5, 4, 3, 0, 1]));
-          return_data('hehe');
-        });
-        worker_socket.call('func1', {foo: 'call from onWorkerSocketCreate'}, (err, data, eof, acknowledge)=> {
-          console.log('[Worker module] "func1" Return value: ', data);
-          if(eof) finish('worker_func1_call_test');
-          if(acknowledge) acknowledge('ack');
-        });
-        worker_socket.handleYielding('field2', (yielding_handler_parameter, ready_yielding) => {
-          console.log('[Worker module] "field2" handleYielding started.');
-          console.log('[Worker module] Parameters value: ', yielding_handler_parameter);
-          ready_yielding('"field2" ok for yielding.', (error, data, eof)=> {
-            if(error) console.log('[Worker module] "field1" Yielding error.', error);
-            console.log('[Worker module] "field2" Yielded value: ', data);
-            if(eof) {
-              finish('worker_field2_yield_test');
-            };
-          });
-        });
-        worker_socket.startYielding('field1', 'yield from createWorkerSocket', (error, yielding_start_parameter, finish_yield, yield_data) => {
-          if (error) console.log('[Worker module] "field1" Yield error.', error);
-          console.log('[Worker module] "field1" yielding_start_parameter value: ', yielding_start_parameter);
-
-          yield_data(321);
-          yield_data({foo: 321}, (acknowledge_information)=> {
-            console.log('[Worker module] "field1" acknowledge_information.', acknowledge_information);
-            yield_data(Buffer.from([5, 4, 3, 0, 1]));
-            finish_yield('hehe');
-          });
-        });
-      });
-
-      Worker.createWorkerSocket('purpose 1', {p: 1}, 1, (error, worker_socket)=> {
-        if (error) {
-          console.log('[Worker module] createWorkerSocket error.', error);
-        }
-        else {
+      Worker.start((error) => {
+        if (error) console.log('[Worker module] start error.', error);
+        Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
+          console.log('[Worker module] onWorkerSocketCreate OK.', parameters, remote_worker_id, worker_socket);
           worker_socket.on('close', () => {
-            console.log('[Worker module] WorkerSocket from createWorkerSocket closed.');
+            console.log('[Worker module] WorkerSocket from onWorkerSocketCreate closed.');
+            finish('worker_test');
           });
-          worker_socket.define('func1', (service_function_parameter, return_data, yield_data) => {
+          worker_socket.define('func2', (service_function_parameter, return_data, yield_data) => {
             console.log('[Worker module] WorkerSocket function on createWorkerSocket called.');
-            yield_data(123);
-            yield_data({foo: 123}, (acknowledge_information)=> {
-              console.log('[Worker module] WorkerSocket function on createWorkerSocket. acknowledge_information', acknowledge_information);
-              yield_data(Buffer.from([5, 4, 3, 2, 1]));
-              return_data('haha');
-            });
+            yield_data(321);
+            yield_data({foo: 321});
+            yield_data(Buffer.from([5, 4, 3, 0, 1]));
+            return_data('hehe');
           });
-          worker_socket.call('func2', {foo: 'call from createWorkerSocket'}, (err, data, eof)=> {
-            console.log('[Worker module] "func2" Return value: ', data);
-            if(eof) finish('worker_func2_call_test');
+          worker_socket.call('func1', {foo: 'call from onWorkerSocketCreate'}, (err, data, eof, acknowledge)=> {
+            console.log('[Worker module] "func1" Return value: ', data);
+            if(eof) finish('worker_func1_call_test');
+            if(acknowledge) acknowledge('ack');
           });
-          worker_socket.handleYielding('field1', (yielding_handler_parameter, ready_yielding) => {
-            console.log('[Worker module] "field1" handleYielding started.');
+          worker_socket.handleYielding('field2', (yielding_handler_parameter, ready_yielding) => {
+            console.log('[Worker module] "field2" handleYielding started.');
             console.log('[Worker module] Parameters value: ', yielding_handler_parameter);
-            ready_yielding('"field1" ok for yielding.', (error, data, eof, acknowledge)=> {
+            ready_yielding('"field2" ok for yielding.', (error, data, eof)=> {
               if(error) console.log('[Worker module] "field1" Yielding error.', error);
-              if(acknowledge) acknowledge('ack');
-              console.log('[Worker module] "field1" Yielded value: ', data);
+              console.log('[Worker module] "field2" Yielded value: ', data);
               if(eof) {
-                finish('worker_field1_yield_test');
-                setTimeout(()=>{worker_socket.close()}, 1500);
+                finish('worker_field2_yield_test');
               };
             });
           });
-          worker_socket.startYielding('field2', 'yield from createWorkerSocket', (error, yielding_start_parameter, finish_yield, yield_data) => {
-            if (error) console.log('[Worker module] "field2" Yield error.', error);
-            console.log('[Worker module] "field2" yielding_start_parameter value: ', yielding_start_parameter);
+          worker_socket.startYielding('field1', 'yield from createWorkerSocket', (error, yielding_start_parameter, finish_yield, yield_data) => {
+            if (error) console.log('[Worker module] "field1" Yield error.', error);
+            console.log('[Worker module] "field1" yielding_start_parameter value: ', yielding_start_parameter);
 
-            yield_data(123);
-            yield_data({foo: 123});
-            yield_data(Buffer.from([5, 4, 3, 2, 1]));
-            finish_yield('haha');
+            yield_data(321);
+            yield_data({foo: 321}, (acknowledge_information)=> {
+              console.log('[Worker module] "field1" acknowledge_information.', acknowledge_information);
+              yield_data(Buffer.from([5, 4, 3, 0, 1]));
+              finish_yield('hehe');
+            });
           });
-          console.log('[Worker module] createWorkerSocket OK.', worker_socket);
-          // finish('worker_test');
-        }
+        });
+
+        Worker.createWorkerSocket('purpose 1', {p: 1}, 1, (error, worker_socket)=> {
+          if (error) {
+            console.log('[Worker module] createWorkerSocket error.', error);
+          }
+          else {
+            worker_socket.on('close', () => {
+              console.log('[Worker module] WorkerSocket from createWorkerSocket closed.');
+            });
+            worker_socket.define('func1', (service_function_parameter, return_data, yield_data) => {
+              console.log('[Worker module] WorkerSocket function on createWorkerSocket called.');
+              yield_data(123);
+              yield_data({foo: 123}, (acknowledge_information)=> {
+                console.log('[Worker module] WorkerSocket function on createWorkerSocket. acknowledge_information', acknowledge_information);
+                yield_data(Buffer.from([5, 4, 3, 2, 1]));
+                return_data('haha');
+              });
+            });
+            worker_socket.call('func2', {foo: 'call from createWorkerSocket'}, (err, data, eof)=> {
+              console.log('[Worker module] "func2" Return value: ', data);
+              if(eof) finish('worker_func2_call_test');
+            });
+            worker_socket.handleYielding('field1', (yielding_handler_parameter, ready_yielding) => {
+              console.log('[Worker module] "field1" handleYielding started.');
+              console.log('[Worker module] Parameters value: ', yielding_handler_parameter);
+              ready_yielding('"field1" ok for yielding.', (error, data, eof, acknowledge)=> {
+                if(error) console.log('[Worker module] "field1" Yielding error.', error);
+                if(acknowledge) acknowledge('ack');
+                console.log('[Worker module] "field1" Yielded value: ', data);
+                if(eof) {
+                  finish('worker_field1_yield_test');
+                  setTimeout(()=>{worker_socket.close()}, 1500);
+                };
+              });
+            });
+            worker_socket.startYielding('field2', 'yield from createWorkerSocket', (error, yielding_start_parameter, finish_yield, yield_data) => {
+              if (error) console.log('[Worker module] "field2" Yield error.', error);
+              console.log('[Worker module] "field2" yielding_start_parameter value: ', yielding_start_parameter);
+
+              yield_data(123);
+              yield_data({foo: 123});
+              yield_data(Buffer.from([5, 4, 3, 2, 1]));
+              finish_yield('haha');
+            });
+            console.log('[Worker module] createWorkerSocket OK.', worker_socket);
+            // finish('worker_test');
+          }
+        });
       });
     });
   });

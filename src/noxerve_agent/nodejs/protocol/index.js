@@ -91,7 +91,7 @@ function Protocol(settings) {
   // Initailize embedded protocols.
   for (const protocol_name in SupportedEmbeddedProtocols) {
     // Fetch protocol.
-    let Protocol = SupportedEmbeddedProtocols[protocol_name];
+    const Protocol = SupportedEmbeddedProtocols[protocol_name];
     // console.log(SupportedEmbeddedProtocols, this._imported_modules, this._imported_modules[Protocol.related_module_name]);
 
     // Check it's related module exists.

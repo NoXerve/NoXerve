@@ -241,7 +241,7 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
                 yielding_start_id
               ]));
             }
-            
+
           } else if (protocol_code === this._ProtocolCodes.yielding_start_yield_data_acknowledge[0]) {
             const yielding_start_callback_id_base64 = data.slice(0, 4).toString('base64');
             const acknowledgement_id = Buf.decodeUInt32BE(data.slice(4, 8));

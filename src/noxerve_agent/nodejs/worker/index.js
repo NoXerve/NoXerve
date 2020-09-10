@@ -12,7 +12,7 @@
  */
 
 const Errors = require('../errors');
-const WorkerSocket = require('./worker_objects/worker_socket');
+const WorkerSocketManager = require('./worker_object_managers/worker_socket');
 const GlobalDeterministicRandomManager = require('./global_deterministic_random_manager');
 
 /**
@@ -33,17 +33,15 @@ function Worker(settings) {
    * @type {object}
    * @private
    */
+  this._worker_object_managers = {
+  };
+
+  /**
+   * @memberof module:Worker
+   * @type {object}
+   * @private
+   */
   this._event_listeners = {
-    // Internal private default events.
-    'worker-socket-request': (callback) => {
-      try {
-        const worker_socket = new WorkerSocket();
-        callback(false, worker_socket);
-      } catch (error) {
-        console.log(error);
-        callback(error);
-      }
-    },
     'global-deterministic-random-manager-request': (static_global_random_seed_4096bytes, callback) => {
       try {
         const global_deterministic_random_manager = new GlobalDeterministicRandomManager({
@@ -88,7 +86,19 @@ function Worker(settings) {
  * @description Start the worker module.
  */
 Worker.prototype.start = function(callback) {
-  if (callback) callback(false);
+  if(this._event_listeners['worker-subprotocol-managers-request']) {
+    // Request for worker socket. With < 256 register_code.
+    this._event_listeners['worker-subprotocol-managers-request'](WorkerSocketManager.register_code, (error, worker_subprotocol_object_managers)=> {
+      console.log(worker_subprotocol_object_managers);
+      this._worker_object_managers['worker_socket'] = new WorkerSocketManager.module(worker_subprotocol_object_managers);
+      if (callback) callback(error);
+    });
+  }
+  else {
+    const error = new Errors.ERR_NOXERVEAGENT_WORKER('Worker module starting failed. Probably because protocol module has\'t started.');
+    if (callback) callback(error);
+    else throw error;
+  }
 }
 
 /**
@@ -159,8 +169,8 @@ Worker.prototype.importWorkerPeersSettings = function(worker_peers_settings, cal
  * @param {module:Worker~callback_of_create_worker_socket} callback
  * @description Create a worker socket in order to communicate with another worker.
  */
-Worker.prototype.createWorkerSocket = function(worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, callback) {
-  this._event_listeners['worker-socket-create'](worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, callback);
+Worker.prototype.createWorkerSocket = function(worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_worker_id, callback) {
+  this._worker_object_managers.worker_socket.create(worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_worker_id, callback);
 }
 
 /**
@@ -176,8 +186,7 @@ Worker.prototype.createWorkerSocket = function(worker_socket_purpose_name, worke
  * @description Handle worker socket emitted from remote worker.
  */
 Worker.prototype.onWorkerSocketCreate = function(worker_socket_purpose_name, listener) {
-  this._event_listeners['worker-socket-create-' + worker_socket_purpose_name] = listener;
-  this._event_listeners['hash-string-request'](worker_socket_purpose_name);
+  this._worker_object_managers.worker_socket.onCreate(worker_socket_purpose_name, listener);
 }
 
 /**

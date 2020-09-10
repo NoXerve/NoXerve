@@ -1,5 +1,5 @@
 /**
- * @file NoXerveAgent worker_socket protocol index file. [worker_socket.js]
+ * @file NoXerveAgent worker_socket protocol file. [worker_socket.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
  * @copyright 2019-2020 nooxy. All Rights Reserved.
@@ -12,9 +12,10 @@
  * @description Subprotocol of worker.
  */
 
-const Utils = require('../../../../utils');
-const Buf = require('../../../../buffer');
-const Crypto = require('crypto');
+const Utils = require('../../../../../utils');
+const Buf = require('../../../../../buffer');
+const WorkerSocket = require('./worker_socket');
+const WorkerSocketManager = require('./manager');
 
 /**
  * @constructor module:WorkerSocketProtocol
@@ -29,18 +30,40 @@ function WorkerSocketProtocol(settings) {
    */
   this._settings = settings;
   /**
-   * @memberof module:ActivityOfServiceProtocol
+   * @memberof module:WorkerSocketProtocol
    * @type {object}
    * @private
    */
   this._hash_manager = settings.hash_manager;
 
   /**
-   * @memberof module:ActivityOfServiceProtocol
+   * @memberof module:WorkerSocketProtocol
    * @type {object}
    * @private
    */
   this._nsdt_embedded_protocol = settings.nsdt_embedded_protocol;
+
+  /**
+   * @memberof module:WorkerSocketProtocol
+   * @type {object}
+   * @private
+   */
+  this._worker_global_protocol_codes = settings.worker_global_protocol_codes;
+
+  /**
+   * @memberof module:WorkerSocketProtocol
+   * @type {object}
+   * @private
+   */
+  this._worker_protocol_actions = settings.worker_protocol_actions;
+
+  /**
+   * @memberof module:WorkerSocketProtocol
+   * @type {object}
+   * @private
+   */
+  this._worker_socket_manager = new WorkerSocketManager();
+
 }
 
 
@@ -67,13 +90,104 @@ WorkerSocketProtocol.prototype._ProtocolCodes = {
 };
 
 /**
+ * @callback module:WorkerSocketProtocol~callback_of_close
+ * @param {error} error
+ */
+/**
+ * @memberof module:WorkerPrWorkerSocketProtocolotocol
+ * @param {module:WorkerSocketProtocol~callback_of_close} callback
+ * @description Close the module.
+ */
+WorkerSocketProtocol.prototype.close = function(callback) {
+  if (callback) callback(false);
+}
+
+/**
+ * @callback module:WorkerSocketProtocol~callback_of_start
+ * @param {error} error
+ */
+/**
+ * @memberof module:WorkerSocketProtocol
+ * @param {module:WorkerSocketProtocol~callback_of_start} callback
+ * @description Start running WorkerSocketProtocol.
+ */
+WorkerSocketProtocol.prototype.start = function(callback) {
+  this._worker_socket_manager.on('hash-string-request', (string) => {
+    this._hash_manager.hashString4Bytes(string);
+  });
+  this._worker_socket_manager.on('worker-socket-create-request', // Create worker socket.
+  (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_worker_id, callback) => {
+    const worker_socket_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_socket_purpose_name);
+    const worker_socket_purpose_parameter_bytes = this._nsdt_embedded_protocol.encode(worker_socket_purpose_parameter);
+    const my_worker_authenticity_bytes = this._worker_protocol_actions.encodeAuthenticityBytes();
+
+    const synchronize_information = Buf.concat([
+      Buf.encodeUInt32BE(my_worker_authenticity_bytes.length),
+      my_worker_authenticity_bytes,
+      worker_socket_purpose_name_4bytes,
+      worker_socket_purpose_parameter_bytes
+    ]);
+
+    let _is_authenticity_valid = false;
+
+    const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
+      if (open_handshanke_error) {
+        callback(open_handshanke_error);
+        next(false);
+      } else if (synchronize_acknowledgement_information[0] === this._worker_global_protocol_codes.accept[0]) {
+        const remote_worker_peer_authenticity_bytes = synchronize_acknowledgement_information.slice(1);
+        // Auth remote worker.
+        this._worker_protocol_actions.validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
+          _is_authenticity_valid = is_authenticity_valid;
+          if (is_authenticity_valid && !error) {
+            next(this._worker_global_protocol_codes.accept); // Accept.
+          } else {
+            next(this._worker_global_protocol_codes.authentication_reason_reject_2_bytes); // Reject. Authenticication error.
+          }
+        });
+      } else if (synchronize_acknowledgement_information[0] === this._worker_global_protocol_codes.reject[0]
+      ) {
+        if (synchronize_acknowledgement_information[1] === this._worker_global_protocol_codes.authentication_reason_reject_2_bytes[1]) {
+          callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'));
+          next(false);
+
+        } else {
+          callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'));
+          next(false);
+        }
+      } else {
+        callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'));
+        next(false);
+      }
+    };
+
+    const finish_handshake = (error, tunnel) => {
+      if (error) {
+        callback(error);
+      } else {
+        if (_is_authenticity_valid) {
+          const worker_socket = new WorkerSocket();
+          this._handleTunnel(error, worker_socket, tunnel);
+          callback(error, worker_socket);
+        } else {
+          callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Remote worker authentication failed.'));
+        }
+      }
+    };
+
+    this._worker_protocol_actions.openHandshakeByWorkerId(remote_worker_peer_worker_id, synchronize_information, acknowledge_synchronization, finish_handshake);
+  });
+  callback(false, this._worker_socket_manager);
+}
+
+/**
  * @memberof module:WorkerSocketProtocol
  * @param {error} error - If worker socket module create worker_socket failed or not.
  * @param {object} worker_socket
  * @param {tunnel} tunnel
  * @description Method that handle worker socket of worker socket protocol from worker socket protocol module.
  */
-WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tunnel) {
+WorkerSocketProtocol.prototype._handleTunnel = function(error, worker_socket, tunnel) {
   if (error) tunnel.close();
   else {
     this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy) => {
@@ -435,4 +549,55 @@ WorkerSocketProtocol.prototype.handleTunnel = function(error, worker_socket, tun
   }
 }
 
-module.exports = WorkerSocketProtocol;
+/**
+ * @memberof module:WorkerSocketProtocol
+ * @param {buffer} synchronize_information
+ * @return {buffer} synchronize_acknowledgement_information
+ * @description Synchronize handshake from remote emitter.
+ */
+WorkerSocketProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
+  const worker_id = Buf.decodeUInt32BE(synchronize_information.slice(0, 4));
+  const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(0, 4));
+
+  onError((error) => {
+    // Server side error.
+    console.log(error);
+  });
+
+  this._worker_protocol_actions.validateAuthenticityBytes(synchronize_information.slice(4, 4 + remote_worker_peer_authenticity_bytes_length), (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
+    if (is_authenticity_valid && !error) {
+      const register_code_1byte = null;
+      const worker_socket_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(4 + remote_worker_peer_authenticity_bytes_length, 4 + remote_worker_peer_authenticity_bytes_length + 4));
+      const worker_socket_purpose_parameter = this._nsdt_embedded_protocol.decode(synchronize_information.slice(4 + remote_worker_peer_authenticity_bytes_length + 4));
+      // console.log(is_authenticity_valid, remote_worker_peer_worker_id, remote_worker_peer_authenticity_bytes_length, remote_worker_peer_authenticity_bytes, worker_socket_purpose_name, worker_socket_purpose_parameter);
+
+      onAcknowledge((acknowledge_information, tunnel) => {
+        if (acknowledge_information[0] === this._worker_global_protocol_codes.accept[0]) {
+          const worker_socket = new WorkerSocket();
+          this._handleTunnel(error, worker_socket, tunnel);
+          this._worker_socket_manager.emitEventListener('worker-socket-create-' + worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_worker_id, worker_socket);
+        } else {
+          tunnel.close();
+        }
+      });
+
+      next(Buf.concat([
+        this._worker_global_protocol_codes.accept, // Accept.
+        this._worker_protocol_actions.encodeAuthenticityBytes()
+      ]));
+
+    } else {
+      onAcknowledge((acknowledge_information, tunnel) => {
+        // Reject.
+        tunnel.close();
+      });
+      next(this._worker_global_protocol_codes.authentication_reason_reject_2_bytes); // Reject. Authenticication error.
+    }
+  });
+}
+
+module.exports = {
+  protocol_name: 'worker_socket',
+  protocol_code: Buf.from([0x00]),
+  module: WorkerSocketProtocol
+};
