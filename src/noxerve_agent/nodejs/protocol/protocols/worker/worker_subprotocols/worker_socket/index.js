@@ -1,5 +1,5 @@
 /**
- * @file NoXerveAgent worker_socket protocol file. [worker_socket.js]
+ * @file NoXerveAgent worker_socket protocol file. [index.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
  * @copyright 2019-2020 nooxy. All Rights Reserved.
@@ -94,7 +94,7 @@ WorkerSocketProtocol.prototype._ProtocolCodes = {
  * @param {error} error
  */
 /**
- * @memberof module:WorkerPrWorkerSocketProtocolotocol
+ * @memberof module:WorkerSocketProtocol
  * @param {module:WorkerSocketProtocol~callback_of_close} callback
  * @description Close the module.
  */
