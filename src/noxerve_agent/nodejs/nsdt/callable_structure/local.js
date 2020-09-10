@@ -21,6 +21,11 @@
 function CallableStructureLocal(settings) {
   /**
    * @memberof module:CallableStructureLocal
+   * @type {buffer}
+   */
+  this.Id = settings.id;
+  /**
+   * @memberof module:CallableStructureLocal
    * @type {object}
    * @private
    */

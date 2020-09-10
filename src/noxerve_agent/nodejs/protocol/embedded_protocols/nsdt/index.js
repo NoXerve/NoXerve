@@ -160,7 +160,7 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
         volatilizing_callback_id_8bytes
       ]);
     } else if (noxerve_supported_data_type_object && noxerve_supported_data_type_object.isCallableStructure) {
-      const callable_struture_id_8bytes = Utils.random8Bytes();
+      const callable_struture_id_8bytes = noxerve_supported_data_type_object.Id;
       const callable_struture_id_8bytes_base64 = callable_struture_id_8bytes.toString('base64');
 
       // Register callable_struture.

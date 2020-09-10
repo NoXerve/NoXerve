@@ -13,6 +13,7 @@
 
 const CallableStructure = require('./callable_structure');
 const Errors = require('../errors');
+const Utils = require('../utils');
 
 // NSTD cheatsheet
 // Code | Type
@@ -62,7 +63,8 @@ NSDT.prototype.createCallableStructure = function(name_to_function_dictionary, c
     }
   }
   return new (CallableStructure.Local)({
-    name_to_function_dictionary: name_to_function_dictionary
+    name_to_function_dictionary: name_to_function_dictionary,
+    id: Utils.random8Bytes()
   });
 };
 
