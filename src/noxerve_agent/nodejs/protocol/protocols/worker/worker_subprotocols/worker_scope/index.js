@@ -14,6 +14,7 @@
 
 const Utils = require('../../../../../utils');
 const Buf = require('../../../../../buffer');
+const WorkerScopeManager = require('./manager');
 
 /**
  * @constructor module:WorkerScopeProtocol
@@ -27,6 +28,40 @@ function WorkerScopeProtocol(settings) {
    * @private
    */
   this._settings = settings;
+  /**
+   * @memberof module:WorkerSocketProtocol
+   * @type {object}
+   * @private
+   */
+  this._hash_manager = settings.hash_manager;
+
+  /**
+   * @memberof module:WorkerSocketProtocol
+   * @type {object}
+   * @private
+   */
+  this._nsdt_embedded_protocol = settings.nsdt_embedded_protocol;
+
+  /**
+   * @memberof module:WorkerSocketProtocol
+   * @type {object}
+   * @private
+   */
+  this._worker_global_protocol_codes = settings.worker_global_protocol_codes;
+
+  /**
+   * @memberof module:WorkerSocketProtocol
+   * @type {object}
+   * @private
+   */
+  this._worker_protocol_actions = settings.worker_protocol_actions;
+
+  /**
+   * @memberof module:WorkerSocketProtocol
+   * @type {object}
+   * @private
+   */
+  this._worker_scope_manager = new WorkerScopeManager();
 }
 
 /**
@@ -52,7 +87,10 @@ WorkerScopeProtocol.prototype.close = function(callback) {
  * @description Start running WorkerScopeProtocol.
  */
 WorkerScopeProtocol.prototype.start = function(callback) {
-  callback(false);
+  // this._worker_scope_manager.on('worker-scope-create-request', () => {
+  //
+  // });
+  callback(false, this._worker_scope_manager);
 }
 
 /**
@@ -62,7 +100,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
  * @description Synchronize handshake from remote emitter.
  */
 WorkerScopeProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
-
+  
 }
 
 module.exports = {

@@ -1215,6 +1215,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
 
     // Worker Object Protocols
   } else if (synchronize_information[0] === this._ProtocolCodes.worker_object[0]) {
+    // Below codes are mainly related to prefix proccessing of worker object protocols.
     const worker_object_protocol_code_1byte = Buf.from([synchronize_information[1]]);
     const worker_subprotocol_protocol_code_1byte = Buf.from([synchronize_information[2]]);
     const sliced_synchronize_information = synchronize_information.slice(3);
