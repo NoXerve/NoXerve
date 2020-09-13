@@ -16,7 +16,7 @@ const Errors = require('../../../../../errors');
 /**
  * @constructor module:WorkerSocket
  * @param {object} settings
- * @description NoXerve Agent Activity WorkerSocket Object.
+ * @description NoXerveAgent worker's WorkerSocket object.
  */
 
 function WorkerSocket(settings) {

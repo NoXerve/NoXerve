@@ -1,5 +1,5 @@
 /**
- * @file NoXerveAgent Locker file. [locker_scope.js]
+ * @file NoXerveAgent AsyncQueue file. [locker_scope.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
  * @copyright 2019-2020 nooxy. All Rights Reserved.
@@ -8,27 +8,27 @@
 'use strict';
 
 /**
- * @module Locker
+ * @module AsyncQueue
  */
 
 const Errors = require('../../errors');
 
 /**
- * @constructor module:Locker
+ * @constructor module:AsyncQueue
  * @param {object} settings
- * @description Locker Object.
+ * @description AsyncQueue Object.
  */
 
-function Locker(settings) {
+function AsyncQueue(settings) {
   /**
-   * @memberof module:Locker
+   * @memberof module:AsyncQueue
    * @type {object}
    * @private
    */
   this._settings = settings;
 
   /**
-   * @memberof module:Locker
+   * @memberof module:AsyncQueue
    * @type {object}
    * @private
    */
@@ -37,26 +37,26 @@ function Locker(settings) {
 }
 
 /**
- * @callback module:Locker~callback_of_on
+ * @callback module:AsyncQueue~callback_of_on
  * @description callback parameter based on event's type.
  */
 /**
- * @memberof module:Locker
+ * @memberof module:AsyncQueue
  * @param {string} event_name
- * @param {module:Locker~callback_of_on} callback
+ * @param {module:AsyncQueue~callback_of_on} callback
  * @description Register event listener.
  */
-Locker.prototype.on = function(event_name, callback) {
+AsyncQueue.prototype.on = function(event_name, callback) {
   this._event_listeners[event_name] = callback;
 }
 
 /**
- * @memberof module:Locker
+ * @memberof module:AsyncQueue
  * @param {string} event_name
- * @description Locker events emitter. For internal uses.
+ * @description AsyncQueue events emitter. For internal uses.
  */
-Locker.prototype.emitEventListener = function(event_name, ...params) {
+AsyncQueue.prototype.emitEventListener = function(event_name, ...params) {
   return this._event_listeners[event_name].apply(null, params);
 }
 
-module.exports = Locker;
+module.exports = AsyncQueue;

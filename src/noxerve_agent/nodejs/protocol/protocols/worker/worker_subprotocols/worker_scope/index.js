@@ -57,6 +57,13 @@ function WorkerScopeProtocol(settings) {
   this._worker_protocol_actions = settings.worker_protocol_actions;
 
   /**
+   * @memberof module:WorkerScope
+   * @type {object}
+   * @private
+   */
+  this._max_concurrent_connections_count = settings.max_concurrent_connections_count;
+
+  /**
    * @memberof module:WorkerSocketProtocol
    * @type {object}
    * @private
@@ -100,7 +107,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
  * @description Synchronize handshake from remote emitter.
  */
 WorkerScopeProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
-  
+
 }
 
 module.exports = {
