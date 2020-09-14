@@ -107,17 +107,7 @@ Node.prototype._newTunnel = function(interface_name, from_interface, from_connec
     tunnel.setValue('from_interface', from_interface);
     tunnel.setValue('from_connector', from_connector);
 
-    // Get tunnel emitter and pass to interface or connector.
-    tunnel.getEmitter((error, emitter) => {
-      if (error) {
-        called_callback = true;
-        callback(error);
-      } else {
-        this._event_listeners['tunnel-create'](tunnel);
-        called_callback = true;
-        callback(error, emitter);
-      }
-    });
+    callback(false, tunnel);
   } catch (error) {
     // console.log(called_callback, error);
     if (!called_callback) callback(error);
@@ -212,12 +202,23 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
     });
 
     // Create a new interface instance from avaliable interfaces list.
-    let interface_instance = new AvaliableInterfaces[interface_name].Interface(interface_settings, (send, close, new_tunnel_callback) => {
+    let interface_instance = new AvaliableInterfaces[interface_name].Interface(interface_settings, (send, close, emitter_initializer_from_interface) => {
       // Fill in proper interface information for interface itself.
       // AvaliableInterfaces[interface_name].interface_name provide a "standard"
       // interface name.
       try {
-        this._newTunnel(AvaliableInterfaces[interface_name].interface_name, true, false, send, close, new_tunnel_callback);
+        this._newTunnel(AvaliableInterfaces[interface_name].interface_name, true, false, send, close, (error, tunnel) => {
+          if(error) {
+            emitter_initializer_from_interface(error);
+          }
+          else {
+            // Get tunnel emitter and pass to interface or connector.
+            tunnel.getEmitter((error, emitter) => {
+              this._event_listeners['tunnel-create'](tunnel);
+              emitter_initializer_from_interface(error, emitter);
+            });
+          }
+        });
       } catch (error) {
         console.log(error);
         this._event_listeners['interface-error'](error);
@@ -312,24 +313,17 @@ Node.prototype.createTunnel = function(interface_name, interface_connect_setting
         // instead of interface.
         (send, close, emitter_initializer_from_connector) => {
           // Create a new tunnel object with proper setting.
-          let tunnel = new Tunnel({
-            close: close,
-            send: send
-          });
-          tunnel.setValue('interface_name', AvaliableInterfaces[interface_name].interface_name);
-          tunnel.setValue('interface_secured', AvaliableInterfaces[interface_name].secured);
-          tunnel.setValue('from_interface', false);
-          tunnel.setValue('from_connector', true);
-
-          // Get tunnel emitter and pass to interface or connector.
-          tunnel.getEmitter((error, emitter) => {
-            if (error) {
-              called_callback = true;
+          this._newTunnel(AvaliableInterfaces[interface_name].interface_name, false, true, send, close, (error, tunnel) => {
+            if(error) {
               callback(error);
-            } else {
-              called_callback = true;
-              callback(false, tunnel);
-              emitter_initializer_from_connector(emitter);
+              emitter_initializer_from_connector(error);
+            }
+            else {
+              // Get tunnel emitter and pass to interface or connector.
+              tunnel.getEmitter((error, emitter) => {
+                callback(error, tunnel);
+                emitter_initializer_from_connector(error, emitter);
+              });
             }
           });
         });

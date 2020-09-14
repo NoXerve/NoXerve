@@ -226,22 +226,29 @@ Connector.prototype.connect = function(connect_settings, new_tunnel_callback) {
       ws.close();
     },
     // Get emitter and get the rest of jobs done.
-    (tunnel_emitter) => {
-      ws.on('open', () => {
-        tunnel_emitter('ready');
-      });
+    (error, tunnel_emitter) => {
+      if (error) {
+        console.log('Websocket error. ', error);
+        // Emitter error event.
+        this._event_listeners['error'](error);
+      }
+      else {
+        ws.on('open', () => {
+          tunnel_emitter('ready');
+        });
 
-      ws.on('message', (message) => {
-        tunnel_emitter('data', message);
-      });
+        ws.on('message', (message) => {
+          tunnel_emitter('data', message);
+        });
 
-      ws.on('error', (error) => {
-        tunnel_emitter('error', error);
-      });
+        ws.on('error', (error) => {
+          tunnel_emitter('error', error);
+        });
 
-      ws.on('close', () => {
-        tunnel_emitter('close');
-      });
+        ws.on('close', () => {
+          tunnel_emitter('close');
+        });
+      }
     }
   );
   // } catch (error) {
