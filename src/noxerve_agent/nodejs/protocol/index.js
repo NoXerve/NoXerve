@@ -251,7 +251,7 @@ Protocol.prototype.start = function(callback) {
     }
     else {
       // Handle tunnel create event from node module.
-      // Specificlly speaking, use handshake to identify which module does tunnel belong to.
+      // Specifically speaking, use handshake to identify which module does tunnel belong to.
       this._node_module.on('tunnel-create', (tunnel) => {
         // Check is passive. Since following patterns are designed only for the role of passive.
         if (tunnel.returnValue('from_connector')) {

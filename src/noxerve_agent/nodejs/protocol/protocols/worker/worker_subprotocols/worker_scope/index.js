@@ -9,12 +9,13 @@
 
  /**
   * @module WorkerScopeProtocol
-  * @description Subprotocol of worker.
+  * @description Subprotocol of worker. This module's "broadcast_request_response", "multicast_request_response" etc needs to be optimized specifically for worker scope later after NoXerve become more matured. Since directly using APIs from worker protocol module costs a lot for a single tunnel connection.
   */
 
 const Utils = require('../../../../../utils');
 const Buf = require('../../../../../buffer');
 const WorkerScopeManager = require('./manager');
+const WorkerScope = require('./worker_scope');
 
 /**
  * @constructor module:WorkerScopeProtocol
@@ -29,28 +30,28 @@ function WorkerScopeProtocol(settings) {
    */
   this._settings = settings;
   /**
-   * @memberof module:WorkerSocketProtocol
+   * @memberof module:WorkerScopeProtocol
    * @type {object}
    * @private
    */
   this._hash_manager = settings.hash_manager;
 
   /**
-   * @memberof module:WorkerSocketProtocol
+   * @memberof module:WorkerScopeProtocol
    * @type {object}
    * @private
    */
   this._nsdt_embedded_protocol = settings.nsdt_embedded_protocol;
 
   /**
-   * @memberof module:WorkerSocketProtocol
+   * @memberof module:WorkerScopeProtocol
    * @type {object}
    * @private
    */
   this._worker_global_protocol_codes = settings.worker_global_protocol_codes;
 
   /**
-   * @memberof module:WorkerSocketProtocol
+   * @memberof module:WorkerScopeProtocol
    * @type {object}
    * @private
    */
@@ -64,12 +65,29 @@ function WorkerScopeProtocol(settings) {
   this._max_concurrent_connections_count = settings.max_concurrent_connections_count;
 
   /**
-   * @memberof module:WorkerSocketProtocol
+   * @memberof module:WorkerScopeProtocol
    * @type {object}
    * @private
    */
   this._worker_scope_manager = new WorkerScopeManager();
+
+  /**
+   * @memberof module:WorkerScopeProtocol
+   * @type {object}
+   * @private
+   */
+  this._worker_scopes_dict = {};
 }
+
+
+/**
+ * @memberof module:WorkerScopeProtocol
+ * @type {object}
+ * @private
+ */
+WorkerScopeProtocol.prototype._ProtocolCodes = {
+  request_response: Buf.from([0x01]),
+};
 
 /**
  * @callback module:WorkerScopeProtocol~callback_of_close
@@ -94,9 +112,25 @@ WorkerScopeProtocol.prototype.close = function(callback) {
  * @description Start running WorkerScopeProtocol.
  */
 WorkerScopeProtocol.prototype.start = function(callback) {
-  // this._worker_scope_manager.on('worker-scope-create-request', () => {
-  //
-  // });
+  this._worker_scope_manager.on('worker-scope-create-request', (worker_scpoe_purpose_name, worker_scope_worker_peers_worker_ids_list, inner_callback) => {
+    const worker_scope_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_scpoe_purpose_name);
+
+    const worker_scope = new WorkerScope({
+      worker_scpoe_purpose_name: worker_scpoe_purpose_name,
+      worker_peers_worker_ids_list: worker_peers_worker_ids_list,
+      broadcast_request_response: (data_bytes, on_a_worker_response, on_finish) => {
+        this._worker_protocol_actions.multicastRequestResponse(worker_scope_worker_peers_worker_ids_list);
+      },
+      multicast_request_response: (worker_ids_list, data_bytes, on_a_worker_response, on_finish) => {
+        this._worker_protocol_actions.multicastRequestResponse(worker_ids_list);
+      },
+      check_all_scope_peers_alive: (callback) => {
+        this._worker_protocol_actions.multicastRequestResponse();
+      }
+    });
+
+    inner_callback(false, worker_scope);
+  });
   callback(false, this._worker_scope_manager);
 }
 
@@ -107,7 +141,13 @@ WorkerScopeProtocol.prototype.start = function(callback) {
  * @description Synchronize handshake from remote emitter.
  */
 WorkerScopeProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
+  const protocol_code_int = synchronize_information[0];
+  if(protocol_code_int === this._ProtocolCodes.request_response[0]) {
 
+  }
+  else {
+
+  }
 }
 
 module.exports = {

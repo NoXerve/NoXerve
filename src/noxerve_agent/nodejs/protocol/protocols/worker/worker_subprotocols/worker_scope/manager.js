@@ -33,9 +33,9 @@ function WorkerScopeManager(settings) {
  * @param {module:Worker~callback_of_create_worker_scope} callback
  * @description Create a worker socket in order to communicate with another worker.
  */
-WorkerScopeManager.prototype.create = function(worker_scpoe_purpose_name, worker_scope_purpose_parameter, worker_peers_worker_ids_list, callback) {
+WorkerScopeManager.prototype.create = function(worker_scpoe_purpose_name, worker_peers_worker_ids_list, callback) {
   // The event is registered by protocols module.
-  this._event_listeners['worker-scope-create-request'](worker_scpoe_purpose_name, worker_scope_purpose_parameter, worker_peers_worker_ids_list, callback);
+  this._event_listeners['worker-scope-create-request'](worker_scpoe_purpose_name, worker_peers_worker_ids_list, callback);
 }
 
 /**
