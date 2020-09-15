@@ -45,11 +45,11 @@ function WorkerScopeManager(worker_subprotocol_object_managers) {
  * @param {module:Worker~callback_of_create_worker_socket} callback
  * @description Create a worker socket in order to communicate with another worker.
  */
-WorkerScopeManager.prototype.create = function(worker_socket_purpose_name, remote_worker_peer_worker_id, callback) {
-  this._worker_subprotocol_object_managers.worker_socket.create(worker_socket_purpose_name, remote_worker_peer_worker_id, callback);
+WorkerScopeManager.prototype.create = function(worker_scpoe_purpose_name, worker_peers_worker_ids_list, callback) {
+  this._worker_subprotocol_object_managers.worker_scope.create(worker_scpoe_purpose_name, worker_peers_worker_ids_list, callback);
 }
 
 module.exports = {
-  register_code: 0,
+  register_code: 1,
   module: WorkerScopeManager
 };

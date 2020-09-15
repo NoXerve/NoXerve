@@ -16,6 +16,7 @@ const Utils = require('../../../../../utils');
 const Buf = require('../../../../../buffer');
 const WorkerScopeManager = require('./manager');
 const WorkerScope = require('./worker_scope');
+const Errors = require('../../../../../errors');
 
 /**
  * @constructor module:WorkerScopeProtocol
@@ -86,6 +87,7 @@ function WorkerScopeProtocol(settings) {
  * @private
  */
 WorkerScopeProtocol.prototype._ProtocolCodes = {
+  heartbeat: Buf.from([0x00]),
   request_response: Buf.from([0x01]),
 };
 
@@ -117,7 +119,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
 
     const worker_scope = new WorkerScope({
       worker_scpoe_purpose_name: worker_scpoe_purpose_name,
-      worker_peers_worker_ids_list: worker_peers_worker_ids_list,
+      worker_peers_worker_ids_list: worker_scope_worker_peers_worker_ids_list,
       broadcast_request_response: (data_bytes, on_a_worker_response, on_finish) => {
         this._worker_protocol_actions.multicastRequestResponse(worker_scope_worker_peers_worker_ids_list);
       },
@@ -125,7 +127,20 @@ WorkerScopeProtocol.prototype.start = function(callback) {
         this._worker_protocol_actions.multicastRequestResponse(worker_ids_list);
       },
       check_all_scope_peers_alive: (callback) => {
-        this._worker_protocol_actions.multicastRequestResponse();
+        const on_a_worker_response = (worker_id, error, response_bytes, next) => {
+          if(error) {
+            next(error, false);
+          }
+          else if(response_bytes[0] === this._ProtocolCodes.heartbeat[0]) {
+            // error, is_finished
+            next(error, true);
+          }
+          else {
+            next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Expected worker(' + worker_id + ') return heartbeat code.'), false);
+          }
+        };
+        const on_finish = callback;
+        this._worker_protocol_actions.multicastRequestResponse(worker_scope_worker_peers_worker_ids_list, this._ProtocolCodes.heartbeat, on_a_worker_response, on_finish);
       }
     });
 
@@ -142,11 +157,17 @@ WorkerScopeProtocol.prototype.start = function(callback) {
  */
 WorkerScopeProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
   const protocol_code_int = synchronize_information[0];
-  if(protocol_code_int === this._ProtocolCodes.request_response[0]) {
+  if(protocol_code_int === this._ProtocolCodes.heartbeat[0]) {
+    onError((error) => {
+      console.log('Heart beat error', error);
+    });
+    next(this._ProtocolCodes.heartbeat);
+  }
+  else if(protocol_code_int === this._ProtocolCodes.request_response[0]) {
 
   }
   else {
-
+    next(false);
   }
 }
 

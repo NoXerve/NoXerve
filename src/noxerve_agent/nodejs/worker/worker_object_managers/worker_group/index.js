@@ -51,6 +51,6 @@ WorkerGroupManager.prototype.create = function(worker_socket_purpose_name, worke
 
 
 module.exports = {
-  register_code: 0,
+  register_code: 2,
   module: WorkerGroupManager
 };

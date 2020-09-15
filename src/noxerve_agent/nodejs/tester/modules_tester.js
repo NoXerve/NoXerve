@@ -23,6 +23,7 @@ let Tests = [
   'worker_func2_call_test',
   'worker_field2_yield_test',
   'worker_field1_yield_test',
+  'worker_scope_check_alive',
   'nsdt_test',
   'other_test'
 ];
@@ -231,6 +232,7 @@ Node2.createInterface('WebSocket', {
           });
         });
 
+        // WorkerSocket test
         Worker.createWorkerSocket('purpose 1', {p: 1}, 1, (error, worker_socket)=> {
           if (error) {
             console.log('[Worker module] createWorkerSocket error.', error);
@@ -277,6 +279,15 @@ Node2.createInterface('WebSocket', {
             console.log('[Worker module] createWorkerSocket OK.', worker_socket);
             // finish('worker_test');
           }
+        });
+
+        // WorkerScope tests
+        Worker.createWorkerScope('test_scope', [1], (error, worker_scope) => {
+          if (error) console.log('[Worker module] "test_scope" error.', error);
+          worker_scope.checkAllScopePeersAlive((error) => {
+            if (error) console.log('[Worker module] "checkAllScopePeersAlive" error.', error);
+            finish('worker_scope_check_alive');
+          });
         });
       });
     });

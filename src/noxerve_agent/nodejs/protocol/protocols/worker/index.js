@@ -444,7 +444,7 @@ WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_wo
 WorkerProtocol.prototype._openHandshakeByWorkerId = function(
   target_worker_peer_worker_id, synchronize_information, acknowledge_synchronization, finish_handshake) {
   if (!this._worker_peers_settings[target_worker_peer_worker_id]) {
-    finish_handshake(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker id(' + target_worker_peer_worker_id + ').'));
+    acknowledge_synchronization(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker(id: ' + target_worker_peer_worker_id + ').'), null, ()=> {});
     return;
   }
   const interfaces_connect_settings = this._worker_peers_settings[target_worker_peer_worker_id].interfaces_connect_settings;
@@ -512,7 +512,7 @@ WorkerProtocol.prototype._multicastRequestResponse = function(worker_ids_list, d
   // let errors = {};
 
   const loop_over_workers = () => {
-    const worker_id = worker_ids_list[index];
+    const worker_id = parseInt(worker_ids_list[index]);
     if (worker_id) {
       current_connections_count++;
 
@@ -522,7 +522,7 @@ WorkerProtocol.prototype._multicastRequestResponse = function(worker_ids_list, d
       }
 
       // Check worker id is not 0.
-      if (parseInt(worker_id) !== 0) {
+      if (worker_id !== 0) {
         const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
           current_connections_count--;
 
@@ -719,7 +719,10 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
         multicastRequestResponse: (worker_ids_list, data_bytes, on_a_worker_response, on_finish) => {
           const decorated_data_bytes = Buf.concat([prefix_data_bytes, data_bytes]);
           const decorated_on_a_worker_response = (worker_id, error, response_bytes, next) => {
-            if(
+            if(error) {
+              on_a_worker_response(worker_id, error, null, next);
+            }
+            else if(
               response_bytes[0] === this._ProtocolCodes.worker_object[0] &&
               response_bytes[1] === worker_object_protocol_code_1byte[0] &&
               response_bytes[2] === worker_subprotocol_protocol_code_1byte[0]
@@ -1225,12 +1228,17 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
     };
 
     const decorated_next = (data_bytes) => {
-      next(Buf.concat([
-        this._ProtocolCodes.worker_object,
-        worker_object_protocol_code_1byte,
-        worker_subprotocol_protocol_code_1byte,
-        data_bytes
-      ]));
+      if(Buf.isBuffer(data_bytes)) {
+        next(Buf.concat([
+          this._ProtocolCodes.worker_object,
+          worker_object_protocol_code_1byte,
+          worker_subprotocol_protocol_code_1byte,
+          data_bytes
+        ]));
+      }
+      else {
+        next(false);
+      }
     };
 
     const decorated_on_error = (listener) => {

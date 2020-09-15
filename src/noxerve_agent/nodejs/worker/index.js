@@ -13,6 +13,7 @@
 
 const Errors = require('../errors');
 const WorkerSocketManager = require('./worker_object_managers/worker_socket');
+const WorkerScopeManager = require('./worker_object_managers/worker_scope');
 const GlobalDeterministicRandomManager = require('./global_deterministic_random_manager');
 
 /**
@@ -89,10 +90,15 @@ Worker.prototype.start = function(callback) {
   if(this._event_listeners['worker-subprotocol-managers-request']) {
     // Request for worker socket. With < 256 register_code.
     this._event_listeners['worker-subprotocol-managers-request'](WorkerSocketManager.register_code, (error, worker_subprotocol_object_managers)=> {
-      console.log(worker_subprotocol_object_managers);
       this._worker_object_managers['worker_socket'] = new WorkerSocketManager.module(worker_subprotocol_object_managers);
-      if (callback) callback(error);
+      // Request for worker scope. With < 256 register_code.
+      this._event_listeners['worker-subprotocol-managers-request'](WorkerScopeManager.register_code, (error, worker_subprotocol_object_managers)=> {
+        this._worker_object_managers['worker_scope'] = new WorkerScopeManager.module(worker_subprotocol_object_managers);
+        if (callback) callback(error);
+      });
     });
+
+
   }
   else {
     const error = new Errors.ERR_NOXERVEAGENT_WORKER('Worker module starting failed. Probably because protocol module has\'t started.');
@@ -187,6 +193,22 @@ Worker.prototype.createWorkerSocket = function(worker_socket_purpose_name, worke
  */
 Worker.prototype.onWorkerSocketCreate = function(worker_socket_purpose_name, listener) {
   this._worker_object_managers.worker_socket.onCreate(worker_socket_purpose_name, listener);
+}
+
+/**
+ * @callback module:Worker~callback_of_create_worker_socket
+ * @param {object} worker_scope
+ * @param {error} error
+ */
+/**
+ * @memberof module:Worker
+ * @param {string} worker_scpoe_purpose_name - The purpose for this worker scope.
+ * @param {list} worker_peers_worker_ids_list - The worker peers that you want to communicate with.
+ * @param {module:Worker~callback_of_create_worker_socket} callback
+ * @description Create a worker scope in order to communicate with another worker.
+ */
+Worker.prototype.createWorkerScope = function(worker_scpoe_purpose_name, worker_peers_worker_ids_list, callback) {
+  this._worker_object_managers.worker_scope.create(worker_scpoe_purpose_name, worker_peers_worker_ids_list, callback);
 }
 
 /**
