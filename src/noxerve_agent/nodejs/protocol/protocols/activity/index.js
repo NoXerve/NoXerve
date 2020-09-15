@@ -213,7 +213,7 @@ ActivityProtocol.prototype.close = function(callback) {
  * @return {buffer} synchronize_acknowledgement_information
  * @description Synchronize handshake from remote emitter.
  */
-ActivityProtocol.prototype.synchronize = function(synchronize_information, next) {
+ActivityProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
   // Activity doesn't support SYN.
   next(false);
 }

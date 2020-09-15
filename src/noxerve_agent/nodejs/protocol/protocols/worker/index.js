@@ -597,7 +597,14 @@ WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authentici
   const remote_worker_peer_worker_id = Buf.decodeUInt32BE(remote_authenticity_bytes.slice(0, 4));
   const remote_worker_peers_ids_checksum_4bytes = remote_authenticity_bytes.slice(4, 8);
   const remote_worker_peers_static_global_random_seed_checksum_4bytes = remote_authenticity_bytes.slice(8, 12);
-  const remote_worker_peer_authenticity_data = this._nsdt_embedded_protocol.decode(remote_authenticity_bytes.slice(12));
+  let remote_worker_peer_authenticity_data;
+
+  try {
+    remote_worker_peer_authenticity_data = this._nsdt_embedded_protocol.decode(remote_authenticity_bytes.slice(12));
+  } catch (error) {
+    callback(error, false, remote_worker_peer_worker_id);
+    return;
+  }
 
   // Check worker_peers_ids_checksum_4bytes.
   if (Utils.areBuffersEqual(this._worker_peers_ids_checksum_4bytes, remote_worker_peers_ids_checksum_4bytes) &&
@@ -704,7 +711,10 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
                 next(false);
               }
             }
-            if(
+            if(open_handshanke_error) {
+              acknowledge_synchronization(open_handshanke_error, null, decorated_next);
+            }
+            else if(
               synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_object[0] &&
               synchronize_acknowledgement_information[1] === worker_object_protocol_code_1byte[0] &&
               synchronize_acknowledgement_information[2] === worker_subprotocol_protocol_code_1byte[0]
@@ -737,7 +747,10 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
         broadcastRequestResponseToAllWorkers: (data_bytes, on_a_worker_response, on_finish) => {
           const decorated_data_bytes = Buf.concat([prefix_data_bytes, data_bytes]);
           const decorated_on_a_worker_response = (worker_id, error, response_bytes, next) => {
-            if(
+            if(error) {
+              on_a_worker_response(worker_id, error, null, next);
+            }
+            else if(
               response_bytes[0] === this._ProtocolCodes.worker_object[0] &&
               response_bytes[1] === worker_object_protocol_code_1byte[0] &&
               response_bytes[2] === worker_subprotocol_protocol_code_1byte[0]

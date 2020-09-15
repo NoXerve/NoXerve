@@ -33,6 +33,13 @@ function WorkerScope(settings) {
    * @type {object}
    * @private
    */
+  this._scope_peers_list = settings.scope_peers_list;
+
+  /**
+   * @memberof module:WorkerScope
+   * @type {object}
+   * @private
+   */
   this._max_concurrent_connections_count = settings.max_concurrent_connections_count;
 
   /**
@@ -61,8 +68,21 @@ function WorkerScope(settings) {
  * @param {module:WorkerScope~callback_of_check_all_scope_peers_alive} callback
  * @description Check all peers alive by sending byte.
  */
-WorkerScope.prototype.checkAllScopePeersAlive = function(callback) {
-  this._settings.check_all_scope_peers_alive(callback);
+WorkerScope.prototype.checkIntegrity = function(callback) {
+  this._settings.check_integrity(callback);
+}
+
+/**
+ * @callback module:WorkerScope~callback_of_check_all_scope_peers_alive
+ * @param {error} error
+ */
+/**
+ * @memberof module:WorkerScope
+ * @param {module:WorkerScope~callback_of_check_all_scope_peers_alive} callback
+ * @description Check all peers alive by sending byte.
+ */
+WorkerScope.prototype.returnScopePeersList = function() {
+  return this._scope_peers_list;
 }
 
 /**
