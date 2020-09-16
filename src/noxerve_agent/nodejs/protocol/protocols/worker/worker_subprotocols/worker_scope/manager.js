@@ -9,7 +9,7 @@
 
 /**
  * @module WorkerScopeManager
- * @description Worker socket subprotocol manager of worker.
+ * @description Worker scope subprotocol manager of worker.
  */
 
 function WorkerScopeManager(settings) {
@@ -31,7 +31,7 @@ function WorkerScopeManager(settings) {
 /**
  * @memberof module:WorkerScopeManager
  * @param {module:Worker~callback_of_create_worker_scope} callback
- * @description Create a worker socket in order to communicate with another worker.
+ * @description Create a worker scope in order to communicate with another worker.
  */
 WorkerScopeManager.prototype.create = function(worker_scpoe_purpose_name, worker_peers_worker_ids_list, callback) {
   // The event is registered by protocols module.

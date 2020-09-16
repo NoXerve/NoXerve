@@ -1,5 +1,5 @@
 /**
- * @file NoXerveAgent worker_scope protocol file. [worker_socket.js]
+ * @file NoXerveAgent worker_scope protocol file. [index.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
  * @copyright 2019-2020 nooxy. All Rights Reserved.
