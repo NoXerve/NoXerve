@@ -116,9 +116,15 @@ ServiceProtocol.prototype.close = function(callback) {
 }
 
 /**
+ * @callback module:ServiceProtocol~callback_of_next
+ * @param {buffer} synchronize_returned_data
+ */
+/**
  * @memberof module:ServiceProtocol
  * @param {buffer} synchronize_information
- * @return {buffer} synchronize_acknowledgement_information
+ * @param {function} onError
+ * @param {function} onAcknowledge
+ * @param {module:ServiceProtocol~callback_of_next} next
  * @description Synchronize handshake from remote emitter.
  */
 ServiceProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {

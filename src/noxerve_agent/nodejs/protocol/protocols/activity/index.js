@@ -208,9 +208,15 @@ ActivityProtocol.prototype.close = function(callback) {
 }
 
 /**
+ * @callback module:ActivityProtocol~callback_of_next
+ * @param {buffer} synchronize_returned_data
+ */
+/**
  * @memberof module:ActivityProtocol
  * @param {buffer} synchronize_information
- * @return {buffer} synchronize_acknowledgement_information
+ * @param {function} onError
+ * @param {function} onAcknowledge
+ * @param {module:ActivityProtocol~callback_of_next} next
  * @description Synchronize handshake from remote emitter.
  */
 ActivityProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {

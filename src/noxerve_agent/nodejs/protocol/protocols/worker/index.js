@@ -1037,9 +1037,15 @@ WorkerProtocol.prototype.close = function(callback) {
 }
 
 /**
+ * @callback module:WorkerProtocol~callback_of_next
+ * @param {buffer} synchronize_returned_data
+ */
+/**
  * @memberof module:WorkerProtocol
  * @param {buffer} synchronize_information
- * @return {buffer} synchronize_acknowledgement_information
+ * @param {function} onError
+ * @param {function} onAcknowledge
+ * @param {module:WorkerProtocol~callback_of_next} next
  * @description Synchronize handshake from remote emitter.
  */
 WorkerProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {

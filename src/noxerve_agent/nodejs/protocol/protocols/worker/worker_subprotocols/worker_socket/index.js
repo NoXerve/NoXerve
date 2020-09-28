@@ -550,9 +550,15 @@ WorkerSocketProtocol.prototype._handleTunnel = function(error, worker_socket, tu
 }
 
 /**
+ * @callback module:WorkerSocketProtocol~callback_of_next
+ * @param {buffer} synchronize_returned_data
+ */
+/**
  * @memberof module:WorkerSocketProtocol
  * @param {buffer} synchronize_information
- * @return {buffer} synchronize_acknowledgement_information
+ * @param {function} onError
+ * @param {function} onAcknowledge
+ * @param {module:WorkerSocketProtocol~callback_of_next} next
  * @description Synchronize handshake from remote emitter.
  */
 WorkerSocketProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
