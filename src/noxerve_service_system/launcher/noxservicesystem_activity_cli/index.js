@@ -33,7 +33,7 @@ process.on('message', (message) => {
       noxerve_agent.start((error)=> {
         if(error) throw error;
         console.log('CLI(PID: '+process.pid+') started NoXerveAgent.');
-        noxerve_agent.Activity.createActivity(data.settings.interfaces_connect_settings, 'default', null, (error, noxservicesystem_service) => {
+        noxerve_agent.Activity.createActivity(data.settings.connectors_settings, 'default', null, (error, noxservicesystem_service) => {
           if(error) console.log(error);
           else {
             console.log('CLI(PID: '+process.pid+') connected to NoxServiceSystem service.');

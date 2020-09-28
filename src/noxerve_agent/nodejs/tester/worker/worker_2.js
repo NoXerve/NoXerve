@@ -43,16 +43,16 @@ const my_worker_interfaces = [{
 
 let worker_peers_settings = {
   1: {
-    interfaces_connect_settings: [{
+    connectors_settings: [{
       interface_name: 'WebSocket',
-      interface_connect_settings: {
+      connector_settings: {
         host: '0.0.0.0',
         port: 9991
       }
     },
     {
       interface_name: 'WebSocket',
-      interface_connect_settings: {
+      connector_settings: {
         host: '0.0.0.0',
         port: 6661
       }
@@ -62,16 +62,16 @@ let worker_peers_settings = {
     }
   },
   2: {
-    interfaces_connect_settings: [{
+    connectors_settings: [{
       interface_name: 'WebSocket',
-      interface_connect_settings: {
+      connector_settings: {
         host: '0.0.0.0',
         port: 9992
       }
     },
     {
       interface_name: 'WebSocket',
-      interface_connect_settings: {
+      connector_settings: {
         host: '0.0.0.0',
         port: 6662
       }
@@ -133,8 +133,8 @@ initialize_interfaces(()=> {
         }
       });
 
-      Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_interfaces_connect_settings, new_worker_peer_detail, next) => {
-        console.log('[Worker ' + my_worker_id + '] "worker-peer-join" event.', new_worker_peer_id, new_worker_peer_interfaces_connect_settings, new_worker_peer_detail);
+      Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_connectors_settings, new_worker_peer_detail, next) => {
+        console.log('[Worker ' + my_worker_id + '] "worker-peer-join" event.', new_worker_peer_id, new_worker_peer_connectors_settings, new_worker_peer_detail);
         const on_cancel = (next_of_cancel)=> {
           console.log('[Worker ' + my_worker_id + '] "worker-peer-join" cancel.');
           next_of_cancel(false);
@@ -142,8 +142,8 @@ initialize_interfaces(()=> {
         next(false, on_cancel);
       });
 
-      Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_interfaces_connect_settings, remote_worker_peer_detail, next) => {
-        console.log('[Worker ' + my_worker_id + '] "worker-peer-update" event.', remote_worker_peer_id, remote_worker_peer_interfaces_connect_settings, remote_worker_peer_detail);
+      Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_connectors_settings, remote_worker_peer_detail, next) => {
+        console.log('[Worker ' + my_worker_id + '] "worker-peer-update" event.', remote_worker_peer_id, remote_worker_peer_connectors_settings, remote_worker_peer_detail);
         const on_cancel = ()=> {
           console.log('[Worker ' + my_worker_id + '] "worker-peer-update" cancel.');
           next_of_cancel(false);

@@ -98,10 +98,10 @@ ActivityProtocol.prototype._ProtocolCodes = {
 ActivityProtocol.prototype.start = function(callback) {
 
   // Create activity from activity module.
-  this._activity_module.on('activity-create', (interface_connect_settings_list, activity_purpose_name, activity_parameter, create_activity_callback) => {
+  this._activity_module.on('activity-create', (connector_settings_list, activity_purpose_name, activity_parameter, create_activity_callback) => {
 
     // Shuffle for clientwise loadbalancing.
-    const shuffled_interface_connect_settings_list = Utils.shuffleArray(interface_connect_settings_list);
+    const shuffled_connector_settings_list = Utils.shuffleArray(connector_settings_list);
 
     // Synchronize information for handshake
     const activity_purpose_name_4bytes = this._hash_manager.hashString4Bytes(activity_purpose_name);
@@ -117,7 +117,7 @@ ActivityProtocol.prototype.start = function(callback) {
     // Loop loop() with condition.
     const loop_next = () => {
       index++;
-      if (index < shuffled_interface_connect_settings_list.length) {
+      if (index < shuffled_connector_settings_list.length) {
         loop();
       }
       // No more next loop. Exit.
@@ -126,8 +126,8 @@ ActivityProtocol.prototype.start = function(callback) {
       }
     };
     const loop = () => {
-      const interface_name = shuffled_interface_connect_settings_list[index].interface_name;
-      const interface_connect_settings = shuffled_interface_connect_settings_list[index].interface_connect_settings;
+      const interface_name = shuffled_connector_settings_list[index].interface_name;
+      const connector_settings = shuffled_connector_settings_list[index].connector_settings;
 
       const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
         if (open_handshanke_error) {
@@ -187,7 +187,7 @@ ActivityProtocol.prototype.start = function(callback) {
       };
 
       // Callbacks setup completed. Start handshake process.
-      this._open_handshake_function(interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
+      this._open_handshake_function(interface_name, connector_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
     };
     loop();
   });

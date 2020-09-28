@@ -36,13 +36,13 @@ module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_param
           FS.writeFileSync(Constants.noxservicesystem_my_worker_settings_path, JSON.stringify({
             worker_id: 1,
             interfaces: preloader_parameters.settings.interfaces,
-            interfaces_connect_settings: preloader_parameters.settings.interfaces_connect_settings,
+            connectors_settings: preloader_parameters.settings.connectors_settings,
           }, null, 2));
           console.log('Created my worker settings file at "' + Constants.noxservicesystem_my_worker_settings_path + '".');
 
           FS.writeFileSync(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify({
             1: {
-              interfaces_connect_settings: preloader_parameters.settings.interfaces_connect_settings,
+              connectors_settings: preloader_parameters.settings.connectors_settings,
               detail: {
                 name: 'The first NoxServiceSystem service worker.'
               }
@@ -84,14 +84,14 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
       is_valid(false);
     }
   });
-  noxerve_agent.Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_interfaces_connect_settings, new_worker_peer_detail, next) => {
-    console.log('Worker peer joined.', new_worker_peer_id, new_worker_peer_interfaces_connect_settings, new_worker_peer_detail);
+  noxerve_agent.Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_connectors_settings, new_worker_peer_detail, next) => {
+    console.log('Worker peer joined.', new_worker_peer_id, new_worker_peer_connectors_settings, new_worker_peer_detail);
     FS.readFile(Constants.noxservicesystem_worker_peers_settings_path, (error, worker_peers_settings_string) => {
       if (error) next(error, () => {});
       else {
         let worker_peers_settings = JSON.parse(worker_peers_settings_string);
         worker_peers_settings[new_worker_peer_id] = {
-          interfaces_connect_settings: new_worker_peer_interfaces_connect_settings,
+          connectors_settings: new_worker_peer_connectors_settings,
           detail: new_worker_peer_detail
         };
         FS.writeFile(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2), () => {
@@ -108,14 +108,14 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
     });
   });
 
-  noxerve_agent.Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_interfaces_connect_settings, remote_worker_peer_detail, next) => {
-    console.log('Worker peer updated.', remote_worker_peer_id, remote_worker_peer_interfaces_connect_settings, remote_worker_peer_detail);
+  noxerve_agent.Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_connectors_settings, remote_worker_peer_detail, next) => {
+    console.log('Worker peer updated.', remote_worker_peer_id, remote_worker_peer_connectors_settings, remote_worker_peer_detail);
     FS.readFile(Constants.noxservicesystem_worker_peers_settings_path, (error, worker_peers_settings_string) => {
       if (error) next(error, () => {});
       else {
         let worker_peers_settings = JSON.parse(worker_peers_settings_string);
         worker_peers_settings[remote_worker_peer_id] = {
-          interfaces_connect_settings: remote_worker_peer_interfaces_connect_settings,
+          connectors_settings: remote_worker_peer_connectors_settings,
           detail: remote_worker_peer_detail
         };
         FS.writeFile(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2), () => {
@@ -157,12 +157,12 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
   const worker_peers_settings = JSON.parse(FS.readFileSync(Constants.noxservicesystem_worker_peers_settings_path));
   const static_global_random_seed_4096bytes = FS.readFileSync(Constants.noxservicesystem_static_global_random_seed_4096bytes_path);
   const preloader_parameters_settings_interfaces = preloader_parameters.settings.interfaces;
-  const preloader_parameters_settings_interfaces_connect_settings = preloader_parameters.settings.interfaces_connect_settings;
+  const preloader_parameters_settings_connectors_settings = preloader_parameters.settings.connectors_settings;
   const my_worker_settings = JSON.parse(FS.readFileSync(Constants.noxservicesystem_my_worker_settings_path));
   const my_worker_files_interfaces = my_worker_settings.interfaces;
-  const my_worker_files_interfaces_connect_settings = my_worker_settings.interfaces_connect_settings;
+  const my_worker_files_connectors_settings = my_worker_settings.connectors_settings;
   const is_interfaces_changed = !(JSON.stringify(preloader_parameters_settings_interfaces) === JSON.stringify(my_worker_files_interfaces));
-  const is_interfaces_connect_settings_changed = !(JSON.stringify(preloader_parameters_settings_interfaces_connect_settings) === JSON.stringify(my_worker_files_interfaces_connect_settings));
+  const is_connectors_settings_changed = !(JSON.stringify(preloader_parameters_settings_connectors_settings) === JSON.stringify(my_worker_files_connectors_settings));
 
   noxerve_agent.Worker.importStaticGlobalRandomSeed(static_global_random_seed_4096bytes, (error) => {
     if (error) callback(error);
@@ -175,16 +175,16 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
           noxerve_agent.Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
             if (error) callback(error);
             else {
-              if (is_interfaces_changed && !is_interfaces_connect_settings_changed) {
+              if (is_interfaces_changed && !is_connectors_settings_changed) {
                 callback(new Error('Interfaces settings changed. But interface connect settings are not changed.'));
-              } else if (is_interfaces_connect_settings_changed) {
-                noxerve_agent.Worker.updateMe(preloader_parameters_settings_interfaces_connect_settings, null, (error) => {
+              } else if (is_connectors_settings_changed) {
+                noxerve_agent.Worker.updateMe(preloader_parameters_settings_connectors_settings, null, (error) => {
                   if (error) callback(error);
                   else {
                     FS.writeFileSync(Constants.noxservicesystem_my_worker_settings_path, JSON.stringify({
                       worker_id: my_worker_settings.worker_id,
                       interfaces: preloader_parameters.settings.interfaces,
-                      interfaces_connect_settings: preloader_parameters.settings.interfaces_connect_settings,
+                      connectors_settings: preloader_parameters.settings.connectors_settings,
                     }, null, 2));
                   }
                 });

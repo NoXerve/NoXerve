@@ -95,14 +95,14 @@ Activity.prototype.on = function(event_name, listener) {
  */
 /**
  * @memberof module:Activity
- * @param {array} interface_connect_settings_list
+ * @param {array} connector_settings_list
  * @param {string} activity_purpose_name
  * @param {noxerve_supported_data_type} activity_purpose_arguments
  * @param {module:Activity~callback_of_create_activity} callback
  * @description Activity events registeration.
  */
-Activity.prototype.createActivity = function(interface_connect_settings_list, activity_purpose_name, activity_purpose_arguments, callback) {
-  this._event_listeners['activity-create'](interface_connect_settings_list, activity_purpose_name, activity_purpose_arguments, callback);
+Activity.prototype.createActivity = function(connector_settings_list, activity_purpose_name, activity_purpose_arguments, callback) {
+  this._event_listeners['activity-create'](connector_settings_list, activity_purpose_name, activity_purpose_arguments, callback);
 }
 
 /**

@@ -289,26 +289,26 @@ Node.prototype.destroyInterface = function(interface_id, callback) {
 /**
  * @memberof module:Node
  * @param {string} interface_name,
- * @param {object} interface_connect_settings,
+ * @param {object} connector_settings,
  * @param {module:Node~callback_of_create_tunnel} callback
  * @description Create tunnel via available interfaces.
  */
-Node.prototype.createTunnel = function(interface_name, interface_connect_settings, callback) {
+Node.prototype.createTunnel = function(interface_name, connector_settings, callback) {
   let called_callback = false;
   // Catch error.
   try {
     this._checkConnectorAvaliable(interface_name, (error) => {
       // Check connector settings match the requirement of interface module.
       let pass = true;
-      let interface_connect_settings_keys = Object.keys(interface_connect_settings);
-      let interface_connector_connect_required_settings = AvaliableInterfaces[interface_name].connector_connect_required_settings;
-      Object.keys(interface_connector_connect_required_settings).forEach((setting_name) => {
-        if (!interface_connect_settings_keys.includes(setting_name)) {
-          throw new Errors.ERR_NOXERVEAGENT_NODE_CONNECTOR_CREATE('Missing settings argument "' + setting_name + '". ' + interface_connector_connect_required_settings[setting_name]);
+      let connector_settings_keys = Object.keys(connector_settings);
+      let interface_connector_required_settings = AvaliableInterfaces[interface_name].connector_required_settings;
+      Object.keys(interface_connector_required_settings).forEach((setting_name) => {
+        if (!connector_settings_keys.includes(setting_name)) {
+          throw new Errors.ERR_NOXERVEAGENT_NODE_CONNECTOR_CREATE('Missing settings argument "' + setting_name + '". ' + interface_connector_required_settings[setting_name]);
         }
       });
 
-      this._active_interface_connectors[interface_name].connect(interface_connect_settings,
+      this._active_interface_connectors[interface_name].connect(connector_settings,
         // Note that this function behave just like this._newTunnel function but with the "connector" taste.
         // instead of interface.
         (send, close, emitter_initializer_from_connector) => {

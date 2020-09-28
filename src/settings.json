@@ -6,7 +6,7 @@
 
   "secured_node": true,
 
-  "interfaces": [
+  "interfaces_settings": [
     {
     "interface_name": "WebSocket",
     "interface_settings": {
@@ -21,16 +21,16 @@
     }}
   ],
 
-  "interfaces_connect_settings": [
+  "connectors_settings": [
     {
     "interface_name": "WebSocket",
-    "interface_connect_settings": {
+    "connector_settings": {
       "host": "0.0.0.0",
       "port": 43100
     }},
     {
     "interface_name": "WebSocket",
-    "interface_connect_settings": {
+    "connector_settings": {
       "host": "0.0.0.0",
       "port": 43101
     }}

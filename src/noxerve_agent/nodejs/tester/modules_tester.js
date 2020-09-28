@@ -166,9 +166,9 @@ Node2.createInterface('WebSocket', {
 
   let worker_peers_settings = {
     1: {
-      interfaces_connect_settings: [{
+      connectors_settings: [{
         interface_name: 'WebSocket',
-        interface_connect_settings: {
+        connector_settings: {
           host: '0.0.0.0',
           port: 12345
         }
@@ -347,7 +347,7 @@ Node2.createInterface('WebSocket', {
   // **** Activity Module Test Start ****
   Activity.createActivity([{
     interface_name: 'WebSocket',
-    interface_connect_settings: {
+    connector_settings: {
       host: '0.0.0.0',
       port: 12345
     }

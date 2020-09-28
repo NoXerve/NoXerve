@@ -20,14 +20,14 @@ let my_worker_id = 0;
 
 const worker_1_interfaces_for_joining_me = [{
     interface_name: 'WebSocket',
-    interface_connect_settings: {
+    connector_settings: {
       host: '0.0.0.0',
       port: 9991
     }
   },
   {
     interface_name: 'WebSocket',
-    interface_connect_settings: {
+    connector_settings: {
       host: '0.0.0.0',
       port: 6661
     }
@@ -54,16 +54,16 @@ const my_worker_interfaces = [{
   }
 ];
 
-const my_worker_interfaces_connect_settings = [{
+const my_worker_connectors_settings = [{
     interface_name: 'WebSocket',
-    interface_connect_settings: {
+    connector_settings: {
       host: '0.0.0.0',
       port: 9993
     }
   },
   {
     interface_name: 'WebSocket',
-    interface_connect_settings: {
+    connector_settings: {
       host: '0.0.0.0',
       port: 6663
     }
@@ -124,8 +124,8 @@ initialize_interfaces(() => {
         }
       });
 
-      Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_interfaces_connect_settings, new_worker_peer_detail, next) => {
-        console.log('[Worker ' + my_worker_id + '] "worker-peer-join" event.', new_worker_peer_id, new_worker_peer_interfaces_connect_settings, new_worker_peer_detail);
+      Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_connectors_settings, new_worker_peer_detail, next) => {
+        console.log('[Worker ' + my_worker_id + '] "worker-peer-join" event.', new_worker_peer_id, new_worker_peer_connectors_settings, new_worker_peer_detail);
         const on_cancel = (next_of_cancel)=> {
           console.log('[Worker ' + my_worker_id + '] "worker-peer-join" cancel.');
           next_of_cancel(false);
@@ -133,8 +133,8 @@ initialize_interfaces(() => {
         next(false, on_cancel);
       });
 
-      Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_interfaces_connect_settings, remote_worker_peer_detail, next) => {
-        console.log('[Worker ' + my_worker_id + '] "worker-peer-update" event.', remote_worker_peer_id, remote_worker_peer_interfaces_connect_settings, remote_worker_peer_detail);
+      Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_connectors_settings, remote_worker_peer_detail, next) => {
+        console.log('[Worker ' + my_worker_id + '] "worker-peer-update" event.', remote_worker_peer_id, remote_worker_peer_connectors_settings, remote_worker_peer_detail);
         const on_cancel = ()=> {
           console.log('[Worker ' + my_worker_id + '] "worker-peer-update" cancel.');
           next_of_cancel(false);
@@ -201,7 +201,7 @@ initialize_interfaces(() => {
 
       process.on('message', (msg)=> {
         if(msg === '1') {
-          Worker.joinMe(worker_1_interfaces_for_joining_me, my_worker_interfaces_connect_settings,
+          Worker.joinMe(worker_1_interfaces_for_joining_me, my_worker_connectors_settings,
             my_worker_detail, 'join_me_auth',
             (error, _worker_id, _worker_peers_settings, static_global_random_seed_4096bytes) => {
               if(error) console.log('[Worker ' + my_worker_id + '] joinMe error.', error);

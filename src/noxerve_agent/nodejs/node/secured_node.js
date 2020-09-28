@@ -197,16 +197,16 @@ SecuredNode.prototype.destroyInterface = function(interface_id, callback) {
 /**
  * @memberof module:SecuredNode
  * @param {string} interface_name,
- * @param {object} interface_connect_settings,
+ * @param {object} connector_settings,
  * @param {module:SecuredNode~callback_of_create_tunnel} callback
  * @description Create tunnel via available interfaces.
  */
-SecuredNode.prototype.createTunnel = function(interface_name, interface_connect_settings, callback) {
+SecuredNode.prototype.createTunnel = function(interface_name, connector_settings, callback) {
   if (this._node_module.isInterfaceSecured(interface_name)) {
     // Tunnel secured no need to upgrade.
-    this._node_module.createTunnel(interface_name, interface_connect_settings, callback);
+    this._node_module.createTunnel(interface_name, connector_settings, callback);
   } else {
-    this._node_module.createTunnel(interface_name, interface_connect_settings, (error, tunnel) => {
+    this._node_module.createTunnel(interface_name, connector_settings, (error, tunnel) => {
       if (error) callback(error);
       else {
 

@@ -64,9 +64,9 @@ NoXerveAgent.start((error)=> {
     // Only myself one worker. For multiple worker test got worker directory.
     let worker_peers_settings = {
       1: {
-        interfaces_connect_settings: [{
+        connectors_settings: [{
           interface_name: 'WebSocket',
-          interface_connect_settings: {
+          connector_settings: {
             host: '0.0.0.0',
             port: 12345
           }
@@ -232,7 +232,7 @@ NoXerveAgent.start((error)=> {
     // **** Activity Module Test Start ****
     NoXerveAgent.Activity.createActivity([{
       interface_name: 'WebSocket',
-      interface_connect_settings: {
+      connector_settings: {
         host: '0.0.0.0',
         port: 12345
       }

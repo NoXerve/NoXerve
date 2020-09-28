@@ -134,11 +134,11 @@ function NoXerveAgent(settings) {
     on: (event_name, listener) => {
       this._worker_module.on(event_name, listener);
     },
-    joinMe: (remote_worker_interfaces, my_worker_interfaces_connect_settings, my_worker_detail, my_worker_authentication_data, callback) => {
-      this._worker_module.joinMe(remote_worker_interfaces, my_worker_interfaces_connect_settings, my_worker_detail, my_worker_authentication_data, callback);
+    joinMe: (remote_worker_interfaces, my_worker_connectors_settings, my_worker_detail, my_worker_authentication_data, callback) => {
+      this._worker_module.joinMe(remote_worker_interfaces, my_worker_connectors_settings, my_worker_detail, my_worker_authentication_data, callback);
     },
-    updateMe: (my_worker_interfaces_connect_settings, my_worker_detail, callback) => {
-      this._worker_module.updateMe(my_worker_interfaces_connect_settings, my_worker_detail, callback);
+    updateMe: (my_worker_connectors_settings, my_worker_detail, callback) => {
+      this._worker_module.updateMe(my_worker_connectors_settings, my_worker_detail, callback);
     },
     leaveMe: (callback) => {
       this._worker_module.leaveMe(callback);
@@ -170,8 +170,8 @@ function NoXerveAgent(settings) {
    * @description API intended to provide functions for the role of service.
    */
   this.Activity = {
-    createActivity: (interface_connect_settings_list, activity_purpose_name, activity_purpose_arguments, callback) => {
-      this._activity_module.createActivity(interface_connect_settings_list, activity_purpose_name, activity_purpose_arguments, callback);
+    createActivity: (connector_settings_list, activity_purpose_name, activity_purpose_arguments, callback) => {
+      this._activity_module.createActivity(connector_settings_list, activity_purpose_name, activity_purpose_arguments, callback);
     }
   };
 

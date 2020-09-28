@@ -135,8 +135,8 @@ function Protocol(settings) {
   * @type {object}
   * @private
   */
-Protocol.prototype._openHandshake = function (interface_name, interface_connect_settings, synchronize_information, acknowledge_synchronization, finish_handshake) {
-  this._node_module.createTunnel(interface_name, interface_connect_settings, (error, tunnel) => {
+Protocol.prototype._openHandshake = function (interface_name, connector_settings, synchronize_information, acknowledge_synchronization, finish_handshake) {
+  this._node_module.createTunnel(interface_name, connector_settings, (error, tunnel) => {
     if (error) {if(acknowledge_synchronization) acknowledge_synchronization(error, null, ()=> {});}
     else {
       // Use stage variable to identify current handshake progress.

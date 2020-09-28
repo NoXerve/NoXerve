@@ -310,13 +310,7 @@ module.exports = {
    * @memberof module:WebsocketInterface
    * @type {object}
    */
-  connector_required_settings: {},
-
-  /**
-   * @memberof module:WebsocketInterface
-   * @type {object}
-   */
-  connector_connect_required_settings: {
+  connector_required_settings: {
     host: 'Remote IP address. Or other alternative addressing.',
     port: 'Remote port number.'
   }

@@ -100,7 +100,7 @@ process.on('message', (message) => {
           let index = 0;
           // Setup interfaces
           const initialize_interfaces = (callback) => {
-            const _interface = data.settings.interfaces[index];
+            const _interface = data.settings.interfaces_settings[index];
             noxerve_agent.createInterface(_interface.interface_name, _interface.interface_settings, (err, id) => {
               if (err) console.log('Create interface error.', err);
               loop_next(callback);
@@ -109,7 +109,7 @@ process.on('message', (message) => {
 
           const loop_next = (callback) => {
             index++;
-            if (index < data.settings.interfaces.length) {
+            if (index < data.settings.interfaces_settings.length) {
               initialize_interfaces(callback);
             } else {
               callback();
