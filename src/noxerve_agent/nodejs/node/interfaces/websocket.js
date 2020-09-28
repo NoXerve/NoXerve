@@ -173,7 +173,7 @@ Interface.prototype.destroy = function(callback) {
 /**
  * @callback Interface~callback_of_on
  * @param {error} error
- * @description This callback might have additional arguments.
+ * @description This callback might have additional parameters.
  */
 /**
  * @memberof Interface

@@ -7,6 +7,11 @@
 
 'use strict';
 
+//  Illustration
+//  W1 1 <-(pop finished waiting) [2, 4, 6, 7] <-(push by W3) 5
+//  W2 1 <-(pop unfinished proccessing) [2, 4, 6, 7] <-(push by W3) 5
+//  W3 1 <-(pop finished waiting) [2, 4, 6, 7] <-(push by W3) 5
+
 /**
  * @module SyncQueue
  */
@@ -33,7 +38,12 @@ function SyncQueue(settings) {
    * @private
    */
   this._event_listeners = {
+    'queue-pop': () => {}
   };
+}
+
+SyncQueue.prototype.push = function(event_name, callback) {
+
 }
 
 /**

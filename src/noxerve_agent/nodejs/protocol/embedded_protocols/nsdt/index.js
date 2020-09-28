@@ -199,7 +199,7 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
           volatilizing_callback_id_8bytes
         ];
 
-        // Encoding arguments for remote.
+        // Encoding parameters for remote.
         for (const index in params) {
           const arg = params[index];
           const runtime_encoded = encode_runtime(arg);
@@ -241,7 +241,7 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
           function_name_4bytes
         ];
 
-        // Encoding arguments for remote.
+        // Encoding parameters for remote.
         for (const index in args) {
           const arg = args[index];
           const runtime_encoded = encode_runtime(arg);

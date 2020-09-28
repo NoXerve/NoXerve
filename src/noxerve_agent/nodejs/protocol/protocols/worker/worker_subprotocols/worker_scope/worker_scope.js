@@ -90,7 +90,7 @@ WorkerScope.prototype.returnScopePeersList = function() {
  * @param {integer} worker_id
  * @param {error} error
  * @param {buffer} response_bytes
- * @param {function} next - arguments are "error" and "is_finished".
+ * @param {function} next - parameters are "error" and "is_finished".
  */
 /**
  * @callback module:WorkerScope~on_finish
@@ -114,7 +114,7 @@ WorkerScope.prototype.multicastRequestResponse = function(worker_ids_list, data_
  * @param {integer} worker_id
  * @param {error} error
  * @param {buffer} response_bytes
- * @param {function} next - arguments are "error" and "is_finished".
+ * @param {function} next - parameters are "error" and "is_finished".
  */
 /**
  * @callback module:WorkerScope~on_finish

@@ -12,6 +12,7 @@
  */
 
 const Errors = require('../../../../../errors');
+const Buf = require('../../../../../buffer');
 
 /**
  * @constructor module:WorkerGroup
@@ -40,13 +41,6 @@ function WorkerGroup(settings) {
    * @type {object}
    * @private
    */
-  this._max_concurrent_connections_count = settings.max_concurrent_connections_count;
-
-  /**
-   * @memberof module:WorkerGroup
-   * @type {object}
-   * @private
-   */
   this._create_tunnel = settings.create_tunnel;
 
   /**
@@ -55,41 +49,81 @@ function WorkerGroup(settings) {
    * @private
    */
   this._event_listeners = {
-    request: () => {}
+
+    'connections-broken': () => {},
+
+    'locker-create': () => {},
+    'sync-queue-create': () => {},
+    'async-queue-create': () => {},
+
+    'locker-resume': () => {},
+    'sync-queue-resume': () => {},
+    'async-queue-resume': () => {},
   };
 }
 
 /**
- * @callback module:WorkerGroup~callback_of_integrate
- * @param {error} error
+ * @memberof module:WorkerGroupProtocol
+ * @type {object}
+ * @private
  */
-/**
- * @memberof module:WorkerGroup
- * @param {module:WorkerGroup~callback_of_integrate} callback
- * @description Integrate running WorkerGroup.
- */
-WorkerGroup.prototype.integrate = function(callback) {
-  let group_peers_connections_dict = {};
-  // Initailize group peers' connections asynchronizely.
-  const finish_a_connection_of_a_group_peer = (group_peer_id, error) => {
+WorkerGroup.prototype._ProtocolCodes = {
+  locker: Buf.from([0x00]),
+  sync_queue: Buf.from([0x01]),
+  async_queue: Buf.from([0x02]),
+};
 
-  };
 
-  const worker_group_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_group_purpose_name);
-  const my_worker_authenticity_bytes = this._worker_protocol_actions.encodeAuthenticityBytes();
+WorkerGroup.prototype._sendToChannel = function(channel_8bytes, callback) {
 
 }
 
-/**
- * @callback module:WorkerGroup~callback_of_disintegrate
- * @param {error} error
- */
-/**
- * @memberof module:WorkerGroup
- * @param {module:WorkerGroup~callback_of_disintegrate} callback
- * @description Integrate running WorkerGroup.
- */
-WorkerGroup.prototype.disintegrate = function(callback) {
+// Locker
+// create by a group peer
+WorkerGroup.prototype.createLocker = function(locker_name, callback) {
+
+}
+
+// resume by all group peers, static_global_random_seed_4096bytes decides exact one peer to handle.
+WorkerGroup.prototype.resumeLocker = function(callback) {
+
+}
+
+// pause, destroy
+// managed by Locker object itself.
+
+
+// SyncQueue
+// create by a group peer
+WorkerGroup.prototype.createSyncQueue = function(callback) {
+
+}
+
+// resume by all group peers, static_global_random_seed_4096bytes decides exact one peer to handle.
+WorkerGroup.prototype.resumeSyncQueue = function(callback) {
+
+}
+
+// pause, destroy
+// managed by SyncQueue object itself.
+
+
+// AyncQueue
+// create by a group peer
+WorkerGroup.prototype.createAyncQueue = function(callback) {
+
+}
+
+// resume by all group peers, static_global_random_seed_4096bytes decides exact one peer to handle.
+WorkerGroup.prototype.resumeAyncQueue = function(callback) {
+
+}
+
+// pause, destroy
+// managed by AyncQueue object itself.
+
+
+WorkerGroup.prototype.destroy = function(callback) {
 
 }
 
@@ -101,6 +135,29 @@ WorkerGroup.prototype.disintegrate = function(callback) {
  */
 WorkerGroup.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
 
+}
+
+/**
+ * @callback module:WorkerGroup~callback_of_on
+ * @description callback parameter based on event's type.
+ */
+/**
+ * @memberof module:WorkerGroup
+ * @param {string} event_name
+ * @param {module:WorkerGroup~callback_of_on} callback
+ * @description Register event listener.
+ */
+WorkerGroup.prototype.on = function(event_name, callback) {
+  this._event_listeners[event_name] = callback;
+}
+
+/**
+ * @memberof module:WorkerGroup
+ * @param {string} event_name
+ * @description WorkerGroup events emitter. For internal uses.
+ */
+WorkerGroup.prototype.emitEventListener = function(event_name, ...params) {
+  return this._event_listeners[event_name].apply(null, params);
 }
 
 module.exports = WorkerGroup;

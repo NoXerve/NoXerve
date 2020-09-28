@@ -765,7 +765,8 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
       },
       hash_manager: this._hash_manager,
       nsdt_embedded_protocol: this._nsdt_embedded_protocol,
-      worker_global_protocol_codes: this._ProtocolCodes
+      worker_global_protocol_codes: this._ProtocolCodes,
+      static_global_random_seed_4096bytes: this._static_global_random_seed_4096bytes // Critical for solving conflicts or without-communication consensus.
     });
 
     // Collect managers for callback. Asynchronizely.

@@ -98,18 +98,18 @@ ActivityProtocol.prototype._ProtocolCodes = {
 ActivityProtocol.prototype.start = function(callback) {
 
   // Create activity from activity module.
-  this._activity_module.on('activity-create', (connector_settings_list, activity_purpose_name, activity_parameter, create_activity_callback) => {
+  this._activity_module.on('activity-create', (connector_settings_list, activity_purpose_name, activity_purpose_parameter, create_activity_callback) => {
 
     // Shuffle for clientwise loadbalancing.
     const shuffled_connector_settings_list = Utils.shuffleArray(connector_settings_list);
 
     // Synchronize information for handshake
     const activity_purpose_name_4bytes = this._hash_manager.hashString4Bytes(activity_purpose_name);
-    const activity_parameter_bytes = this._nsdt_embedded_protocol.encode(activity_parameter);
+    const activity_purpose_parameter_bytes = this._nsdt_embedded_protocol.encode(activity_purpose_parameter);
     const synchronize_information = Buf.concat([
       this._ProtocolCodes.service_and_activity,
       activity_purpose_name_4bytes,
-      activity_parameter_bytes
+      activity_purpose_parameter_bytes
     ]);
 
     // Proceed tunnel creations loop.

@@ -33,7 +33,23 @@ function Locker(settings) {
    * @private
    */
   this._event_listeners = {
+    'pause'
   };
+}
+
+Locker.prototype.lock = function(lock_value, callback) {
+}
+
+Locker.prototype.unlock = function(callback) {
+}
+
+Locker.prototype.toggle = function(lock_value, callback) {
+}
+
+Locker.prototype.pause = function(lock_value, callback) {
+}
+
+Locker.prototype.destroy = function(lock_value, callback) {
 }
 
 /**

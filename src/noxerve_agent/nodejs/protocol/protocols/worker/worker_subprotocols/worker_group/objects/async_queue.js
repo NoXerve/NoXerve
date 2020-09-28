@@ -5,6 +5,11 @@
  * @copyright 2019-2020 nooxy. All Rights Reserved.
  */
 
+//  Illustration
+//  W1 [1, 2, 4, 6, 7] <-(push by W3) 5
+//  W2 2 <-(pop) [4, 6, 7] <-(push by W3) 5
+//  W3 4 <-(pop) [6, 7] <-(push by W3) 5
+
 'use strict';
 
 /**
@@ -16,7 +21,7 @@ const Errors = require('../../errors');
 /**
  * @constructor module:AsyncQueue
  * @param {object} settings
- * @description AsyncQueue Object.
+ * @description AsyncQueue Object. Asynchronizely pop item from queue.
  */
 
 function AsyncQueue(settings) {
@@ -34,6 +39,14 @@ function AsyncQueue(settings) {
    */
   this._event_listeners = {
   };
+}
+
+AsyncQueue.prototype.push = function(event_name, callback) {
+
+}
+
+AsyncQueue.prototype.pop = function(event_name, callback) {
+
 }
 
 /**

@@ -162,7 +162,7 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
           // Call acknowledge_synchronization function. Respond with acknowledge_information for remote.
           acknowledge_synchronization(false, data, (acknowledge_information)=> {
             // stage 1 => waiting to finish up. If any error happened call
-            // "finish_handshake" from arguments.
+            // "finish_handshake" from parameters.
             stage = 1;
             try {
               if (acknowledge_information === false) {

@@ -170,8 +170,8 @@ function NoXerveAgent(settings) {
    * @description API intended to provide functions for the role of service.
    */
   this.Activity = {
-    createActivity: (connector_settings_list, activity_purpose_name, activity_purpose_arguments, callback) => {
-      this._activity_module.createActivity(connector_settings_list, activity_purpose_name, activity_purpose_arguments, callback);
+    createActivity: (connector_settings_list, activity_purpose_name, activity_purpose_parameters, callback) => {
+      this._activity_module.createActivity(connector_settings_list, activity_purpose_name, activity_purpose_parameters, callback);
     }
   };
 
