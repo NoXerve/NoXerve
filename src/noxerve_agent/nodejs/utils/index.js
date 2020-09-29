@@ -16,6 +16,20 @@ module.exports.hash4BytesMd5 = function(string) {
 }
 
 // Crypto level random bytes.
+module.exports.hash8BytesMd5 = function(string) {
+  const hash_of_the_string = Crypto.createHash('md5');
+  hash_of_the_string.update(string);
+  return hash_of_the_string.digest().slice(0, 8);
+}
+
+// Crypto level random bytes.
+module.exports.hash16BytesMd5 = function(string) {
+  const hash_of_the_string = Crypto.createHash('md5');
+  hash_of_the_string.update(string);
+  return hash_of_the_string.digest().slice(0, 16);
+}
+
+// Crypto level random bytes.
 module.exports.random8Bytes = function() {
   return Crypto.randomBytes(8);
 }

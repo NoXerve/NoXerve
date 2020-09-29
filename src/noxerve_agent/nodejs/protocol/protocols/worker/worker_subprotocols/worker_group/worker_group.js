@@ -95,13 +95,13 @@ WorkerGroup.prototype._ProtocolCodes = {
 };
 
 
-WorkerGroup.prototype._sendToChannel = function(channel_8bytes, callback) {
+WorkerGroup.prototype._sendToGroupPeer = function(group_peer_id, object_code, object_id_8bytes, callback) {
 
 }
 
 // Locker
 // create by a group peer
-WorkerGroup.prototype.createLocker = function(locker_name, locker_parameters, callback) {
+WorkerGroup.prototype.createLocker = function(locker_name, locker_parameter, callback) {
 
 }
 
@@ -116,7 +116,7 @@ WorkerGroup.prototype.resumeLocker = function(callback) {
 
 // SyncQueue
 // create by a group peer
-WorkerGroup.prototype.createSyncQueue = function(sync_queue_name, sync_queue_parameters, callback) {
+WorkerGroup.prototype.createSyncQueue = function(sync_queue_name, sync_queue_parameter, callback) {
 
 }
 
@@ -131,7 +131,7 @@ WorkerGroup.prototype.resumeSyncQueue = function(callback) {
 
 // AyncQueue
 // create by a group peer
-WorkerGroup.prototype.createAyncQueue = function(async_queue_name, async_queue_name_parameters, callback) {
+WorkerGroup.prototype.createAyncQueue = function(async_queue_name, async_queue_name_parameter, callback) {
 
 }
 
