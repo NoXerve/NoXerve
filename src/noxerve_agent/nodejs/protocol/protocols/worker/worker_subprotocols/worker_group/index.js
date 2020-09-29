@@ -119,7 +119,12 @@ WorkerGroupProtocol.prototype.start = function(callback) {
 
 
       const worker_scope = new WorkerGroup({
+        create_tunnel: (group_peer_id) => {
 
+        },
+        on_tunnel_create: (tunnel_create_listener) => {
+          
+        }
       });
 
       this._worker_groups_dict[worker_group_purpose_name] = worker_group;

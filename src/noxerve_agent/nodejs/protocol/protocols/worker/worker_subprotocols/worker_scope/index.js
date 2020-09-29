@@ -131,8 +131,8 @@ WorkerScopeProtocol.prototype.start = function(callback) {
         ]);
         this._worker_protocol_actions.multicastRequestResponse(scope_peers_list, );
       },
-      multicast_request_response: (worker_ids_list, data_bytes, on_a_worker_response, on_finish) => {
-        this._worker_protocol_actions.multicastRequestResponse(worker_ids_list);
+      multicast_request_response: (worker_id_list, data_bytes, on_a_worker_response, on_finish) => {
+        this._worker_protocol_actions.multicastRequestResponse(worker_id_list);
       },
       check_integrity: (callback) => {
         const data_bytes = Buf.concat([

@@ -8,9 +8,9 @@
 'use strict';
 
 //  Illustration
-//  W1 1 <-(pop finished waiting) [2, 4, 6, 7] <-(push by W3) 5
-//  W2 1 <-(pop unfinished proccessing) [2, 4, 6, 7] <-(push by W3) 5
-//  W3 1 <-(pop finished waiting) [2, 4, 6, 7] <-(push by W3) 5
+//  W1 1 <-(pop finished waiting (transaction)) [2, 4, 6, 7] <-(push by W3 (transaction)) 5
+//  W2 1 <-(pop unfinished proccessing (transaction)) [2, 4, 6, 7] <-(push by W3 (transaction)) 5
+//  W3 1 <-(pop finished waiting (transaction)) [2, 4, 6, 7] <-(push by W3 (transaction)) 5
 
 /**
  * @module SyncQueue
@@ -40,6 +40,13 @@ function SyncQueue(settings) {
   this._event_listeners = {
     'queue-pop': () => {}
   };
+
+  /**
+   * @memberof module:SyncQueue
+   * @type {object}
+   * @private
+   */
+  this._push_transaction_lock = ;
 }
 
 SyncQueue.prototype.push = function(event_name, callback) {

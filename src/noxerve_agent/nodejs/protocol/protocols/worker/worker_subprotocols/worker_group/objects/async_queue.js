@@ -6,9 +6,9 @@
  */
 
 //  Illustration
-//  W1 [1, 2, 4, 6, 7] <-(push by W3) 5
-//  W2 2 <-(pop) [4, 6, 7] <-(push by W3) 5
-//  W3 4 <-(pop) [6, 7] <-(push by W3) 5
+//  W1 [1, 2, 4, 6, 7] <-(push by W3 (transaction)) 5
+//  W2 2 <-(pop) [4, 6, 7] <-(push by W3 (transaction)) 5
+//  W3 4 <-(pop) [6, 7] <-(push by W3 (transaction)) 5
 
 'use strict';
 

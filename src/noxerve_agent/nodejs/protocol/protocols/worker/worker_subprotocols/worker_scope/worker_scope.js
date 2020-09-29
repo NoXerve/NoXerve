@@ -95,18 +95,18 @@ WorkerScope.prototype.returnScopePeersList = function() {
 /**
  * @callback module:WorkerScope~on_finish
  * @param {error} error
- * @param {list} finished_worker_ids_list
+ * @param {list} finished_worker_id_list
  */
 /**
  * @memberof module:WorkerScope
- * @param {list} worker_ids_list
+ * @param {list} worker_id_list
  * @param {buffer} data_bytes
  * @param {module:WorkerScope~on_a_worker_response} on_a_worker_response
  * @param {module:WorkerScope~on_finish} on_finish
  * @description Worker scope multicast request response.
  */
-WorkerScope.prototype.multicastRequestResponse = function(worker_ids_list, data_bytes, on_a_worker_response, on_finish) {
-  this._settings.multicast_request_response(worker_ids_list, data_bytes, on_a_worker_response, on_finish);
+WorkerScope.prototype.multicastRequestResponse = function(worker_id_list, data_bytes, on_a_worker_response, on_finish) {
+  this._settings.multicast_request_response(worker_id_list, data_bytes, on_a_worker_response, on_finish);
 }
 
 /**
@@ -119,11 +119,11 @@ WorkerScope.prototype.multicastRequestResponse = function(worker_ids_list, data_
 /**
  * @callback module:WorkerScope~on_finish
  * @param {error} error
- * @param {list} finished_worker_ids_list
+ * @param {list} finished_worker_id_list
  */
 /**
  * @memberof module:WorkerScope
- * @param {list} worker_ids_list
+ * @param {list} worker_id_list
  * @param {buffer} data_bytes
  * @param {module:WorkerScope~on_a_worker_response} on_a_worker_response
  * @param {module:WorkerScope~on_finish} on_finish

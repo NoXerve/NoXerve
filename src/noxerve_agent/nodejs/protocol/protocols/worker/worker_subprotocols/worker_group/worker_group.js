@@ -45,6 +45,13 @@ function WorkerGroup(settings) {
 
   /**
    * @memberof module:WorkerGroup
+   * @type {function}
+   * @private
+   */
+  this._on_tunnel_create = settings.on_tunnel_create;
+
+  /**
+   * @memberof module:WorkerGroup
    * @type {object}
    * @private
    */
@@ -94,8 +101,23 @@ WorkerGroup.prototype._ProtocolCodes = {
   async_queue: Buf.from([0x02]),
 };
 
+// [Flag]
+WorkerGroup.prototype._onData = function(object_code, object_id_8bytes, callback) {
 
-WorkerGroup.prototype._sendToGroupPeer = function(group_peer_id, object_code, object_id_8bytes, callback) {
+}
+
+// [Flag]
+WorkerGroup.prototype._sendToGroupPeer = function(object_code, object_id_8bytes, group_peer_id, callback) {
+
+}
+
+// [Flag]
+WorkerGroup.prototype._multicastHandShake = function(object_code, object_id_8bytes, callback) {
+
+}
+
+// [Flag]
+WorkerGroup.prototype._broadcastHandShake = function(object_code, object_id_8bytes, callback) {
 
 }
 

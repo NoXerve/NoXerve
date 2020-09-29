@@ -235,7 +235,7 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
     }
   };
 
-  const on_finish = (error, finished_worker_ids_list) => {
+  const on_finish = (error, finished_worker_id_list) => {
     const encoded_authenticity_bytes = this._encodeAuthenticityBytes();
     if (error) {
       // Cancel all operation done.
@@ -265,12 +265,12 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
         }
       };
 
-      const inner_on_finish = (error, inner_finished_worker_ids_list) => {
+      const inner_on_finish = (error, inner_finished_worker_id_list) => {
         if (error) {
-          console.log(error, inner_finished_worker_ids_list);
+          console.log(error, inner_finished_worker_id_list);
         }
       };
-      this._multicastRequestResponse(finished_worker_ids_list, worker_affairs_worker_peer_operation_cancel_broadcast_bytes, on_a_worker_response, inner_on_finish);
+      this._multicastRequestResponse(finished_worker_id_list, worker_affairs_worker_peer_operation_cancel_broadcast_bytes, on_a_worker_response, inner_on_finish);
     } else {
       // Comfirm all operation done.
       const worker_affairs_worker_peer_join_comfirm_broadcast_bytes = Buf.concat([
@@ -299,9 +299,9 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
         }
       };
 
-      const inner_on_finish = (error, inner_finished_worker_ids_list) => {
+      const inner_on_finish = (error, inner_finished_worker_id_list) => {
         if (error) {
-          console.log(error, inner_finished_worker_ids_list);
+          console.log(error, inner_finished_worker_id_list);
         }
         if (operation_type === 'leave') {
           // Reset worker.
@@ -314,7 +314,7 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
         }
       };
 
-      this._multicastRequestResponse(finished_worker_ids_list, worker_affairs_worker_peer_join_comfirm_broadcast_bytes, on_a_worker_response, inner_on_finish);
+      this._multicastRequestResponse(finished_worker_id_list, worker_affairs_worker_peer_join_comfirm_broadcast_bytes, on_a_worker_response, inner_on_finish);
     }
     callback(error);
   };
@@ -436,11 +436,11 @@ WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = func
  * @memberof module:WorkerProtocol
  * @private
  */
-WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_worker_ids_list) {
+WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_worker_id_list) {
   let worker_peers_ids_checksum = 0;
-  for (const index in peers_worker_ids_list) {
-    peers_worker_ids_list[index] = parseInt(peers_worker_ids_list[index]);
-    worker_peers_ids_checksum += peers_worker_ids_list[index];
+  for (const index in peers_worker_id_list) {
+    peers_worker_id_list[index] = parseInt(peers_worker_id_list[index]);
+    worker_peers_ids_checksum += peers_worker_id_list[index];
   }
   const worker_peers_ids_checksum_bytes = Buf.encodeUInt32BE(worker_peers_ids_checksum);
   this._worker_peers_ids_checksum_4bytes = worker_peers_ids_checksum_bytes;
@@ -509,12 +509,12 @@ WorkerProtocol.prototype._openHandshakeByWorkerId = function(
  * @memberof module:WorkerProtocol
  * @private
  */
-WorkerProtocol.prototype._multicastRequestResponse = function(worker_ids_list, data_bytes, on_a_worker_response, on_finish) {
+WorkerProtocol.prototype._multicastRequestResponse = function(worker_id_list, data_bytes, on_a_worker_response, on_finish) {
 
   // Broadcast worker join start.
   // max concurrent connections.
   const max_concurrent_connections_count = MAX_CONCURRENT_CONNECTIONS_COUNT;
-  const finished_worker_ids_list = [];
+  const finished_worker_id_list = [];
   let escape_loop_with_error = false;
   let worker_peers_errors = {};
   let current_connections_count = 0;
@@ -522,7 +522,7 @@ WorkerProtocol.prototype._multicastRequestResponse = function(worker_ids_list, d
   // let errors = {};
 
   const loop_over_workers = () => {
-    const worker_id = parseInt(worker_ids_list[index]);
+    const worker_id = parseInt(worker_id_list[index]);
     if (worker_id) {
       current_connections_count++;
 
@@ -543,7 +543,7 @@ WorkerProtocol.prototype._multicastRequestResponse = function(worker_ids_list, d
               escape_loop_with_error = true;
             }
             if (is_finished) {
-              finished_worker_ids_list.push(worker_id);
+              finished_worker_id_list.push(worker_id);
             }
             loop_next();
           });
@@ -565,11 +565,11 @@ WorkerProtocol.prototype._multicastRequestResponse = function(worker_ids_list, d
 
   const loop_next = () => {
     index++;
-    if (finished_worker_ids_list.length >= worker_ids_list.length) {
-      on_finish(false, finished_worker_ids_list);
+    if (finished_worker_id_list.length >= worker_id_list.length) {
+      on_finish(false, finished_worker_id_list);
     } else if (escape_loop_with_error && current_connections_count === 0) {
-      on_finish(worker_peers_errors, finished_worker_ids_list);
-    } else if (index < worker_ids_list.length && current_connections_count < max_concurrent_connections_count) {
+      on_finish(worker_peers_errors, finished_worker_id_list);
+    } else if (index < worker_id_list.length && current_connections_count < max_concurrent_connections_count) {
       loop_over_workers();
     }
   };
@@ -582,8 +582,8 @@ WorkerProtocol.prototype._multicastRequestResponse = function(worker_ids_list, d
  * @private
  */
 WorkerProtocol.prototype._broadcastRequestResponseToAllWorkers = function(data_bytes, on_a_worker_response, on_finish) {
-  const worker_ids_list = Object.keys(this._worker_peers_settings).map(x => parseInt(x));
-  this._multicastRequestResponse(worker_ids_list, data_bytes, on_a_worker_response, on_finish);
+  const worker_id_list = Object.keys(this._worker_peers_settings).map(x => parseInt(x));
+  this._multicastRequestResponse(worker_id_list, data_bytes, on_a_worker_response, on_finish);
 }
 
 /**
@@ -736,7 +736,7 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
           };
           this._openHandshakeByWorkerId(target_worker_peer_worker_id, decorated_synchronize_information, decorated_acknowledge_synchronization, finish_handshake);
         },
-        multicastRequestResponse: (worker_ids_list, data_bytes, on_a_worker_response, on_finish) => {
+        multicastRequestResponse: (worker_id_list, data_bytes, on_a_worker_response, on_finish) => {
           const decorated_data_bytes = Buf.concat([prefix_data_bytes, data_bytes]);
           const decorated_on_a_worker_response = (worker_id, error, response_bytes, next) => {
             if(error) {
@@ -752,7 +752,7 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
               on_a_worker_response(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_bytes.slice(3), next);
             }
           };
-          this._multicastRequestResponse(worker_ids_list, decorated_data_bytes, decorated_on_a_worker_response, on_finish);
+          this._multicastRequestResponse(worker_id_list, decorated_data_bytes, decorated_on_a_worker_response, on_finish);
         },
         broadcastRequestResponseToAllWorkers: (data_bytes, on_a_worker_response, on_finish) => {
           const decorated_data_bytes = Buf.concat([prefix_data_bytes, data_bytes]);
@@ -770,7 +770,7 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
               on_a_worker_response(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_bytes.slice(3), next);
             }
           };
-          this._multicastRequestResponse(worker_ids_list, decorated_data_bytes, decorated_on_a_worker_response, on_finish);
+          this._multicastRequestResponse(worker_id_list, decorated_data_bytes, decorated_on_a_worker_response, on_finish);
         },
       },
       hash_manager: this._hash_manager,
@@ -1108,11 +1108,11 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onError
             const new_worker_peer_detail = this._nsdt_embedded_protocol.decode(synchronize_information.slice(bytes_offset_length + 4 + new_worker_peer_connectors_settings_bytes_length));
 
             // Obtain new Id.
-            const worker_ids_list = Object.keys(this._worker_peers_settings).map(x => parseInt(x));
-            const max_worker_id = worker_ids_list[worker_ids_list.length - 1] + 1;
+            const worker_id_list = Object.keys(this._worker_peers_settings).map(x => parseInt(x));
+            const max_worker_id = worker_id_list[worker_id_list.length - 1] + 1;
             let new_worker_id = 0;
             for (let id = 1; id <= max_worker_id; id++) {
-              if (!worker_ids_list.includes(id)) {
+              if (!worker_id_list.includes(id)) {
                 new_worker_id = id;
                 break;
               }

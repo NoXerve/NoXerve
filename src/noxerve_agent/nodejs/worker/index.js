@@ -186,12 +186,12 @@ Worker.prototype.onWorkerSocketCreate = function(worker_socket_purpose_name, lis
 /**
  * @memberof module:Worker
  * @param {string} worker_scpoe_purpose_name - The purpose for this worker scope.
- * @param {list} worker_peers_worker_ids_list - The worker peers that you want to communicate with.
+ * @param {list} worker_peers_worker_id_list - The worker peers that you want to communicate with.
  * @param {module:Worker~callback_of_create_worker_socket} callback
  * @description Create a worker scope in order to communicate with another worker.
  */
-Worker.prototype.createWorkerScope = function(worker_scpoe_purpose_name, worker_peers_worker_ids_list, callback) {
-  this._worker_object_managers.worker_scope.create(worker_scpoe_purpose_name, worker_peers_worker_ids_list, callback);
+Worker.prototype.createWorkerScope = function(worker_scpoe_purpose_name, worker_peers_worker_id_list, callback) {
+  this._worker_object_managers.worker_scope.create(worker_scpoe_purpose_name, worker_peers_worker_id_list, callback);
 }
 
 /**
@@ -253,6 +253,21 @@ Worker.prototype.leaveMe = function(callback) {
  */
 Worker.prototype.leaveWorkerPeer = function(worker_id, callback) {
   this._event_listeners['worker-peer-leave'](worker_id, callback);
+}
+
+/**
+ * @callback module:Worker~callback_of_abandon_worker_peer
+ * @param {error} error
+ */
+/**
+ * @memberof module:Worker
+ * @param {integer} worker_id
+ * @param {module:Worker~callback_of_abandon_worker_peer} callback
+ * @description Abandon this workers away from workers cluster by worker ids nastily.
+ * Do not notify workers which will be abandoned.
+ */
+Worker.prototype.abandonWorkerPeers = function(worker_id_list, callback) {
+  this._event_listeners['worker-peers-abandon'](worker_id_list, callback);
 }
 
 /**
