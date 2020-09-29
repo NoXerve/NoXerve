@@ -10,6 +10,8 @@
 /**
  * @module WorkerProtocol
  */
+
+const GlobalDeterministicRandomManager = require('./global_deterministic_random_manager');
 // Initial supported protocols detail.
 const WorkerSubprotocolsPath = require("path").join(__dirname, "./worker_subprotocols");
 const MAX_CONCURRENT_CONNECTIONS_COUNT = 30; // Not yet decided how this parameter to be set.
@@ -82,6 +84,14 @@ function WorkerProtocol(settings) {
    * @description static_global_random_seed_4096bytes for GlobalDeterministicRandomManager.
    */
   this._static_global_random_seed_4096bytes;
+
+  /**
+   * @memberof module:WorkerProtocol
+   * @type {buffer}
+   * @private
+   * @description GlobalDeterministicRandomManager.
+   */
+  this._global_deterministic_random_manager;
 
   /**
    * @memberof module:WorkerProtocol
@@ -766,7 +776,15 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
       hash_manager: this._hash_manager,
       nsdt_embedded_protocol: this._nsdt_embedded_protocol,
       worker_global_protocol_codes: this._ProtocolCodes,
-      static_global_random_seed_4096bytes: this._static_global_random_seed_4096bytes // Critical for solving conflicts or without-communication consensus.
+      static_global_random_seed_4096bytes: this._static_global_random_seed_4096bytes, // Critical for solving conflicts or without-communication consensus.
+      global_deterministic_random_manager: {
+        generateIntegerInRange: (initialization_vector_bytes, begin_int, end_int, callback) => {
+          this._global_deterministic_random_manager.generateIntegerInRange(initialization_vector_bytes, begin_int, end_int, callback);
+        },
+        generateIntegerListInRange: (initialization_vector_bytes, begin_int, end_int, list_length, callback) => {
+          this._global_deterministic_random_manager.generateIntegerListInRange(initialization_vector_bytes, begin_int, end_int, list_length, callback);
+        }
+      }
     });
 
     // Collect managers for callback. Asynchronizely.
@@ -811,6 +829,9 @@ WorkerProtocol.prototype.start = function(callback) {
   this._worker_module.on('static-global-random-seed-import', (static_global_random_seed_4096bytes, callback) => {
     if (static_global_random_seed_4096bytes && Buf.isBuffer(static_global_random_seed_4096bytes) && static_global_random_seed_4096bytes.length === 4096) {
       this._static_global_random_seed_4096bytes = static_global_random_seed_4096bytes;
+      this._global_deterministic_random_manager = new GlobalDeterministicRandomManager({
+        static_global_random_seed_4096bytes: static_global_random_seed_4096bytes
+      });
       this._static_global_random_seed_checksum_4bytes = Utils.hash4BytesMd5(static_global_random_seed_4096bytes);
       callback(false);
     } else callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported static global random seed buffer must have exactly 4096 bytes.'));
@@ -932,6 +953,9 @@ WorkerProtocol.prototype.start = function(callback) {
                 // Update worker peers settings
                 this._worker_peers_settings = worker_peers_settings;
                 this._static_global_random_seed_4096bytes = static_global_random_seed_4096bytes;
+                this._global_deterministic_random_manager = new GlobalDeterministicRandomManager({
+                  static_global_random_seed_4096bytes: static_global_random_seed_4096bytes
+                });
                 this._static_global_random_seed_checksum_4bytes = Utils.hash4BytesMd5(static_global_random_seed_4096bytes);
                 this._updateWorkerPeersIdsChecksum4Bytes(Object.keys(worker_peers_settings));
 

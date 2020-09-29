@@ -11,7 +11,7 @@
  * @module GlobalDeterministicRandomManager
  */
 
-const Errors = require('../errors');
+const Errors = require('../../../errors');
 
 /**
  * @constructor module:GlobalDeterministicRandomManager
@@ -35,6 +35,14 @@ function GlobalDeterministicRandomManager(settings) {
   this._static_global_random_seed_4096bytes = settings.static_global_random_seed_4096bytes;
 }
 
-GlobalDeterministicRandomManager.prototype.test = null;
+// [Flag]
+GlobalDeterministicRandomManager.prototype.generateIntegerInRange = function(initialization_vector_bytes, begin_int, end_int, callback) {
+
+};
+
+// [Flag]
+GlobalDeterministicRandomManager.prototype.generateIntegerListInRange = function(initialization_vector_bytes, begin_int, end_int, list_length, callback) {
+
+};
 
 module.exports = GlobalDeterministicRandomManager;

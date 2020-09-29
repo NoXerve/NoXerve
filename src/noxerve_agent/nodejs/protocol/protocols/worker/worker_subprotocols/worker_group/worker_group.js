@@ -60,6 +60,27 @@ function WorkerGroup(settings) {
     'sync-queue-resume': () => {},
     'async-queue-resume': () => {},
   };
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._active_locker_dict = {};
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._active_sync_queue_dict = {};
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._active_async_queue_dict = {};
 }
 
 /**
@@ -80,7 +101,7 @@ WorkerGroup.prototype._sendToChannel = function(channel_8bytes, callback) {
 
 // Locker
 // create by a group peer
-WorkerGroup.prototype.createLocker = function(locker_name, callback) {
+WorkerGroup.prototype.createLocker = function(locker_name, locker_parameters, callback) {
 
 }
 
@@ -95,7 +116,7 @@ WorkerGroup.prototype.resumeLocker = function(callback) {
 
 // SyncQueue
 // create by a group peer
-WorkerGroup.prototype.createSyncQueue = function(callback) {
+WorkerGroup.prototype.createSyncQueue = function(sync_queue_name, sync_queue_parameters, callback) {
 
 }
 
@@ -110,7 +131,7 @@ WorkerGroup.prototype.resumeSyncQueue = function(callback) {
 
 // AyncQueue
 // create by a group peer
-WorkerGroup.prototype.createAyncQueue = function(callback) {
+WorkerGroup.prototype.createAyncQueue = function(async_queue_name, async_queue_name_parameters, callback) {
 
 }
 

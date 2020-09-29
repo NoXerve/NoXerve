@@ -14,7 +14,6 @@
 const Errors = require('../errors');
 const WorkerSocketManager = require('./worker_object_managers/worker_socket');
 const WorkerScopeManager = require('./worker_object_managers/worker_scope');
-const GlobalDeterministicRandomManager = require('./global_deterministic_random_manager');
 
 /**
  * @constructor module:Worker
@@ -43,22 +42,8 @@ function Worker(settings) {
    * @private
    */
   this._event_listeners = {
-    'global-deterministic-random-manager-request': (static_global_random_seed_4096bytes, callback) => {
-      try {
-        const global_deterministic_random_manager = new GlobalDeterministicRandomManager({
-          static_global_random_seed_4096bytes: static_global_random_seed_4096bytes
-        });
-        callback(false, global_deterministic_random_manager);
-      } catch (error) {
-        console.log(error);
-        callback(error);
-      }
-    },
     'worker-peer-authentication': (worker_id, worker_authenticity_information, is_valid) => {
       is_valid(false);
-    },
-    'worker-socket-ready': (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_id, worker_socket) => {
-      this._event_listeners['worker-socket-create-' + worker_socket_purpose_name](worker_socket_purpose_parameter, remote_worker_id, worker_socket);
     },
     'worker-peer-join-request': (remote_worker_id, worker_peer_connectors_settings, worker_peer_detail, next) => {
       this._event_listeners['worker-peer-join'](remote_worker_id, worker_peer_connectors_settings, worker_peer_detail, next);
@@ -97,8 +82,6 @@ Worker.prototype.start = function(callback) {
         if (callback) callback(error);
       });
     });
-
-
   }
   else {
     const error = new Errors.ERR_NOXERVEAGENT_WORKER('Worker module starting failed. Probably because protocol module has\'t started.');
