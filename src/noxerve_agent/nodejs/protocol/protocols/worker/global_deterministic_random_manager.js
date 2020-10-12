@@ -38,27 +38,27 @@ function GlobalDeterministicRandomManager(settings) {
   this._static_global_random_seed_4096bytes = settings.static_global_random_seed_4096bytes;
 }
 
-GlobalDeterministicRandomManager.prototype._base10 = function (base64_result) {
-    // It's a multi to one function
-    let result = 0;
-    for(let i=0; i<base64_result.length; i++){
-        result *= 10;
-        result += base64_result.charCodeAt(i);
-        result = result%Number.MAX_SAFE_INTEGER;
-    }
+GlobalDeterministicRandomManager.prototype._base10 = function(base64_result) {
+  // It's a multi to one function
+  let result = 0;
+  for (let i = 0; i < base64_result.length; i++) {
+    result *= 10;
+    result += base64_result.charCodeAt(i);
+    result = result % Number.MAX_SAFE_INTEGER;
+  }
 
-    return result;
+  return result;
 }
 
-GlobalDeterministicRandomManager.prototype._isInputValid = function (begin_int, end_int, list_length) {
-    if(begin_int > end_int) {
-        return false;
-    }
-    if( list_length > ( end_int - begin_int + 1) ) {
-        return false;
-    }
+GlobalDeterministicRandomManager.prototype._isInputValid = function(begin_int, end_int, list_length) {
+  if (begin_int > end_int) {
+    return false;
+  }
+  if (list_length > (end_int - begin_int + 1)) {
+    return false;
+  }
 
-    return true;
+  return true;
 }
 
 // [Flag]
@@ -85,20 +85,20 @@ GlobalDeterministicRandomManager.prototype.generateIntegerInRange = function(ini
  * @return {integer}                               result
  */
 GlobalDeterministicRandomManager.prototype.generateIntegerListInRange = function(initialization_vector_bytes, begin_int, end_int, list_length, callback) {
-    if(!this._isInputValid(begin_int, end_int, list_length)) {
-        callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Input of "generateIntegerListInRange" is invalid.'));
-        return;
-    }
+  if (!this._isInputValid(begin_int, end_int, list_length)) {
+    callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Input of "generateIntegerListInRange" is invalid.'));
+    return;
+  }
 
-    let seed = this._base10(hash('sha1').update(String(initialization_vector_bytes)).digest('base64'));
-    // console.log('seed = ' + seed);
-    let result = ACORN.random(seed, list_length);
-    // console.log('seed in ACORN = ' + ACORN.seed);
-    result.forEach( function(element, index){
-        this[index] = Math.round( begin_int + this[index]*(end_int-begin_int) );
-    }, result);
+  let seed = this._base10(hash('sha1').update(String(initialization_vector_bytes)).digest('base64'));
+  // console.log('seed = ' + seed);
+  let result = ACORN.random(seed, list_length);
+  // console.log('seed in ACORN = ' + ACORN.seed);
+  result.forEach(function(element, index) {
+    this[index] = Math.round(begin_int + this[index] * (end_int - begin_int));
+  }, result);
 
-    callback(false, result);
+  callback(false, result);
 };
 
 // [Flag]
@@ -112,16 +112,16 @@ GlobalDeterministicRandomManager.prototype.generateIntegerListInRange = function
  * @return {integer}                               result
  */
 GlobalDeterministicRandomManager.prototype.generateUniqueIntegerListInRange = function(initialization_vector_bytes, begin_int, end_int, list_length, callback) {
-    if(!this._isInputValid(begin_int, end_int, list_length)) {
-        callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Input of "generateUniqueIntegerListInRange" is invalid.'));
-        return;
-    }
-    // begin + (seed*i) mod length
+  if (!this._isInputValid(begin_int, end_int, list_length)) {
+    callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Input of "generateUniqueIntegerListInRange" is invalid.'));
+    return;
+  }
+  // begin + (seed*i) mod length
 
-    let seed = this._base10(hash('sha1').update(String(initialization_vector_bytes)).digest('base64'));
-    // console.log('seed = ' + seed);
+  let seed = this._base10(hash('sha1').update(String(initialization_vector_bytes)).digest('base64'));
+  // console.log('seed = ' + seed);
 
-    callback(false, result);
+  callback(false, result);
 }
 
 //let g = new GlobalDeterministicRandomManager({});
