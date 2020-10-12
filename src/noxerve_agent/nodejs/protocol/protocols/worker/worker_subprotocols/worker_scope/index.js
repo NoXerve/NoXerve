@@ -116,12 +116,12 @@ WorkerScopeProtocol.prototype.close = function(callback) {
  * @description Start running WorkerScopeProtocol.
  */
 WorkerScopeProtocol.prototype.start = function(callback) {
-  this._worker_scope_manager.on('worker-scope-create-request', (worker_scpoe_purpose_name, scope_peers_list, inner_callback) => {
-    const worker_scope_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_scpoe_purpose_name);
+  this._worker_scope_manager.on('worker-scope-create-request', (worker_scope_purpose_name, scope_peers_list, inner_callback) => {
+    const worker_scope_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_scope_purpose_name);
     const my_worker_authenticity_bytes = this._worker_protocol_actions.encodeAuthenticityBytes();
 
     const worker_scope = new WorkerScope({
-      worker_scpoe_purpose_name: worker_scpoe_purpose_name,
+      worker_scope_purpose_name: worker_scope_purpose_name,
       scope_peers_list: scope_peers_list,
       broadcast_request_response: (data_bytes, on_a_worker_response, on_finish) => {
         const decorated_data_bytes = Buf.concat([
@@ -177,7 +177,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
       }
     });
 
-    this._worker_scopes_dict[worker_scpoe_purpose_name] = worker_scope;
+    this._worker_scopes_dict[worker_scope_purpose_name] = worker_scope;
     inner_callback(false, worker_scope);
   });
   callback(false, this._worker_scope_manager);

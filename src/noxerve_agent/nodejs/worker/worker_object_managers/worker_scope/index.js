@@ -33,20 +33,19 @@ function WorkerScopeManager(worker_subprotocol_object_managers) {
 }
 
 /**
- * @callback module:WorkerScopeManager~callback_of_create_worker_socket
- * @param {object} worker_socket
+ * @callback module:WorkerScopeManager~callback_of_create
+ * @param {object} worker_scope
  * @param {error} error
  */
 /**
  * @memberof module:WorkerScopeManager
- * @param {string} worker_socket_purpose_name
- * @param {noxerve_supported_data_type} worker_socket_purpose_parameter - The purpose for this worker socket. Along with it's parameter.
- * @param {integer} remote_worker_id - The worker that you want to communicate with.
- * @param {module:Worker~callback_of_create_worker_socket} callback
- * @description Create a worker socket in order to communicate with another worker.
+ * @param {string} worker_scope_purpose_name - The purpose for this worker scope.
+ * @param {list} worker_peers_worker_id_list - The worker peers that you want to communicate with.
+ * @param {module:Worker~callback_of_create} callback
+ * @description Create a worker scope in order to communicate with another worker.
  */
-WorkerScopeManager.prototype.create = function(worker_scpoe_purpose_name, worker_peers_worker_id_list, callback) {
-  this._worker_subprotocol_object_managers.worker_scope.create(worker_scpoe_purpose_name, worker_peers_worker_id_list, callback);
+WorkerScopeManager.prototype.create = function(worker_scope_purpose_name, worker_peers_worker_id_list, callback) {
+  this._worker_subprotocol_object_managers.worker_scope.create(worker_scope_purpose_name, worker_peers_worker_id_list, callback);
 }
 
 module.exports = {

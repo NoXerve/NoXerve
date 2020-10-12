@@ -164,21 +164,40 @@ WorkerGroup.prototype.resumeAyncQueue = function(callback) {
 
 // pause, destroy
 // managed by AyncQueue object itself.
-
-
+// [Flag]
 WorkerGroup.prototype.destroy = function(callback) {
 
 }
 
-/**
- * @memberof module:WorkerGroup
- * @param {buffer} synchronize_information
- * @return {buffer} synchronize_acknowledgement_information
- * @description Synchronize handshake from remote emitter.
- */
-WorkerGroup.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
+// [Flag]
+WorkerGroup.prototype.start = function(create_tunnel, on_tunnel_create, callback) {
+  console.log(123);
+  on_tunnel_create((group_peer_id, tunnel) => {
+    console.log(group_peer_id);
+    tunnel.on('data', (data) => {
+      console.log(data);
+    });
+  });
+  create_tunnel(this._group_peers_list[0], (error, tunnel)=> {
+    console.log(error);
+    tunnel.send(Buf.from([0x00, 0x01, 0x02]));
+  });
+}
+
+// [Flag]
+WorkerGroup.prototype.close = function() {
 
 }
+
+// /**
+//  * @memberof module:WorkerGroup
+//  * @param {buffer} synchronize_information
+//  * @return {buffer} synchronize_acknowledgement_information
+//  * @description Synchronize handshake from remote emitter.
+//  */
+// WorkerGroup.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
+//
+// }
 
 /**
  * @callback module:WorkerGroup~callback_of_on

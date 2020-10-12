@@ -14,6 +14,7 @@
 const Errors = require('../errors');
 const WorkerSocketManager = require('./worker_object_managers/worker_socket');
 const WorkerScopeManager = require('./worker_object_managers/worker_scope');
+const WorkerGroupManager = require('./worker_object_managers/worker_group');
 
 /**
  * @constructor module:Worker
@@ -73,15 +74,20 @@ function Worker(settings) {
  */
 Worker.prototype.start = function(callback) {
   if(this._event_listeners['worker-subprotocol-managers-request']) {
-    // Request for worker socket. With < 256 register_code.
-    this._event_listeners['worker-subprotocol-managers-request'](WorkerSocketManager.register_code, (error, worker_subprotocol_object_managers)=> {
-      this._worker_object_managers['worker_socket'] = new WorkerSocketManager.module(worker_subprotocol_object_managers);
-      // Request for worker scope. With < 256 register_code.
-      this._event_listeners['worker-subprotocol-managers-request'](WorkerScopeManager.register_code, (error, worker_subprotocol_object_managers)=> {
-        this._worker_object_managers['worker_scope'] = new WorkerScopeManager.module(worker_subprotocol_object_managers);
-        if (callback) callback(error);
+    // Request for worker group. With < 256 register_code.
+    this._event_listeners['worker-subprotocol-managers-request'](WorkerGroupManager.register_code, (error, worker_subprotocol_object_managers)=> {
+      this._worker_object_managers['worker_group'] = new WorkerGroupManager.module(worker_subprotocol_object_managers);
+      // Request for worker socket. With < 256 register_code.
+      this._event_listeners['worker-subprotocol-managers-request'](WorkerSocketManager.register_code, (error, worker_subprotocol_object_managers)=> {
+        this._worker_object_managers['worker_socket'] = new WorkerSocketManager.module(worker_subprotocol_object_managers);
+        // Request for worker scope. With < 256 register_code.
+        this._event_listeners['worker-subprotocol-managers-request'](WorkerScopeManager.register_code, (error, worker_subprotocol_object_managers)=> {
+          this._worker_object_managers['worker_scope'] = new WorkerScopeManager.module(worker_subprotocol_object_managers);
+          if (callback) callback(error);
+        });
       });
     });
+
   }
   else {
     const error = new Errors.ERR_NOXERVEAGENT_WORKER('Worker module starting failed. Probably because protocol module has\'t started.');
@@ -179,19 +185,35 @@ Worker.prototype.onWorkerSocketCreate = function(worker_socket_purpose_name, lis
 }
 
 /**
- * @callback module:Worker~callback_of_create_worker_socket
+ * @callback module:Worker~callback_of_create_worker_scope
  * @param {object} worker_scope
  * @param {error} error
  */
 /**
  * @memberof module:Worker
- * @param {string} worker_scpoe_purpose_name - The purpose for this worker scope.
+ * @param {string} worker_scope_purpose_name - The purpose for this worker scope.
  * @param {list} worker_peers_worker_id_list - The worker peers that you want to communicate with.
- * @param {module:Worker~callback_of_create_worker_socket} callback
+ * @param {module:Worker~callback_of_create_worker_scope} callback
  * @description Create a worker scope in order to communicate with another worker.
  */
-Worker.prototype.createWorkerScope = function(worker_scpoe_purpose_name, worker_peers_worker_id_list, callback) {
-  this._worker_object_managers.worker_scope.create(worker_scpoe_purpose_name, worker_peers_worker_id_list, callback);
+Worker.prototype.createWorkerScope = function(worker_scope_purpose_name, worker_peers_worker_id_list, callback) {
+  this._worker_object_managers.worker_scope.create(worker_scope_purpose_name, worker_peers_worker_id_list, callback);
+}
+
+/**
+ * @callback module:Worker~callback_of_create_worker_group
+ * @param {object} worker_group
+ * @param {error} error
+ */
+/**
+ * @memberof module:Worker
+ * @param {string} worker_group_purpose_name - The purpose for this worker group.
+ * @param {list} worker_peers_worker_id_list - The worker peers that you want to communicate with.
+ * @param {module:Worker~callback_of_create_worker_group} callback
+ * @description Create a worker group in order to communicate with another worker.
+ */
+Worker.prototype.createWorkerGroup = function(worker_group_purpose_name, worker_peers_worker_id_list, callback) {
+  this._worker_object_managers.worker_group.create(worker_group_purpose_name, worker_peers_worker_id_list, callback);
 }
 
 /**

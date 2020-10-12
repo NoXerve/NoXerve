@@ -116,7 +116,7 @@ WorkerSocketProtocol.prototype.start = function(callback) {
     this._hash_manager.hashString4Bytes(string);
   });
   this._worker_socket_manager.on('worker-socket-create-request', // Create worker socket.
-  (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_worker_id, callback) => {
+  (worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_worker_id, inner_callback) => {
     const worker_socket_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_socket_purpose_name);
     const worker_socket_purpose_parameter_bytes = this._nsdt_embedded_protocol.encode(worker_socket_purpose_parameter);
     const my_worker_authenticity_bytes = this._worker_protocol_actions.encodeAuthenticityBytes();
@@ -132,7 +132,7 @@ WorkerSocketProtocol.prototype.start = function(callback) {
 
     const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
       if (open_handshanke_error) {
-        callback(open_handshanke_error);
+        inner_callback(open_handshanke_error);
         next(false);
       } else if (synchronize_acknowledgement_information[0] === this._worker_global_protocol_codes.accept[0]) {
         const remote_worker_peer_authenticity_bytes = synchronize_acknowledgement_information.slice(1);
@@ -148,29 +148,29 @@ WorkerSocketProtocol.prototype.start = function(callback) {
       } else if (synchronize_acknowledgement_information[0] === this._worker_global_protocol_codes.reject[0]
       ) {
         if (synchronize_acknowledgement_information[1] === this._worker_global_protocol_codes.authentication_reason_reject_2_bytes[1]) {
-          callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'));
+          inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'));
           next(false);
 
         } else {
-          callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'));
+          inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'));
           next(false);
         }
       } else {
-        callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'));
+        inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'));
         next(false);
       }
     };
 
     const finish_handshake = (error, tunnel) => {
       if (error) {
-        callback(error);
+        inner_callback(error);
       } else {
         if (_is_authenticity_valid) {
           const worker_socket = new WorkerSocket();
           this._handleTunnel(error, worker_socket, tunnel);
-          callback(error, worker_socket);
+          inner_callback(error, worker_socket);
         } else {
-          callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Remote worker authentication failed.'));
+          inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Remote worker authentication failed.'));
         }
       }
     };

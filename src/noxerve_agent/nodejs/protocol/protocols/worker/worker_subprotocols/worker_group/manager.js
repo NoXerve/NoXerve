@@ -33,9 +33,9 @@ function WorkerGroupManager(settings) {
  * @param {module:Worker~callback_of_create_worker_group} callback
  * @description Create a worker group in order to communicate with another worker.
  */
-WorkerGroupManager.prototype.create = function(worker_scpoe_purpose_name, worker_peers_worker_id_list, callback) {
+WorkerGroupManager.prototype.create = function(worker_scope_purpose_name, worker_peers_worker_id_list, callback) {
   // The event is registered by protocols module.
-  this._event_listeners['worker-group-create-request'](worker_scpoe_purpose_name, worker_peers_worker_id_list, callback);
+  this._event_listeners['worker-group-create-request'](worker_scope_purpose_name, worker_peers_worker_id_list, callback);
 }
 
 /**

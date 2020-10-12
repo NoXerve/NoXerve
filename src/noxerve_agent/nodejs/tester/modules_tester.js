@@ -25,6 +25,7 @@ let Tests = [
   'worker_field1_yield_test',
   'worker_scope_check_integrity',
   'nsdt_test',
+  'worker_group',
   'other_test'
 ];
 
@@ -291,6 +292,12 @@ Node2.createInterface('WebSocket', {
             if (error) console.log('[Worker module] "checkIntegrity" error.', error);
             finish('worker_scope_check_integrity');
           });
+        });
+
+        // WorkerGroup tests
+        Worker.createWorkerGroup('test_group', [1], (error, worker_group) => {
+          if (error) console.log('[Worker module] "test_group" error.', error);
+          finish('worker_group');
         });
       });
     });
