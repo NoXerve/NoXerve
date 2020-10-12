@@ -40,26 +40,26 @@ function GlobalDeterministicRandomManager(settings) {
 
 // This is awuful
 GlobalDeterministicRandomManager.prototype._base10 = function (base64_result, UseBigInt) {
-    // It's a multi to one function
-    let result = 0;
-    for(let i=0; i<base64_result.length; i++){
-        result *= 10;
-        result += base64_result.charCodeAt(i);
-        if(!UseBigInt) result = result%Number.MAX_SAFE_INTEGER;
-    }
+  // It's a multi to one function
+  let result = 0;
+  for(let i=0; i<base64_result.length; i++){
+    result *= 10;
+    result += base64_result.charCodeAt(i);
+    if(!UseBigInt) result = result%Number.MAX_SAFE_INTEGER;
+  }
 
-    return result;
+  return result;
 }
 
 GlobalDeterministicRandomManager.prototype._isInputValid = function(begin_int, end_int, list_length) {
-    if (begin_int > end_int) {
-        return false;
-    }
-    if (list_length > (end_int - begin_int + 1)) {
-        return false;
-    }
+  if (begin_int > end_int) {
+    return false;
+  }
+  if (list_length > (end_int - begin_int + 1)) {
+    return false;
+  }
 
-    return true;
+  return true;
 }
 
 // [Flag]
