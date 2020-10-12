@@ -5,9 +5,16 @@
  * @copyright 2019-2020 nooxy. All Rights Reserved.
  */
 
+/*
+TODO k is normally below 20
+TODO initial values could be arbitary numbers, [0,M)
+TODO seed is [1,M)
+small k, large M could cause bad results?
+ */
+
 'use strict';
 /**
- * The k-th orderAdditive Congruential Random Number (ACORN) generator.
+ * The k-th order Additive Congruential Random Number (ACORN) generator.
  */
 function ACORN() {
     this.precision_multiplier = 1;

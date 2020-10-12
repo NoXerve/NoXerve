@@ -38,27 +38,28 @@ function GlobalDeterministicRandomManager(settings) {
   this._static_global_random_seed_4096bytes = settings.static_global_random_seed_4096bytes;
 }
 
-GlobalDeterministicRandomManager.prototype._base10 = function(base64_result) {
-  // It's a multi to one function
-  let result = 0;
-  for (let i = 0; i < base64_result.length; i++) {
-    result *= 10;
-    result += base64_result.charCodeAt(i);
-    result = result % Number.MAX_SAFE_INTEGER;
-  }
+// This is awuful
+GlobalDeterministicRandomManager.prototype._base10 = function (base64_result, UseBigInt) {
+    // It's a multi to one function
+    let result = 0;
+    for(let i=0; i<base64_result.length; i++){
+        result *= 10;
+        result += base64_result.charCodeAt(i);
+        if(!UseBigInt) result = result%Number.MAX_SAFE_INTEGER;
+    }
 
-  return result;
+    return result;
 }
 
 GlobalDeterministicRandomManager.prototype._isInputValid = function(begin_int, end_int, list_length) {
-  if (begin_int > end_int) {
-    return false;
-  }
-  if (list_length > (end_int - begin_int + 1)) {
-    return false;
-  }
+    if (begin_int > end_int) {
+        return false;
+    }
+    if (list_length > (end_int - begin_int + 1)) {
+        return false;
+    }
 
-  return true;
+    return true;
 }
 
 // [Flag]
@@ -90,7 +91,7 @@ GlobalDeterministicRandomManager.prototype.generateIntegerListInRange = function
     return;
   }
 
-  let seed = this._base10(hash('sha1').update(String(initialization_vector_bytes)).digest('base64'));
+  let seed = this._base10(hash('sha1').update(String(initialization_vector_bytes)).digest('base64'), false);
   // console.log('seed = ' + seed);
   let result = ACORN.random(seed, list_length);
   // console.log('seed in ACORN = ' + ACORN.seed);
@@ -118,7 +119,7 @@ GlobalDeterministicRandomManager.prototype.generateUniqueIntegerListInRange = fu
   }
   // begin + (seed*i) mod length
 
-  let seed = this._base10(hash('sha1').update(String(initialization_vector_bytes)).digest('base64'));
+  let seed = this._base10(hash('sha1').update(String(initialization_vector_bytes)).digest('base64'), false);
   // console.log('seed = ' + seed);
 
   callback(false, result);
