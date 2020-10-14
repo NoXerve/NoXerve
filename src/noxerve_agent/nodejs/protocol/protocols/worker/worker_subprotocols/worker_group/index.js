@@ -116,13 +116,6 @@ WorkerGroupProtocol.prototype.close = function(callback) {
 WorkerGroupProtocol.prototype.start = function(callback) {
   this._worker_group_manager.on('worker-group-create-request', (worker_group_purpose_name, group_peers_list, inner_callback) => {
     if (group_peers_list.length <= MaxGroupPeersCount) {
-      const worker_group = new WorkerGroup({
-        inactive_timeout_ms: -1,
-        group_peers_list: group_peers_list,
-        purpose_name: worker_group_purpose_name,
-
-      });
-
       let _tunnel_create_listener;
 
       const create_tunnel = (group_peer_id, create_tunnel_callback) => {
@@ -205,7 +198,16 @@ WorkerGroupProtocol.prototype.start = function(callback) {
         });
       };
 
-      worker_group.start(create_tunnel, on_tunnel_create, (error)=> {
+      const worker_group = new WorkerGroup({
+        inactive_timeout_ms: -1,
+        group_peers_list: group_peers_list,
+        group_peers_count: group_peers_list.length,
+        purpose_name: worker_group_purpose_name,
+        create_tunnel: create_tunnel,
+        on_tunnel_create: on_tunnel_create
+      });
+
+      worker_group.start((error)=> {
         inner_callback(error, worker_group);
       });
     } else {

@@ -16,7 +16,8 @@
  * @module AsyncQueue
  */
 
-const Errors = require('../../errors');
+const Errors = require('../../../../../../errors');
+
 
 /**
  * @constructor module:AsyncQueue
@@ -72,4 +73,7 @@ AsyncQueue.prototype.emitEventListener = function(event_name, ...params) {
   return this._event_listeners[event_name].apply(null, params);
 }
 
-module.exports = AsyncQueue;
+module.exports = {
+  register_code: 2,
+  module: AsyncQueue
+};

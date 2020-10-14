@@ -167,7 +167,7 @@ WorkerSocketProtocol.prototype.start = function(callback) {
       } else {
         if (_is_authenticity_valid) {
           const worker_socket = new WorkerSocket();
-          this._handleTunnel(error, worker_socket, tunnel);
+          this._setupTunnel(error, worker_socket, tunnel);
           inner_callback(error, worker_socket);
         } else {
           inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Remote worker authentication failed.'));
@@ -187,7 +187,7 @@ WorkerSocketProtocol.prototype.start = function(callback) {
  * @param {tunnel} tunnel
  * @description Method that handle worker socket of worker socket protocol from worker socket protocol module.
  */
-WorkerSocketProtocol.prototype._handleTunnel = function(error, worker_socket, tunnel) {
+WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tunnel) {
   if (error) tunnel.close();
   else {
     this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy) => {
@@ -580,7 +580,7 @@ WorkerSocketProtocol.prototype.synchronize = function(synchronize_information, o
       onAcknowledge((acknowledge_information, tunnel) => {
         if (acknowledge_information[0] === this._worker_global_protocol_codes.accept[0]) {
           const worker_socket = new WorkerSocket();
-          this._handleTunnel(error, worker_socket, tunnel);
+          this._setupTunnel(error, worker_socket, tunnel);
           this._worker_socket_manager.emitEventListener('worker-socket-create-' + worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_worker_id, worker_socket);
         } else {
           tunnel.close();

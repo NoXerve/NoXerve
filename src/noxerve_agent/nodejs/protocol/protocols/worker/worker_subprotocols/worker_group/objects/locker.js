@@ -11,7 +11,7 @@
  * @module Locker
  */
 
-const Errors = require('../../errors');
+const Errors = require('../../../../../../errors');
 
 /**
  * @constructor module:Locker
@@ -33,7 +33,7 @@ function Locker(settings) {
    * @private
    */
   this._event_listeners = {
-    'pause'
+    pause: null
   };
 }
 
@@ -75,4 +75,7 @@ Locker.prototype.emitEventListener = function(event_name, ...params) {
   return this._event_listeners[event_name].apply(null, params);
 }
 
-module.exports = Locker;
+module.exports = {
+  register_code: 0,
+  module: Locker
+};

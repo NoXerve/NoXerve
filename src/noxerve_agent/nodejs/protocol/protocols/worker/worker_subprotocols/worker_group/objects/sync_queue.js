@@ -16,7 +16,7 @@
  * @module SyncQueue
  */
 
-const Errors = require('../../errors');
+const Errors = require('../../../../../../errors');
 
 /**
  * @constructor module:SyncQueue
@@ -46,7 +46,7 @@ function SyncQueue(settings) {
    * @type {object}
    * @private
    */
-  this._push_transaction_lock = ;
+  this._push_transaction_lock = null;
 }
 
 SyncQueue.prototype.push = function(event_name, callback) {
@@ -76,4 +76,7 @@ SyncQueue.prototype.emitEventListener = function(event_name, ...params) {
   return this._event_listeners[event_name].apply(null, params);
 }
 
-module.exports = SyncQueue;
+module.exports = {
+  register_code: 1,
+  module: SyncQueue
+};
