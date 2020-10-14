@@ -17,7 +17,7 @@ TODO uesless constructor
 /**
  * The k-th order Additive Congruential Random Number (ACORN) generator.
  */
-function acorn() {
+function ACORN() {
 	this.precision_multiplier = 1;
 	this.K = 10000;
 	this.N = 1;
@@ -27,14 +27,14 @@ function acorn() {
 	this.auto_correct_seed = true;
 
 	// constructor <-- wrong
-	function acorn(precision_multiplier, order, auto_correct_seed) {
+	function ACORN(precision_multiplier, order, auto_correct_seed) {
 		this.precision_multiplier = precision_multiplier;
 		this.K = order;
 		this.auto_correct_seed = auto_correct_seed;
 	}
 }
 
-acorn.prototype.IsInputValid = function(seed, length) {
+ACORN.prototype.IsInputValid = function(seed, length) {
 	if (Number.isNaN(seed)) {
 		console.log('Invalid seed. Must be a number.');
 		return false;
@@ -64,7 +64,7 @@ acorn.prototype.IsInputValid = function(seed, length) {
  * @param  {integer} order                Order. Default is 10000.
  * @param  {boolean} auto_correct_seed    An option to auto correct even seed. Default is true.
  */
-acorn.prototype.setProperty = function(precision_multiplier, order, auto_correct_seed) {
+ACORN.prototype.setProperty = function(precision_multiplier, order, auto_correct_seed) {
 	this.precision_multiplier = precision_multiplier;
 	this.K = order;
 	this.auto_correct_seed = auto_correct_seed;
@@ -75,7 +75,7 @@ acorn.prototype.setProperty = function(precision_multiplier, order, auto_correct
  * @param  {integer} length Length of the returned array
  * @return {Array}          Generated numbers.
  */
-acorn.prototype.random = function(seed, length) {
+ACORN.prototype.random = function(seed, length) {
 	seed = seed % this.M;
 	this.seed = seed;
 	if (!this.IsInputValid(this.seed, length)) return undefined;
@@ -103,7 +103,7 @@ acorn.prototype.random = function(seed, length) {
 	return Y2;
 }
 
-//let ac = new acorn();
+//let ac = new ACORN();
 //console.log(ac.random(1000000, 10));
 
-module.exports = acorn
+module.exports = Acorn;
