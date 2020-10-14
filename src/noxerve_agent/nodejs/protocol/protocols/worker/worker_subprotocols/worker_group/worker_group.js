@@ -181,7 +181,7 @@ WorkerGroup.prototype._registerObjectIdOnData = function(object_register_code, o
 }
 
 // [Flag]
-WorkerGroup.prototype._degisterObjectIdOnData = function(object_register_code, object_id_8bytes) {
+WorkerGroup.prototype._unregisterObjectIdOnData = function(object_register_code, object_id_8bytes) {
   delete this._on_data_object_register_code_object_id_dict[object_register_code][object_id_8bytes.toString()];
 }
 
@@ -296,7 +296,10 @@ WorkerGroup.prototype._onHandShakeWithObjectId = function(object_register_code_b
 // Locker
 // create by a group peer
 WorkerGroup.prototype.createLocker = function(locker_name, locker_parameter, callback) {
-
+  // const locker = new Locker({
+  //   locker_name: locker_name,
+  //   locker_parameter: locker_parameter
+  // });
 }
 
 // resume by all group peers, static_global_random_seed_4096bytes decides exact one peer to handle.

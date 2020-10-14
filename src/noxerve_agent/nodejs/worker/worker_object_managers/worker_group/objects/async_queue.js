@@ -1,5 +1,5 @@
 /**
- * @file NoXerveAgent AsyncQueue file. [locker_scope.js]
+ * @file NoXerveAgent AsyncQueue file. [async_queue.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
  * @copyright 2019-2020 nooxy. All Rights Reserved.
