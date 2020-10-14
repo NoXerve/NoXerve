@@ -120,10 +120,12 @@ function WorkerGroup(settings) {
  * @private
  */
 WorkerGroup.prototype._ProtocolCodes = {
-
+  onetime_data: Buf.from([0x00]),
+  request_response: Buf.from([0x01]),
+  handshake: Buf.from([0x01])
 };
 
-WorkerGroup.prototype._sendToGroupPeerId = function(object_register_code_byte, object_id_8bytes, group_peer_id, data_bytes, callback) {
+WorkerGroup.prototype._sendWithObjectIdWithoutProtocolCodePrefix = function(object_register_code_byte, object_id_8bytes, group_peer_id, data_bytes, callback) {
   this._group_peer_tunnel_dict[group_peer_id].tunnel.send(Buf.concat([
     object_register_code_byte,
     object_id_8bytes,
@@ -161,7 +163,7 @@ WorkerGroup.prototype._setupTunnelWithObjectIdPrefix = function(group_peer_id, t
     const _group_peer_id = to_be_sent_informations[2];
     const _data_bytes = to_be_sent_informations[3];
     const _callback = to_be_sent_informations[4];
-    this._sendToGroupPeerId(_object_register_code_byte, _object_id_8bytes, _group_peer_id, _data_bytes, _callback);
+    this._sendWithObjectIdWithoutProtocolCodePrefix(_object_register_code_byte, _object_id_8bytes, _group_peer_id, _data_bytes, _callback);
   });
 
   // Change status.
@@ -194,7 +196,7 @@ WorkerGroup.prototype._sendWithObjectIdToGroupPeer = function(object_register_co
 
   // Check if tunnel already created.
   if(this._group_peer_tunnel_dict[group_peer_id].status === 2) {
-    this._sendToGroupPeerId(object_register_code_byte, object_id_8bytes, group_peer_id, data_bytes, callback);
+    this._sendWithObjectIdWithoutProtocolCodePrefix(object_register_code_byte, object_id_8bytes, group_peer_id, data_bytes, callback);
   }
   // Add to queue.
   else if(this._group_peer_tunnel_dict[group_peer_id].status === 1) {
@@ -225,13 +227,69 @@ WorkerGroup.prototype._sendWithObjectIdToGroupPeer = function(object_register_co
   }
 }
 
+// Onetime data
+
 // [Flag]
-WorkerGroup.prototype._multicastHandShake = function(object_register_code_byte, object_id_8bytes, callback) {
+WorkerGroup.prototype._sendWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
 
 }
 
 // [Flag]
-WorkerGroup.prototype._broadcastHandShake = function(object_register_code_byte, object_id_8bytes, callback) {
+WorkerGroup.prototype._multicastWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
+
+}
+
+// [Flag]
+WorkerGroup.prototype._broadcastWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
+
+}
+
+// [Flag]
+WorkerGroup.prototype._onDataWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
+
+}
+
+// Request response
+
+// [Flag]
+WorkerGroup.prototype._requestResponseWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
+
+}
+
+// [Flag]
+WorkerGroup.prototype._multicastRequestResponseWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
+
+}
+
+// [Flag]
+WorkerGroup.prototype._broadcastRequestResponseWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
+
+}
+
+// [Flag]
+WorkerGroup.prototype._onRequestResponseWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
+
+}
+
+// Handshake
+
+// [Flag]
+WorkerGroup.prototype._handshakeWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
+
+}
+
+// [Flag]
+WorkerGroup.prototype._multicastHandShakeWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
+
+}
+
+// [Flag]
+WorkerGroup.prototype._broadcastHandShakeWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
+
+}
+
+// [Flag]
+WorkerGroup.prototype._onHandShakeWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
 
 }
 
