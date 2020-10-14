@@ -1,3 +1,6 @@
+const Locker = require('./objects/locker');
+const SyncQueue = require('./objects/sync_queue');
+const AsyncQueue = require('./objects/async_queue');
 
 // Locker
 // create by a group peer

@@ -106,4 +106,4 @@ ACORN.prototype.random = function(seed, length) {
 //let ac = new ACORN();
 //console.log(ac.random(1000000, 10));
 
-module.exports = Acorn;
+module.exports = ACORN;

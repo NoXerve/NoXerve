@@ -13,9 +13,6 @@
 
 const Errors = require('../../../../../errors');
 const Buf = require('../../../../../buffer');
-const Locker = require('./objects/locker');
-const SyncQueue = require('./objects/sync_queue');
-const AsyncQueue = require('./objects/async_queue');
 
 /**
  * @constructor module:WorkerGroup
@@ -111,7 +108,7 @@ function WorkerGroup(settings) {
    * @type {object}
    * @private
    */
-  this._on_data_object_register_code_object_id_dict = {};
+  this._on_data_channel_type_and_id_dict = {};
 }
 
 /**
@@ -125,16 +122,16 @@ WorkerGroup.prototype._ProtocolCodes = {
   handshake: Buf.from([0x01])
 };
 
-WorkerGroup.prototype._sendWithObjectIdWithoutProtocolCodePrefix = function(object_register_code_byte, object_id_8bytes, group_peer_id, data_bytes, callback) {
+WorkerGroup.prototype._sendWithChannelTypeAndChannelIdWithoutProtocolCodePrefix = function(channel_type_code_byte, channel_id_8bytes, group_peer_id, data_bytes, callback) {
   this._group_peer_tunnel_dict[group_peer_id].tunnel.send(Buf.concat([
-    object_register_code_byte,
-    object_id_8bytes,
+    channel_type_code_byte,
+    channel_id_8bytes,
     data_bytes
   ]), callback);
 };
 
 // [Flag]
-WorkerGroup.prototype._setupTunnelWithObjectIdPrefix = function(group_peer_id, tunnel) {
+WorkerGroup.prototype._setupTunnelWithChannelTypeAndChannelIdPrefix = function(group_peer_id, tunnel) {
   // Register tunnel.
   this._group_peer_tunnel_dict[group_peer_id].tunnel = tunnel;
 
@@ -147,10 +144,10 @@ WorkerGroup.prototype._setupTunnelWithObjectIdPrefix = function(group_peer_id, t
   });
 
   tunnel.on('data', (data) => {
-    const object_register_code = data[0];
-    const object_id_8bytes = data.slice(1, 9);
+    const channel_type_code = data[0];
+    const channel_id_8bytes = data.slice(1, 9);
     const data_bytes = data.slice(9);
-    this._on_data_object_register_code_object_id_dict[object_register_code][object_id_8bytes.toString()](group_peer_id, data_bytes);
+    this._on_data_channel_type_and_id_dict[channel_type_code + channel_id_8bytes.toString()](group_peer_id, data_bytes);
   });
 
   // Start flushing to be sent list.
@@ -158,12 +155,12 @@ WorkerGroup.prototype._setupTunnelWithObjectIdPrefix = function(group_peer_id, t
   // Clear to be sent list.
   this._group_peer_tunnel_dict[group_peer_id].to_be_sent_list = [];
   to_be_sent_list.forEach((to_be_sent_informations) => {
-    const _object_register_code_byte = to_be_sent_informations[0];
-    const _object_id_8bytes = to_be_sent_informations[1];
+    const _channel_type_code_byte = to_be_sent_informations[0];
+    const _channel_id_8bytes = to_be_sent_informations[1];
     const _group_peer_id = to_be_sent_informations[2];
     const _data_bytes = to_be_sent_informations[3];
     const _callback = to_be_sent_informations[4];
-    this._sendWithObjectIdWithoutProtocolCodePrefix(_object_register_code_byte, _object_id_8bytes, _group_peer_id, _data_bytes, _callback);
+    this._sendWithChannelTypeAndChannelIdWithoutProtocolCodePrefix(_channel_type_code_byte, _channel_id_8bytes, _group_peer_id, _data_bytes, _callback);
   });
 
   // Change status.
@@ -176,19 +173,19 @@ WorkerGroup.prototype._setupTunnelWithObjectIdPrefix = function(group_peer_id, t
 // }
 
 // [Flag]
-WorkerGroup.prototype._registerObjectIdOnData = function(object_register_code, object_id_8bytes, on_data_listener) {
-  this._on_data_object_register_code_object_id_dict[object_register_code][object_id_8bytes.toString()] = on_data_listener;
+WorkerGroup.prototype._registerChannelTypeAndChannelIdOnData = function(channel_type_code, channel_id_8bytes, on_data_listener) {
+  this._on_data_channel_type_and_id_dict[channel_type_code + channel_id_8bytes.toString()] = on_data_listener;
 }
 
 // [Flag]
-WorkerGroup.prototype._unregisterObjectIdOnData = function(object_register_code, object_id_8bytes) {
-  delete this._on_data_object_register_code_object_id_dict[object_register_code][object_id_8bytes.toString()];
+WorkerGroup.prototype._unregisterChannelTypeAndChannelIdOnData = function(channel_type_code, channel_id_8bytes) {
+  delete this._on_data_channel_type_and_id_dict[channel_type_code + channel_id_8bytes.toString()];
 }
 
 // [Flag]
-WorkerGroup.prototype._sendWithObjectIdToGroupPeer = function(object_register_code, object_id_8bytes, group_peer_id, data_bytes, callback) {
+WorkerGroup.prototype._sendWithChannelTypeAndChannelIdToGroupPeer = function(channel_type_code, channel_id_8bytes, group_peer_id, data_bytes, callback) {
   console.log(this._group_peer_tunnel_dict, group_peer_id);
-  const object_register_code_byte = Buf.from([object_register_code]);
+  const channel_type_code_byte = Buf.from([channel_type_code]);
   // tunnel status
   // 0: not created
   // 1: creating
@@ -196,15 +193,15 @@ WorkerGroup.prototype._sendWithObjectIdToGroupPeer = function(object_register_co
 
   // Check if tunnel already created.
   if(this._group_peer_tunnel_dict[group_peer_id].status === 2) {
-    this._sendWithObjectIdWithoutProtocolCodePrefix(object_register_code_byte, object_id_8bytes, group_peer_id, data_bytes, callback);
+    this._sendWithChannelTypeAndChannelIdWithoutProtocolCodePrefix(channel_type_code_byte, channel_id_8bytes, group_peer_id, data_bytes, callback);
   }
   // Add to queue.
   else if(this._group_peer_tunnel_dict[group_peer_id].status === 1) {
-    this._group_peer_tunnel_dict[group_peer_id].to_be_sent_list.push([object_register_code_byte, object_id_8bytes, group_peer_id, data_bytes, callback]);
+    this._group_peer_tunnel_dict[group_peer_id].to_be_sent_list.push([channel_type_code_byte, channel_id_8bytes, group_peer_id, data_bytes, callback]);
   }
   // Otherwise create it.
   else {
-    this._group_peer_tunnel_dict[group_peer_id].to_be_sent_list.push([object_register_code_byte, object_id_8bytes, group_peer_id, data_bytes, callback]);
+    this._group_peer_tunnel_dict[group_peer_id].to_be_sent_list.push([channel_type_code_byte, channel_id_8bytes, group_peer_id, data_bytes, callback]);
     this._create_tunnel(group_peer_id, (error, tunnel)=> {
       if(error) {
         // Clear to be sent list
@@ -219,7 +216,7 @@ WorkerGroup.prototype._sendWithObjectIdToGroupPeer = function(object_register_co
       }
       else {
         // Change status to created.
-        this._setupTunnelWithObjectIdPrefix(group_peer_id, tunnel);
+        this._setupTunnelWithChannelTypeAndChannelIdPrefix(group_peer_id, tunnel);
       }
     });
     // Change status to creating.
@@ -227,120 +224,8 @@ WorkerGroup.prototype._sendWithObjectIdToGroupPeer = function(object_register_co
   }
 }
 
-// Onetime data
-
 // [Flag]
-WorkerGroup.prototype._sendWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
-
-}
-
-// [Flag]
-WorkerGroup.prototype._multicastWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
-
-}
-
-// [Flag]
-WorkerGroup.prototype._broadcastWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
-
-}
-
-// [Flag]
-WorkerGroup.prototype._onDataWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
-
-}
-
-// Request response
-
-// [Flag]
-WorkerGroup.prototype._requestResponseWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
-
-}
-
-// [Flag]
-WorkerGroup.prototype._multicastRequestResponseWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
-
-}
-
-// [Flag]
-WorkerGroup.prototype._broadcastRequestResponseWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
-
-}
-
-// [Flag]
-WorkerGroup.prototype._onRequestResponseWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
-
-}
-
-// Handshake
-
-// [Flag]
-WorkerGroup.prototype._handshakeWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
-
-}
-
-// [Flag]
-WorkerGroup.prototype._multicastHandShakeWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
-
-}
-
-// [Flag]
-WorkerGroup.prototype._broadcastHandShakeWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
-
-}
-
-// [Flag]
-WorkerGroup.prototype._onHandShakeWithObjectId = function(object_register_code_byte, object_id_8bytes, callback) {
-
-}
-
-// Locker
-// create by a group peer
-WorkerGroup.prototype.createLocker = function(locker_name, locker_parameter, callback) {
-  // const locker = new Locker({
-  //   locker_name: locker_name,
-  //   locker_parameter: locker_parameter
-  // });
-}
-
-// resume by all group peers, static_global_random_seed_4096bytes decides exact one peer to handle.
-WorkerGroup.prototype.resumeLocker = function(callback) {
-
-}
-
-// pause, destroy
-// managed by Locker object itself.
-
-
-// SyncQueue
-// create by a group peer
-WorkerGroup.prototype.createSyncQueue = function(sync_queue_name, sync_queue_parameter, callback) {
-
-}
-
-// resume by all group peers, static_global_random_seed_4096bytes decides exact one peer to handle.
-WorkerGroup.prototype.resumeSyncQueue = function(callback) {
-
-}
-
-// pause, destroy
-// managed by SyncQueue object itself.
-
-
-// AyncQueue
-// create by a group peer
-WorkerGroup.prototype.createAyncQueue = function(async_queue_name, async_queue_name_parameter, callback) {
-
-}
-
-// resume by all group peers, static_global_random_seed_4096bytes decides exact one peer to handle.
-WorkerGroup.prototype.resumeAyncQueue = function(callback) {
-
-}
-
-// pause, destroy
-// managed by AyncQueue object itself.
-// [Flag]
-WorkerGroup.prototype.destroy = function(callback) {
+WorkerGroup.prototype.createChannel = function(channel_type_code_byte, channel_id_8bytes, callback) {
 
 }
 
@@ -355,23 +240,18 @@ WorkerGroup.prototype.start = function(create_tunnel, on_tunnel_create, callback
     }
   }
 
-  // Initiallize worker group objects.
-  this._on_data_object_register_code_object_id_dict[Locker.register_code] = {};
-  this._on_data_object_register_code_object_id_dict[SyncQueue.register_code] = {};
-  this._on_data_object_register_code_object_id_dict[AsyncQueue.register_code] = {};
-
   // Initiallize on data.
   this._on_tunnel_create((group_peer_id, tunnel) => {
     console.log(group_peer_id);
-    this._setupTunnelWithObjectIdPrefix(group_peer_id, tunnel);
+    this._setupTunnelWithChannelTypeAndChannelIdPrefix(group_peer_id, tunnel);
   });
 
   console.log(123);
-  this._registerObjectIdOnData(1, Buf.from([0x00, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x02]), (group_peer_id, data)=> {
+  this._registerChannelTypeAndChannelIdOnData(1, Buf.from([0x00, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x02]), (group_peer_id, data)=> {
     console.log(group_peer_id, data);
   });
 
-  this._sendWithObjectIdToGroupPeer(
+  this._sendWithChannelTypeAndChannelIdToGroupPeer(
     1,
     Buf.from([0x00, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x02]),
     1,
@@ -385,6 +265,13 @@ WorkerGroup.prototype.start = function(create_tunnel, on_tunnel_create, callback
   //   console.log(error);
   //   tunnel.send(Buf.from([0x00, 0x01, 0x02]));
   // });
+}
+
+// pause, destroy
+// managed by AyncQueue object itself.
+// [Flag]
+WorkerGroup.prototype.destroy = function(callback) {
+
 }
 
 // [Flag]
