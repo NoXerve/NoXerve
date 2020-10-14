@@ -115,7 +115,7 @@ function WorkerProtocol(settings) {
    * @private
    * @description Worker authenticity data. Avoid being hacked.
    */
-  this._worker_peers_ids_checksum_4bytes;
+  this._worker_peers_worker_ids_checksum_4bytes;
 
   /**
    * @memberof module:WorkerProtocol
@@ -146,13 +146,6 @@ function WorkerProtocol(settings) {
    * @private
    */
   this._nsdt_embedded_protocol = settings.embedded_protocols['nsdt_embedded'];
-
-  /**
-   * @memberof module:WorkerProtocol
-   * @type {object}
-   * @private
-   */
-  this._base64_to_scope_dict = {};
 
   /**
    * @memberof module:WorkerProtocol
@@ -309,7 +302,7 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
           this._my_worker_id_4bytes = null;
           this._my_worker_id_4bytes = null;
           this._my_worker_authenticity_data_bytes = null;
-          this._worker_peers_ids_checksum_4bytes = null;
+          this._worker_peers_worker_ids_checksum_4bytes = null;
           this._worker_peers_settings = {};
         }
       };
@@ -437,14 +430,14 @@ WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = func
  * @private
  */
 WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_worker_id_list) {
-  let worker_peers_ids_checksum = 0;
+  let worker_peers_worker_ids_checksum = 0;
   for (const index in peers_worker_id_list) {
     peers_worker_id_list[index] = parseInt(peers_worker_id_list[index]);
-    worker_peers_ids_checksum += peers_worker_id_list[index];
+    worker_peers_worker_ids_checksum += peers_worker_id_list[index];
   }
-  const worker_peers_ids_checksum_bytes = Buf.encodeUInt32BE(worker_peers_ids_checksum);
-  this._worker_peers_ids_checksum_4bytes = worker_peers_ids_checksum_bytes;
-  return worker_peers_ids_checksum_bytes;
+  const worker_peers_worker_ids_checksum_bytes = Buf.encodeUInt32BE(worker_peers_worker_ids_checksum);
+  this._worker_peers_worker_ids_checksum_4bytes = worker_peers_worker_ids_checksum_bytes;
+  return worker_peers_worker_ids_checksum_bytes;
 }
 
 /**
@@ -593,7 +586,7 @@ WorkerProtocol.prototype._broadcastRequestResponseToAllWorkers = function(data_b
 WorkerProtocol.prototype._encodeAuthenticityBytes = function() {
   return Buf.concat([
     this._my_worker_id_4bytes,
-    this._worker_peers_ids_checksum_4bytes,
+    this._worker_peers_worker_ids_checksum_4bytes,
     this._static_global_random_seed_checksum_4bytes,
     this._my_worker_authenticity_data_bytes
   ]);
@@ -605,7 +598,7 @@ WorkerProtocol.prototype._encodeAuthenticityBytes = function() {
  */
 WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authenticity_bytes, callback) {
   const remote_worker_peer_worker_id = Buf.decodeUInt32BE(remote_authenticity_bytes.slice(0, 4));
-  const remote_worker_peers_ids_checksum_4bytes = remote_authenticity_bytes.slice(4, 8);
+  const remote_worker_peers_worker_ids_checksum_4bytes = remote_authenticity_bytes.slice(4, 8);
   const remote_worker_peers_static_global_random_seed_checksum_4bytes = remote_authenticity_bytes.slice(8, 12);
   let remote_worker_peer_authenticity_data;
 
@@ -616,8 +609,8 @@ WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authentici
     return;
   }
 
-  // Check worker_peers_ids_checksum_4bytes.
-  if (Utils.areBuffersEqual(this._worker_peers_ids_checksum_4bytes, remote_worker_peers_ids_checksum_4bytes) &&
+  // Check worker_peers_worker_ids_checksum_4bytes.
+  if (Utils.areBuffersEqual(this._worker_peers_worker_ids_checksum_4bytes, remote_worker_peers_worker_ids_checksum_4bytes) &&
     Utils.areBuffersEqual(this._static_global_random_seed_checksum_4bytes, remote_worker_peers_static_global_random_seed_checksum_4bytes)
   ) {
     // Emit worker authentication from worker module.
@@ -854,7 +847,7 @@ WorkerProtocol.prototype.start = function(callback) {
 
     // Check the validability of imported worker_peers_settings.
     const required_fields = ['connectors_settings', 'detail'];
-    let worker_peers_ids_checksum = 0;
+    let worker_peers_worker_ids_checksum = 0;
     let include_myself = false;
     // Loop over all workers.
     for (const index in worker_peers_settings) {
@@ -862,7 +855,7 @@ WorkerProtocol.prototype.start = function(callback) {
       // Obtain keys from specified worker.
       const keys = Object.keys(worker_peers_settings[index]);
       const worker_id = parseInt(index);
-      worker_peers_ids_checksum += worker_id;
+      worker_peers_worker_ids_checksum += worker_id;
       if (worker_id === this._my_worker_id) include_myself = true;
 
       // Check worker id is integer.
@@ -889,7 +882,7 @@ WorkerProtocol.prototype.start = function(callback) {
     }
     this._worker_peers_settings = worker_peers_settings;
 
-    this._worker_peers_ids_checksum_4bytes = Buf.encodeUInt32BE(worker_peers_ids_checksum);
+    this._worker_peers_worker_ids_checksum_4bytes = Buf.encodeUInt32BE(worker_peers_worker_ids_checksum);
     // Peacefully finish the job.
     callback(false);
   });

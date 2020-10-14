@@ -116,20 +116,20 @@ WorkerScopeProtocol.prototype.close = function(callback) {
  * @description Start running WorkerScopeProtocol.
  */
 WorkerScopeProtocol.prototype.start = function(callback) {
-  this._worker_scope_manager.on('worker-scope-create-request', (worker_scope_purpose_name, scope_peers_list, inner_callback) => {
+  this._worker_scope_manager.on('worker-scope-create-request', (worker_scope_purpose_name, scope_peer_list, inner_callback) => {
     const worker_scope_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_scope_purpose_name);
     const my_worker_authenticity_bytes = this._worker_protocol_actions.encodeAuthenticityBytes();
 
     const worker_scope = new WorkerScope({
       worker_scope_purpose_name: worker_scope_purpose_name,
-      scope_peers_list: scope_peers_list,
+      scope_peer_list: scope_peer_list,
       broadcast_request_response: (data_bytes, on_a_worker_response, on_finish) => {
         const decorated_data_bytes = Buf.concat([
           this._ProtocolCodes.request_response,
           worker_scope_purpose_name_4bytes,
           data_bytes
         ]);
-        this._worker_protocol_actions.multicastRequestResponse(scope_peers_list, );
+        this._worker_protocol_actions.multicastRequestResponse(scope_peer_list, );
       },
       multicast_request_response: (worker_id_list, data_bytes, on_a_worker_response, on_finish) => {
         this._worker_protocol_actions.multicastRequestResponse(worker_id_list);
@@ -173,7 +173,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
             // Integrity passed. Broadcast integrity pass information.
           }
         };
-        this._worker_protocol_actions.multicastRequestResponse(scope_peers_list, data_bytes, on_a_worker_response, on_finish);
+        this._worker_protocol_actions.multicastRequestResponse(scope_peer_list, data_bytes, on_a_worker_response, on_finish);
       }
     });
 
@@ -200,7 +200,7 @@ WorkerScopeProtocol.prototype.synchronize = function(synchronize_information, on
 
       if (is_authenticity_valid && !error) {
         const worker_scope_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(5 + remote_worker_peer_authenticity_bytes_length, 5 + remote_worker_peer_authenticity_bytes_length + 4));
-        if(this._worker_scopes_dict[worker_scope_purpose_name] && this._worker_scopes_dict[worker_scope_purpose_name].returnScopePeersList().includes(remote_worker_peer_worker_id)) {
+        if(this._worker_scopes_dict[worker_scope_purpose_name] && this._worker_scopes_dict[worker_scope_purpose_name].returnScopePeerList().includes(remote_worker_peer_worker_id)) {
           next(Buf.concat([
             this._ProtocolCodes.integrity_check,
             this._worker_global_protocol_codes.accept,

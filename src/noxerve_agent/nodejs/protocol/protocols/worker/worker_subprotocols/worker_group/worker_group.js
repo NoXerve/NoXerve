@@ -63,38 +63,8 @@ function WorkerGroup(settings) {
    * @private
    */
   this._event_listeners = {
-
-    'connections-broken': () => {},
-
-    'locker-create': () => {},
-    'sync-queue-create': () => {},
-    'async-queue-create': () => {},
-
-    'locker-resume': () => {},
-    'sync-queue-resume': () => {},
-    'async-queue-resume': () => {},
+    'connections-broken': () => {}
   };
-
-  /**
-   * @memberof module:WorkerGroup
-   * @type {object}
-   * @private
-   */
-  this._active_locker_dict = {};
-
-  /**
-   * @memberof module:WorkerGroup
-   * @type {object}
-   * @private
-   */
-  this._active_sync_queue_dict = {};
-
-  /**
-   * @memberof module:WorkerGroup
-   * @type {object}
-   * @private
-   */
-  this._active_async_queue_dict = {};
 
   /**
    * @memberof module:WorkerGroup
@@ -117,17 +87,12 @@ function WorkerGroup(settings) {
  * @private
  */
 WorkerGroup.prototype._ProtocolCodes = {
-  onetime_data: Buf.from([0x00]),
-  request_response: Buf.from([0x01]),
-  handshake: Buf.from([0x01])
+  worker_group_global_affair: Buf.from([0x00]),
+  channel: Buf.from([0x01])
 };
 
-WorkerGroup.prototype._sendWithChannelTypeAndChannelIdWithoutProtocolCodePrefix = function(channel_type_code_byte, channel_id_8bytes, group_peer_id, data_bytes, callback) {
-  this._group_peer_tunnel_dict[group_peer_id].tunnel.send(Buf.concat([
-    channel_type_code_byte,
-    channel_id_8bytes,
-    data_bytes
-  ]), callback);
+WorkerGroup.prototype._sendToGroupPeer = function(group_peer_id, data_bytes, callback) {
+  this._group_peer_tunnel_dict[group_peer_id].tunnel.send(data_bytes, callback);
 };
 
 // [Flag]
@@ -160,7 +125,7 @@ WorkerGroup.prototype._setupTunnelWithChannelTypeAndChannelIdPrefix = function(g
     const _group_peer_id = to_be_sent_informations[2];
     const _data_bytes = to_be_sent_informations[3];
     const _callback = to_be_sent_informations[4];
-    this._sendWithChannelTypeAndChannelIdWithoutProtocolCodePrefix(_channel_type_code_byte, _channel_id_8bytes, _group_peer_id, _data_bytes, _callback);
+    this._sendToGroupPeer(_group_peer_id, Buf.concat([_channel_type_code_byte, _channel_id_8bytes, _data_bytes]), _callback);
   });
 
   // Change status.
@@ -173,12 +138,12 @@ WorkerGroup.prototype._setupTunnelWithChannelTypeAndChannelIdPrefix = function(g
 // }
 
 // [Flag]
-WorkerGroup.prototype._registerChannelTypeAndChannelIdOnData = function(channel_type_code, channel_id_8bytes, on_data_listener) {
+WorkerGroup.prototype._registerOnDataOfChannelTypeAndChannelId = function(channel_type_code, channel_id_8bytes, on_data_listener) {
   this._on_data_channel_type_and_id_dict[channel_type_code + channel_id_8bytes.toString()] = on_data_listener;
 }
 
 // [Flag]
-WorkerGroup.prototype._unregisterChannelTypeAndChannelIdOnData = function(channel_type_code, channel_id_8bytes) {
+WorkerGroup.prototype._unregisterOnDataOfChannelTypeAndChannelId = function(channel_type_code, channel_id_8bytes) {
   delete this._on_data_channel_type_and_id_dict[channel_type_code + channel_id_8bytes.toString()];
 }
 
@@ -193,7 +158,7 @@ WorkerGroup.prototype._sendWithChannelTypeAndChannelIdToGroupPeer = function(cha
 
   // Check if tunnel already created.
   if(this._group_peer_tunnel_dict[group_peer_id].status === 2) {
-    this._sendWithChannelTypeAndChannelIdWithoutProtocolCodePrefix(channel_type_code_byte, channel_id_8bytes, group_peer_id, data_bytes, callback);
+    this._sendToGroupPeer(group_peer_id, Buf.concat([_channel_type_code_byte, _channel_id_8bytes, _data_bytes]), callback);
   }
   // Add to queue.
   else if(this._group_peer_tunnel_dict[group_peer_id].status === 1) {
@@ -226,7 +191,19 @@ WorkerGroup.prototype._sendWithChannelTypeAndChannelIdToGroupPeer = function(cha
 
 // [Flag]
 WorkerGroup.prototype.createChannel = function(channel_type_code_byte, channel_id_8bytes, callback) {
+  const channel = new Channel({
+    send_to_group_peer: () => {
 
+    },
+    register_on_data: () => {
+
+    },
+    unregister_on_data: ()=> {
+
+    }
+  });
+
+  callback(false, channel);
 }
 
 // [Flag]
@@ -247,7 +224,7 @@ WorkerGroup.prototype.start = function(create_tunnel, on_tunnel_create, callback
   });
 
   console.log(123);
-  this._registerChannelTypeAndChannelIdOnData(1, Buf.from([0x00, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x02]), (group_peer_id, data)=> {
+  this._registerOnDataOfChannelTypeAndChannelId(1, Buf.from([0x00, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x02]), (group_peer_id, data)=> {
     console.log(group_peer_id, data);
   });
 

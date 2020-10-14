@@ -2,6 +2,77 @@ const Locker = require('./objects/locker');
 const SyncQueue = require('./objects/sync_queue');
 const AsyncQueue = require('./objects/async_queue');
 
+'use strict';
+
+/**
+ * @module WorkerGroup
+ */
+
+const Errors = require('../../../../../errors');
+const Buf = require('../../../../../buffer');
+
+/**
+ * @constructor module:WorkerGroup
+ * @param {object} settings
+ * @description NoXerveAgent worker's WorkerGroup object.
+ */
+
+
+function WorkerGroup(settings) {
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._settings = settings;
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._group_peers_count = settings.group_peers_count;
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._event_listeners = {
+
+    'connections-broken': () => {},
+
+    'locker-create': () => {},
+    'sync-queue-create': () => {},
+    'async-queue-create': () => {},
+
+    'locker-resume': () => {},
+    'sync-queue-resume': () => {},
+    'async-queue-resume': () => {},
+  };
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._active_locker_dict = {};
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._active_sync_queue_dict = {};
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._active_async_queue_dict = {};
+}
+
 // Locker
 // create by a group peer
 WorkerGroup.prototype.createLocker = function(locker_name, locker_parameter, callback) {

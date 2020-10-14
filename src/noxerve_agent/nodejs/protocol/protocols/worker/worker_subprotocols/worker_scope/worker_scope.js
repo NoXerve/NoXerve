@@ -33,7 +33,7 @@ function WorkerScope(settings) {
    * @type {object}
    * @private
    */
-  this._scope_peers_list = settings.scope_peers_list;
+  this._scope_peer_list = settings.scope_peer_list;
 
   /**
    * @memberof module:WorkerScope
@@ -81,13 +81,13 @@ WorkerScope.prototype.checkIntegrity = function(callback) {
  * @param {module:WorkerScope~callback_of_check_all_scope_peers_alive} callback
  * @description Check all peers alive by sending byte.
  */
-WorkerScope.prototype.returnScopePeersList = function() {
-  return this._scope_peers_list;
+WorkerScope.prototype.returnScopePeerList = function() {
+  return this._scope_peer_list;
 }
 
 /**
  * @callback module:WorkerScope~on_a_worker_response
- * @param {integer} worker_id
+ * @param {integer} scope_peer_id
  * @param {error} error
  * @param {buffer} response_bytes
  * @param {function} next - parameters are "error" and "is_finished".
@@ -95,23 +95,23 @@ WorkerScope.prototype.returnScopePeersList = function() {
 /**
  * @callback module:WorkerScope~on_finish
  * @param {error} error
- * @param {list} finished_worker_id_list
+ * @param {list} finished_scope_peer_id_list
  */
 /**
  * @memberof module:WorkerScope
- * @param {list} worker_id_list
+ * @param {list} scope_peer_id_list
  * @param {buffer} data_bytes
  * @param {module:WorkerScope~on_a_worker_response} on_a_worker_response
  * @param {module:WorkerScope~on_finish} on_finish
  * @description Worker scope multicast request response.
  */
-WorkerScope.prototype.multicastRequestResponse = function(worker_id_list, data_bytes, on_a_worker_response, on_finish) {
-  this._settings.multicast_request_response(worker_id_list, data_bytes, on_a_worker_response, on_finish);
+WorkerScope.prototype.multicastRequestResponse = function(scope_peer_id_list, data_bytes, on_a_worker_response, on_finish) {
+  this._settings.multicast_request_response(scope_peer_id_list, data_bytes, on_a_worker_response, on_finish);
 }
 
 /**
  * @callback module:WorkerScope~on_a_worker_response
- * @param {integer} worker_id
+ * @param {integer} scope_peer_id
  * @param {error} error
  * @param {buffer} response_bytes
  * @param {function} next - parameters are "error" and "is_finished".
@@ -119,11 +119,10 @@ WorkerScope.prototype.multicastRequestResponse = function(worker_id_list, data_b
 /**
  * @callback module:WorkerScope~on_finish
  * @param {error} error
- * @param {list} finished_worker_id_list
+ * @param {list} finished_scope_peer_id_list
  */
 /**
  * @memberof module:WorkerScope
- * @param {list} worker_id_list
  * @param {buffer} data_bytes
  * @param {module:WorkerScope~on_a_worker_response} on_a_worker_response
  * @param {module:WorkerScope~on_finish} on_finish
