@@ -31,7 +31,7 @@ function CallableStructureRemote(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {};
+  this._event_listener_dict = {};
 }
 
 // For nsdt protocol detecting.
@@ -42,7 +42,7 @@ function CallableStructureRemote(settings) {
 CallableStructureRemote.prototype.isCallableStructure = true;
 
 CallableStructureRemote.prototype.call = function(function_name, ...params) {
-  this._event_listeners['call'](function_name, params);
+  this._event_listener_dict['call'](function_name, params);
 }
 
 /**
@@ -56,7 +56,7 @@ CallableStructureRemote.prototype.call = function(function_name, ...params) {
  * @description CallableStructureRemote events registeration.
  */
 CallableStructureRemote.prototype.on = function(event_name, listener) {
-  this._event_listeners[event_name] = listener;
+  this._event_listener_dict[event_name] = listener;
 }
 
 /**
@@ -65,7 +65,7 @@ CallableStructureRemote.prototype.on = function(event_name, listener) {
  * @description CallableStructureRemote events emitter.
  */
 CallableStructureRemote.prototype.emitEventListener = function(event_name, ...params) {
-  this._event_listeners[event_name].apply(null, params);
+  this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = CallableStructureRemote;

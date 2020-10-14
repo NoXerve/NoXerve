@@ -58,7 +58,7 @@ function Interface(settings, new_tunnel) {
    * @private
    * @description Dictionary of event listeners.
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
     'error': (error) => {
 
     }
@@ -110,7 +110,7 @@ Interface.prototype.start = function(callback) {
               if (error) {
                 console.log('Websocket error. ', error);
                 // Emitter error event.
-                this._event_listeners['error'](error);
+                this._event_listener_dict['error'](error);
               } else {
                 ws.on('message', (message) => {
                   tunnel_emitter('data', message);
@@ -182,7 +182,7 @@ Interface.prototype.destroy = function(callback) {
  * @description Register event listener.
  */
 Interface.prototype.on = function(event_name, callback) {
-  this._event_listeners[event_name] = callback;
+  this._event_listener_dict[event_name] = callback;
 }
 
 /**
@@ -230,7 +230,7 @@ Connector.prototype.connect = function(connect_settings, new_tunnel_callback) {
       if (error) {
         console.log('Websocket error. ', error);
         // Emitter error event.
-        this._event_listeners['error'](error);
+        this._event_listener_dict['error'](error);
       }
       else {
         ws.on('open', () => {

@@ -33,7 +33,7 @@ function Service(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
     // Internal private default events.
     'service-of-activity-request': (callback) => {
       try {
@@ -44,14 +44,14 @@ function Service(settings) {
       }
     },
     'service-of-activity-purpose-exist': (activity_purpose_name) => {
-      if (this._event_listeners['activity-create-' + activity_purpose_name]) {
+      if (this._event_listener_dict['activity-create-' + activity_purpose_name]) {
         return true;
       } else {
         return false;
       }
     },
     'service-of-activity-ready': (activity_purpose_name, activity_purpose_parameter, service_of_activity) => {
-      this._event_listeners['activity-create-' + activity_purpose_name](activity_purpose_parameter, service_of_activity);
+      this._event_listener_dict['activity-create-' + activity_purpose_name](activity_purpose_parameter, service_of_activity);
     },
   };
 };
@@ -93,7 +93,7 @@ Service.prototype.close = function(callback) {
  * @description Service events registeration.
  */
 Service.prototype.on = function(event_name, listener) {
-  this._event_listeners[event_name] = listener;
+  this._event_listener_dict[event_name] = listener;
 }
 
 /**
@@ -108,8 +108,8 @@ Service.prototype.on = function(event_name, listener) {
  * @description Handle activity emitted from remote.
  */
 Service.prototype.onActivityCreate = function(activity_purpose_name, listener) {
-  this._event_listeners['activity-create-' + activity_purpose_name] = listener;
-  this._event_listeners['hash-string-request'](activity_purpose_name);
+  this._event_listener_dict['activity-create-' + activity_purpose_name] = listener;
+  this._event_listener_dict['hash-string-request'](activity_purpose_name);
 }
 
 /**
@@ -118,7 +118,7 @@ Service.prototype.onActivityCreate = function(activity_purpose_name, listener) {
  * @description Service events emitter.
  */
 Service.prototype.emitEventListener = function(event_name, ...params) {
-  return this._event_listeners[event_name].apply(null, params);
+  return this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = Service;

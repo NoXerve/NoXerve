@@ -18,7 +18,7 @@ function WorkerSocketManager(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
 
   }
 }
@@ -39,7 +39,7 @@ function WorkerSocketManager(settings) {
  */
 WorkerSocketManager.prototype.create = function(worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_worker_id, callback) {
   // The event is registered by protocols module.
-  this._event_listeners['worker-socket-create-request'](worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_worker_id, callback);
+  this._event_listener_dict['worker-socket-create-request'](worker_socket_purpose_name, worker_socket_purpose_parameter, remote_worker_peer_worker_id, callback);
 }
 
 /**
@@ -56,9 +56,9 @@ WorkerSocketManager.prototype.create = function(worker_socket_purpose_name, work
  * @description Handle worker socket emitted from remote worker.
  */
 WorkerSocketManager.prototype.onCreate = function(worker_socket_purpose_name, listener) {
-  this._event_listeners['worker-socket-create-' + worker_socket_purpose_name] = listener;
+  this._event_listener_dict['worker-socket-create-' + worker_socket_purpose_name] = listener;
   // Register worker_socket_purpose_name.
-  this._event_listeners['hash-string-request'](worker_socket_purpose_name);
+  this._event_listener_dict['hash-string-request'](worker_socket_purpose_name);
 }
 
 /**
@@ -73,7 +73,7 @@ WorkerSocketManager.prototype.onCreate = function(worker_socket_purpose_name, li
  * @description WorkerSocketManager events.
  */
 WorkerSocketManager.prototype.on = function(event_name, listener) {
-  this._event_listeners[event_name] = listener;
+  this._event_listener_dict[event_name] = listener;
 }
 
 /**
@@ -82,7 +82,7 @@ WorkerSocketManager.prototype.on = function(event_name, listener) {
  * @description WorkerSocketManager events emitter. For internal uses.
  */
 WorkerSocketManager.prototype.emitEventListener = function(event_name, ...params) {
-  return this._event_listeners[event_name].apply(null, params);
+  return this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = WorkerSocketManager;

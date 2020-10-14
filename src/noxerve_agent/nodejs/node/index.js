@@ -70,7 +70,7 @@ function Node(settings) {
    * @private
    * @description Dictionary of event listeners.
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
     'tunnel-create': (tunnel) => {
 
     },
@@ -214,14 +214,14 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
           else {
             // Get tunnel emitter and pass to interface or connector.
             tunnel.getEmitter((error, emitter) => {
-              this._event_listeners['tunnel-create'](tunnel);
+              this._event_listener_dict['tunnel-create'](tunnel);
               emitter_initializer_from_interface(error, emitter);
             });
           }
         });
       } catch (error) {
         console.log(error);
-        this._event_listeners['interface-error'](error);
+        this._event_listener_dict['interface-error'](error);
       }
     });
 
@@ -345,7 +345,7 @@ Node.prototype.createTunnel = function(interface_name, connector_settings, callb
  * @description Register event listener.
  */
 Node.prototype.on = function(event_name, callback) {
-  this._event_listeners[event_name] = callback;
+  this._event_listener_dict[event_name] = callback;
 }
 
 /**

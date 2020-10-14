@@ -38,7 +38,7 @@ function WorkerGroup(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
 
     'connections-broken': () => {},
 

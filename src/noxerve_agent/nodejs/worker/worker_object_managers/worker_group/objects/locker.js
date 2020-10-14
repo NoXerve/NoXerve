@@ -32,7 +32,7 @@ function Locker(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
     pause: null
   };
 }
@@ -63,7 +63,7 @@ Locker.prototype.destroy = function(lock_value, callback) {
  * @description Register event listener.
  */
 Locker.prototype.on = function(event_name, callback) {
-  this._event_listeners[event_name] = callback;
+  this._event_listener_dict[event_name] = callback;
 }
 
 /**
@@ -72,7 +72,7 @@ Locker.prototype.on = function(event_name, callback) {
  * @description Locker events emitter. For internal uses.
  */
 Locker.prototype.emitEventListener = function(event_name, ...params) {
-  return this._event_listeners[event_name].apply(null, params);
+  return this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = {

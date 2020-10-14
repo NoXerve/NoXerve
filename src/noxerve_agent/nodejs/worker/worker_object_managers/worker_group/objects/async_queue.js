@@ -38,7 +38,7 @@ function AsyncQueue(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
   };
 }
 
@@ -61,7 +61,7 @@ AsyncQueue.prototype.pop = function(event_name, callback) {
  * @description Register event listener.
  */
 AsyncQueue.prototype.on = function(event_name, callback) {
-  this._event_listeners[event_name] = callback;
+  this._event_listener_dict[event_name] = callback;
 }
 
 /**
@@ -70,7 +70,7 @@ AsyncQueue.prototype.on = function(event_name, callback) {
  * @description AsyncQueue events emitter. For internal uses.
  */
 AsyncQueue.prototype.emitEventListener = function(event_name, ...params) {
-  return this._event_listeners[event_name].apply(null, params);
+  return this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = {

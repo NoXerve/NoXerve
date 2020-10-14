@@ -39,14 +39,14 @@ function ServiceOfActivity(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
     'service-function-call-request': (service_function_name, service_function_parameter, return_value, yield_value) => {
       // return_value(error, NSDT), yield(NSDT)
       this._service_functions[service_function_name](service_function_parameter, return_value, yield_value);
     },
     'passively-close': () => {
       this._closed = true;
-      const close_handler = this._event_listeners['close'];
+      const close_handler = this._event_listener_dict['close'];
       if (close_handler) close_handler();
     },
     'yielding-start-request': (field_name, yielding_handler_parameter, ready_yielding) => {
@@ -79,7 +79,7 @@ function ServiceOfActivity(settings) {
  * @description Close ServiceOfActivity.
  */
 ServiceOfActivity.prototype.close = function(callback) {
-  this._event_listeners['initiative-close'](callback);
+  this._event_listener_dict['initiative-close'](callback);
 }
 
 /**
@@ -93,7 +93,7 @@ ServiceOfActivity.prototype.close = function(callback) {
  * @description ServiceOfActivity events registeration.
  */
 ServiceOfActivity.prototype.on = function(event_name, listener) {
-  this._event_listeners[event_name] = listener;
+  this._event_listener_dict[event_name] = listener;
 }
 
 /**
@@ -116,7 +116,7 @@ ServiceOfActivity.prototype.on = function(event_name, listener) {
  */
 ServiceOfActivity.prototype.handleYielding = function(field_name, yielding_handler) {
   this._yielding_handlers[field_name] = yielding_handler;
-  this._event_listeners['yielding-handle'](field_name);
+  this._event_listener_dict['yielding-handle'](field_name);
 
 }
 
@@ -135,7 +135,7 @@ ServiceOfActivity.prototype.handleYielding = function(field_name, yielding_handl
  */
 ServiceOfActivity.prototype.define = function(service_function_name, service_function) {
   this._service_functions[service_function_name] = service_function;
-  this._event_listeners['service-function-define'](service_function_name);
+  this._event_listener_dict['service-function-define'](service_function_name);
 }
 
 /**
@@ -144,7 +144,7 @@ ServiceOfActivity.prototype.define = function(service_function_name, service_fun
  * @description ServiceOfActivity events emitter. For internal uses.
  */
 ServiceOfActivity.prototype.emitEventListener = function(event_name, ...params) {
-  return this._event_listeners[event_name].apply(null, params);
+  return this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = ServiceOfActivity;

@@ -40,7 +40,7 @@ function NSDT(settings) {
    * @type {object}
    * @private
    */
-   this._event_listeners = {
+   this._event_listener_dict = {
      // 'callable-structure-local-request': ()=> {
      //
      // },
@@ -79,7 +79,7 @@ NSDT.prototype.createCallableStructure = function(name_to_function_dictionary, c
  * @description NSDT events registeration.
  */
 NSDT.prototype.on = function(event_name, listener) {
-  this._event_listeners[event_name] = listener;
+  this._event_listener_dict[event_name] = listener;
 }
 
 /**
@@ -88,7 +88,7 @@ NSDT.prototype.on = function(event_name, listener) {
  * @description NSDT events emitter.
  */
 NSDT.prototype.emitEventListener = function(event_name, ...params) {
-  return this._event_listeners[event_name].apply(null, params);
+  return this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = NSDT;

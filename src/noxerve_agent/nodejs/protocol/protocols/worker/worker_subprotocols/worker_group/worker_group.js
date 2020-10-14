@@ -41,7 +41,7 @@ function WorkerGroup(settings) {
    * @type {object}
    * @private
    */
-  // this._group_peers_list = settings.group_peers_list;
+  // this._group_peer_list = settings.group_peer_list;
 
   /**
    * @memberof module:WorkerGroup
@@ -62,7 +62,7 @@ function WorkerGroup(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
     'connections-broken': () => {}
   };
 
@@ -277,7 +277,7 @@ WorkerGroup.prototype.close = function() {
  * @description Register event listener.
  */
 WorkerGroup.prototype.on = function(event_name, callback) {
-  this._event_listeners[event_name] = callback;
+  this._event_listener_dict[event_name] = callback;
 }
 
 /**
@@ -286,7 +286,7 @@ WorkerGroup.prototype.on = function(event_name, callback) {
  * @description WorkerGroup events emitter. For internal uses.
  */
 WorkerGroup.prototype.emitEventListener = function(event_name, ...params) {
-  return this._event_listeners[event_name].apply(null, params);
+  return this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = WorkerGroup;

@@ -18,7 +18,7 @@ function WorkerGroupManager(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
 
   }
 }
@@ -35,7 +35,7 @@ function WorkerGroupManager(settings) {
  */
 WorkerGroupManager.prototype.create = function(worker_scope_purpose_name, worker_peers_worker_id_list, callback) {
   // The event is registered by protocols module.
-  this._event_listeners['worker-group-create-request'](worker_scope_purpose_name, worker_peers_worker_id_list, callback);
+  this._event_listener_dict['worker-group-create-request'](worker_scope_purpose_name, worker_peers_worker_id_list, callback);
 }
 
 /**
@@ -50,7 +50,7 @@ WorkerGroupManager.prototype.create = function(worker_scope_purpose_name, worker
  * @description WorkerGroupManager events.
  */
 WorkerGroupManager.prototype.on = function(event_name, listener) {
-  this._event_listeners[event_name] = listener;
+  this._event_listener_dict[event_name] = listener;
 }
 
 /**
@@ -59,7 +59,7 @@ WorkerGroupManager.prototype.on = function(event_name, listener) {
  * @description WorkerGroupManager events emitter. For internal uses.
  */
 WorkerGroupManager.prototype.emitEventListener = function(event_name, ...params) {
-  return this._event_listeners[event_name].apply(null, params);
+  return this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = WorkerGroupManager;

@@ -54,7 +54,7 @@ function WorkerScope(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
     request: () => {}
   };
 }
@@ -144,7 +144,7 @@ WorkerScope.prototype.broadcastRequestResponse = function(data_bytes, on_a_worke
  * @description WorkerScope events.
  */
 WorkerScope.prototype.on = function(event_name, listener) {
-  this._event_listeners[event_name] = listener;
+  this._event_listener_dict[event_name] = listener;
 }
 
 /**
@@ -153,7 +153,7 @@ WorkerScope.prototype.on = function(event_name, listener) {
  * @description WorkerScope events emitter. For internal uses.
  */
 WorkerScope.prototype.emitEventListener = function(event_name, ...params) {
-  return this._event_listeners[event_name].apply(null, params);
+  return this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = WorkerScope;

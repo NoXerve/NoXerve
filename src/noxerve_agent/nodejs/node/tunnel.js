@@ -71,7 +71,7 @@ function Tunnel(settings) {
    * @private
    * @description Dictionary of event listeners.
    */
-  this._event_listeners = {};
+  this._event_listener_dict = {};
 
   /**
    * @memberof module:Tunnel
@@ -88,8 +88,8 @@ function Tunnel(settings) {
    * @description Dictionary of event listeners.
    */
   this._emitter = (event_name, ...param) => {
-    if (this._event_listeners[event_name]) {
-      this._event_listeners[event_name].apply(null, param);
+    if (this._event_listener_dict[event_name]) {
+      this._event_listener_dict[event_name].apply(null, param);
     }
   }
 }
@@ -153,7 +153,7 @@ Tunnel.prototype.getEmitter = function(callback) {
  * @description On method. Designed for listening events.
  */
 Tunnel.prototype.on = function(event_name, callback) {
-  this._event_listeners[event_name] = callback;
+  this._event_listener_dict[event_name] = callback;
 }
 
 /**

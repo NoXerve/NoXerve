@@ -32,7 +32,7 @@ function WorkerSocket(worker_subprotocol_object_managers) {
  * @description Close WorkerSocket.
  */
 WorkerSocket.prototype.close = function(callback) {
-  this._event_listeners['initiative-close'](callback);
+  this._event_listener_dict['initiative-close'](callback);
 }
 
 /**
@@ -46,7 +46,7 @@ WorkerSocket.prototype.close = function(callback) {
  * @description WorkerSocket events registeration.
  */
 WorkerSocket.prototype.on = function(event_name, listener) {
-  this._event_listeners[event_name] = listener;
+  this._event_listener_dict[event_name] = listener;
 }
 
 /**
@@ -69,7 +69,7 @@ WorkerSocket.prototype.on = function(event_name, listener) {
  */
 WorkerSocket.prototype.handleYielding = function(field_name, yielding_handler) {
   this._yielding_handlers[field_name] = yielding_handler;
-  this._event_listeners['yielding-handle'](field_name);
+  this._event_listener_dict['yielding-handle'](field_name);
 
 }
 
@@ -88,7 +88,7 @@ WorkerSocket.prototype.handleYielding = function(field_name, yielding_handler) {
  */
 WorkerSocket.prototype.define = function(worker_socket_function_name, worker_socket_function) {
   this._worker_socket_functions[worker_socket_function_name] = worker_socket_function;
-  this._event_listeners['function-define'](worker_socket_function_name);
+  this._event_listener_dict['function-define'](worker_socket_function_name);
 }
 
 
@@ -108,7 +108,7 @@ WorkerSocket.prototype.define = function(worker_socket_function_name, worker_soc
  * from this worker to another. Yielded data handled by another worker.
  */
 WorkerSocket.prototype.startYielding = function(field_name, yielding_start_argument, yielding_start_callback) {
-  this._event_listeners['yielding-start'](field_name, yielding_start_argument, yielding_start_callback);
+  this._event_listener_dict['yielding-start'](field_name, yielding_start_argument, yielding_start_callback);
 }
 
 /**
@@ -125,7 +125,7 @@ WorkerSocket.prototype.startYielding = function(field_name, yielding_start_argum
  * @description WorkerSocket call. Call worker-socket function defined from another worker.
  */
 WorkerSocket.prototype.call = function(worker_socket_function_name, worker_socket_function_argument, worker_socket_function_callback) {
-  this._event_listeners['function-call'](worker_socket_function_name, worker_socket_function_argument, worker_socket_function_callback);
+  this._event_listener_dict['function-call'](worker_socket_function_name, worker_socket_function_argument, worker_socket_function_callback);
 }
 
 /**
@@ -134,7 +134,7 @@ WorkerSocket.prototype.call = function(worker_socket_function_name, worker_socke
  * @description WorkerSocket events emitter. For internal uses.
  */
 WorkerSocket.prototype.emitEventListener = function(event_name, ...params) {
-  return this._event_listeners[event_name].apply(null, params);
+  return this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = WorkerSocket;

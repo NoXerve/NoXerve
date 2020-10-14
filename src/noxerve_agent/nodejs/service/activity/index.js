@@ -35,7 +35,7 @@ function Activity(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
     // Internal private default events.
     'activity-of-service-request': (callback) => {
       try {
@@ -85,7 +85,7 @@ Activity.prototype.close = function(callback) {
  * @description Activity events registeration.
  */
 Activity.prototype.on = function(event_name, listener) {
-  this._event_listeners[event_name] = listener;
+  this._event_listener_dict[event_name] = listener;
 }
 
 /**
@@ -102,7 +102,7 @@ Activity.prototype.on = function(event_name, listener) {
  * @description Activity events registeration.
  */
 Activity.prototype.createActivity = function(connector_settings_list, activity_purpose_name, activity_purpose_parameters, callback) {
-  this._event_listeners['activity-create'](connector_settings_list, activity_purpose_name, activity_purpose_parameters, callback);
+  this._event_listener_dict['activity-create'](connector_settings_list, activity_purpose_name, activity_purpose_parameters, callback);
 }
 
 /**
@@ -111,7 +111,7 @@ Activity.prototype.createActivity = function(connector_settings_list, activity_p
  * @description Activity events emitter.
  */
 Activity.prototype.emitEventListener = function(event_name, ...params) {
-  this._event_listeners[event_name].apply(null, params);
+  this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = Activity;

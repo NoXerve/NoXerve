@@ -37,7 +37,7 @@ function SyncQueue(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
     'queue-pop': () => {}
   };
 
@@ -64,7 +64,7 @@ SyncQueue.prototype.push = function(event_name, callback) {
  * @description Register event listener.
  */
 SyncQueue.prototype.on = function(event_name, callback) {
-  this._event_listeners[event_name] = callback;
+  this._event_listener_dict[event_name] = callback;
 }
 
 /**
@@ -73,7 +73,7 @@ SyncQueue.prototype.on = function(event_name, callback) {
  * @description SyncQueue events emitter. For internal uses.
  */
 SyncQueue.prototype.emitEventListener = function(event_name, ...params) {
-  return this._event_listeners[event_name].apply(null, params);
+  return this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = {

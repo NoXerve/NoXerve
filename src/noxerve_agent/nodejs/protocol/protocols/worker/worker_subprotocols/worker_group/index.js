@@ -114,14 +114,14 @@ WorkerGroupProtocol.prototype.close = function(callback) {
  * @description Start running WorkerGroupProtocol.
  */
 WorkerGroupProtocol.prototype.start = function(callback) {
-  this._worker_group_manager.on('worker-group-create-request', (worker_group_purpose_name, group_peers_list, inner_callback) => {
-    if (group_peers_list.length <= MaxGroupPeersCount) {
+  this._worker_group_manager.on('worker-group-create-request', (worker_group_purpose_name, group_peer_list, inner_callback) => {
+    if (group_peer_list.length <= MaxGroupPeersCount) {
       let _tunnel_create_listener;
 
       const create_tunnel = (group_peer_id, create_tunnel_callback) => {
         const worker_group_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_group_purpose_name);
         const my_worker_authenticity_bytes = this._worker_protocol_actions.encodeAuthenticityBytes();
-        const worker_peer_worker_id = group_peers_list[group_peer_id - 1];
+        const worker_peer_worker_id = group_peer_list[group_peer_id - 1];
         let _is_authenticity_valid = false;
 
         const synchronize_information = Buf.concat([
@@ -174,11 +174,11 @@ WorkerGroupProtocol.prototype.start = function(callback) {
         const remote_worker_peer_authenticity_bytes = synchronize_information.slice(4);
 
         this._worker_protocol_actions.validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
-          if (is_authenticity_valid && !error && group_peers_list.indexOf(remote_worker_peer_worker_id) !== -1) {
+          if (is_authenticity_valid && !error && group_peer_list.indexOf(remote_worker_peer_worker_id) !== -1) {
             onAcknowledge((acknowledge_information, tunnel) => {
               if (acknowledge_information[0] === this._worker_global_protocol_codes.accept[0]) {
                 // Transfer worker id into group id.
-                _tunnel_create_listener(group_peers_list.indexOf(remote_worker_peer_worker_id) + 1, tunnel);
+                _tunnel_create_listener(group_peer_list.indexOf(remote_worker_peer_worker_id) + 1, tunnel);
               } else {
                 tunnel.close();
               }
@@ -200,8 +200,8 @@ WorkerGroupProtocol.prototype.start = function(callback) {
 
       const worker_group = new WorkerGroup({
         inactive_timeout_ms: -1,
-        group_peers_list: group_peers_list,
-        group_peers_count: group_peers_list.length,
+        group_peer_list: group_peer_list,
+        group_peers_count: group_peer_list.length,
         purpose_name: worker_group_purpose_name,
         create_tunnel: create_tunnel,
         on_tunnel_create: on_tunnel_create

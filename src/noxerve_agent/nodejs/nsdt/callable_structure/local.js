@@ -50,13 +50,13 @@ function CallableStructureLocal(settings) {
    * @type {object}
    * @private
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
     'call-request': (function_name, args) => {
       this._name_to_function_dictionary[function_name].apply(null, args);
     },
     'passively-close': () => {
       this._closed = true;
-      const close_handler = this._event_listeners['close'];
+      const close_handler = this._event_listener_dict['close'];
       if (close_handler) close_handler();
     }
   };
@@ -72,7 +72,7 @@ CallableStructureLocal.prototype.isCallableStructure = true;
  * @memberof module:CallableStructureLocal
  */
 CallableStructureLocal.prototype.close = function() {
-  this._event_listeners['initiative-close']();
+  this._event_listener_dict['initiative-close']();
 };
 
 /**
@@ -94,7 +94,7 @@ CallableStructureLocal.prototype.returnFunctionNameList = function() {
  * @description CallableStructureLocal events registeration.
  */
 CallableStructureLocal.prototype.on = function(event_name, listener) {
-  this._event_listeners[event_name] = listener;
+  this._event_listener_dict[event_name] = listener;
 }
 
 /**
@@ -103,7 +103,7 @@ CallableStructureLocal.prototype.on = function(event_name, listener) {
  * @description CallableStructureLocal events emitter.
  */
 CallableStructureLocal.prototype.emitEventListener = function(event_name, ...params) {
-  this._event_listeners[event_name].apply(null, params);
+  this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = CallableStructureLocal;

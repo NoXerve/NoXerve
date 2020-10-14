@@ -64,7 +64,7 @@ function SecuredNode(settings) {
    * @private
    * @description Dictionary of event listeners.
    */
-  this._event_listeners = {
+  this._event_listener_dict = {
     'tunnel-create': (tunnel) => {
 
     },
@@ -301,7 +301,7 @@ SecuredNode.prototype.createTunnel = function(interface_name, connector_settings
  * @description Register event listener.
  */
 SecuredNode.prototype.on = function(event_name, callback) {
-  this._event_listeners[event_name] = callback;
+  this._event_listener_dict[event_name] = callback;
 }
 
 /**
@@ -320,7 +320,7 @@ SecuredNode.prototype.start = function(callback) {
     // Setting up server side crypto.
     if (tunnel.returnValue('interface_secured')) {
       // Tunnel secured no need to upgrade.
-      this._event_listeners['tunnel-create'](tunnel);
+      this._event_listener_dict['tunnel-create'](tunnel);
     } else {
       let aes_cbc_256_shared_key;
       // Create new tunnel.
@@ -372,7 +372,7 @@ SecuredNode.prototype.start = function(callback) {
                 });
 
                 // Finished.
-                this._event_listeners['tunnel-create'](secured_tunnel);
+                this._event_listener_dict['tunnel-create'](secured_tunnel);
                 tunnel.send(this._secured_node_comfirm_protocol_code);
                 secured_tunnel_emitter('ready');
               } else {
