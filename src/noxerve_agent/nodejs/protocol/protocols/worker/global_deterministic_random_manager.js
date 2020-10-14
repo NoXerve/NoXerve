@@ -14,7 +14,7 @@
 
 const Errors = require('../../../errors');
 const hash = require("crypto").createHash;
-const ACORN = new(require('./acron'));
+const ACORN = new(require('./acorn'));
 
 /**
  * GlobalDeterministicRandomManager Object.
