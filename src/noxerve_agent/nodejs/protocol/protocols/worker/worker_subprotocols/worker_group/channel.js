@@ -100,7 +100,14 @@ function Channel(settings) {
    * @type {object}
    * @private
    */
-  this._response_listener_dict_of_handshake = {};
+  this._synchronize_acknowledgment_listener_dict_of_handshake = {};
+
+  /**
+   * @memberof module:Channel
+   * @type {object}
+   * @private
+   */
+  this._acknowledgment_listener_dict_of_handshake = {};
 }
 
 Channel.prototype._ProtocolCodes = {
