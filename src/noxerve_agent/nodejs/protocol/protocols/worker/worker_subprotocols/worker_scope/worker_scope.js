@@ -57,6 +57,23 @@ function WorkerScope(settings) {
   this._event_listener_dict = {
     request: () => {}
   };
+
+  /**
+	 * @memberof module:WorkerScopeProtocol
+	 * @type {object}
+	 * @private
+	 */
+	this._worker_list = {};
+}
+
+/**
+ * Transfer the given workers to a labeled list starting from 0
+ * @param  {Array} workers
+ */
+WorkerScope.prototype._CreateWorkerList = function(workers) {
+	for (let i = 0; i < workers.length; i++) {
+		this._worker_list[i] = workers[i];
+	}
 }
 
 /**
