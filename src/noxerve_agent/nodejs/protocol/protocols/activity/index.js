@@ -129,7 +129,7 @@ ActivityProtocol.prototype.start = function(callback) {
       const interface_name = shuffled_connector_settings_list[index].interface_name;
       const connector_settings = shuffled_connector_settings_list[index].connector_settings;
 
-      const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
+      const synchronize_acknowledgment = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
         if (open_handshanke_error) {
 
           // Unable to open handshake. Next loop.
@@ -138,9 +138,9 @@ ActivityProtocol.prototype.start = function(callback) {
           // Return acknowledge_information(not acknowledge).
           next(false);
         } else {
-          // Handshake opened. Check if synchronize_acknowledgement_information valid.
+          // Handshake opened. Check if synchronize_acknowledgment_information valid.
           try {
-            if(synchronize_acknowledgement_information[0] === this._ProtocolCodes.service_and_activity[0] && synchronize_acknowledgement_information[1] === this._ProtocolCodes.accept[0]) {
+            if(synchronize_acknowledgment_information[0] === this._ProtocolCodes.service_and_activity[0] && synchronize_acknowledgment_information[1] === this._ProtocolCodes.accept[0]) {
 
               // Acknowledgement information for handshake
               const acknowledge_information = this._ProtocolCodes.service_and_activity;
@@ -148,8 +148,8 @@ ActivityProtocol.prototype.start = function(callback) {
               // Return acknowledge binary.
               next(acknowledge_information);
             }
-            else if(synchronize_acknowledgement_information[0] === this._ProtocolCodes.service_and_activity[0] && synchronize_acknowledgement_information[1] === this._ProtocolCodes.reject[0]) {
-              if(synchronize_acknowledgement_information[2] === this._ProtocolCodes.not_exist_reason_reject_2_bytes[1]) {
+            else if(synchronize_acknowledgment_information[0] === this._ProtocolCodes.service_and_activity[0] && synchronize_acknowledgment_information[1] === this._ProtocolCodes.reject[0]) {
+              if(synchronize_acknowledgment_information[2] === this._ProtocolCodes.not_exist_reason_reject_2_bytes[1]) {
                 create_activity_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY('Create activity error. Service for such purpose does not exist.'));
                 next(false);
               }
@@ -187,7 +187,7 @@ ActivityProtocol.prototype.start = function(callback) {
       };
 
       // Callbacks setup completed. Start handshake process.
-      this._open_handshake_function(interface_name, connector_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
+      this._open_handshake_function(interface_name, connector_settings, synchronize_information, synchronize_acknowledgment, finish_handshake);
     };
     loop();
   });

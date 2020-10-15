@@ -60,6 +60,13 @@ function WorkerGroup(settings) {
 
   /**
    * @memberof module:WorkerGroup
+   * @type {function}
+   * @private
+   */
+  this._my_group_peer_id = settings.my_group_peer_id;
+
+  /**
+   * @memberof module:WorkerGroup
    * @type {object}
    * @private
    */
@@ -212,6 +219,9 @@ WorkerGroup.prototype._createChannel = function(channel_type_code, channel_id_8b
     },
     return_group_peer_id_list: () => {
       return this._group_peer_id_list;
+    },
+    return_my_group_peer_id: () => {
+      return this._my_group_peer_id;
     }
   });
 
@@ -255,7 +265,7 @@ WorkerGroup.prototype.close = function(callback) {
 // /**
 //  * @memberof module:WorkerGroup
 //  * @param {buffer} synchronize_information
-//  * @return {buffer} synchronize_acknowledgement_information
+//  * @return {buffer} synchronize_acknowledgment_information
 //  * @description Synchronize handshake from remote emitter.
 //  */
 // WorkerGroup.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {

@@ -58,13 +58,13 @@ function Channel(settings) {
   this._return_group_peer_id_list = settings.return_group_peer_id_list;
 
   /**
-   * @memberof module:WorkerGroup
+   * @memberof module:Channel
    * @type {object}
    * @private
    */
   this._event_listener_dict = {
-    'data': () => {
-
+    'data': (group_peer_id, data_bytes) => {
+      console.log(group_peer_id, data_bytes);
     },
     'request-response': () => {
 
@@ -73,6 +73,34 @@ function Channel(settings) {
 
     }
   };
+
+  /**
+   * @memberof module:Channel
+   * @type {object}
+   * @private
+   */
+  this._enumerated_request_response_session_id = 0;
+
+  /**
+   * @memberof module:Channel
+   * @type {object}
+   * @private
+   */
+  this._response_listener_dict_of_request_response = {};
+
+  /**
+   * @memberof module:Channel
+   * @type {object}
+   * @private
+   */
+  this._enumerated_handshake_session_id = 0;
+
+  /**
+   * @memberof module:Channel
+   * @type {object}
+   * @private
+   */
+  this._response_listener_dict_of_handshake = {};
 }
 
 Channel.prototype._ProtocolCodes = {
@@ -86,10 +114,17 @@ Channel.prototype._ProtocolCodes = {
 Channel.prototype.start = function(callback) {
   this._register_on_data((group_peer_id, data)=> {
     console.log(group_peer_id, data);
-  });
+    const protocol_code_int = data[0];
+    const data_bytes = data.slice(1);
+    if(protocol_code_int === this._ProtocolCodes.onetime_data[0]) {
+      this._event_listener_dict['data'](group_peer_id, data_bytes);
+    }
+    else if (protocol_code_int === this._ProtocolCodes.request_response[0]) {
 
-  this._send_by_group_peer_id(1, Buf.from([0x00, 0x01, 0x02]), (error)=> {
-    console.log(error);
+    }
+    else if (protocol_code_int === this._ProtocolCodes.handshake[0]) {
+
+    }
   });
 
   this.broadcast(Buf.from([0x00, 0x01, 0x02, 0x04]), (error, finished_group_peer_id_list) => {
@@ -157,12 +192,19 @@ Channel.prototype.broadcast = function(data_bytes, callback) {
 // Request response
 
 // [Flag]
-Channel.prototype.requestResponse = function(callback) {
+Channel.prototype._returnNewRequestResponseSessionId = function() {
+  const session_id = this._enumerated_request_response_session_id;
+  this._enumerated_session_id += 1;
+  return session_id;
+}
+
+// [Flag]
+Channel.prototype.requestResponse = function(group_peer_id, request_data_bytes, on_group_peer_response) {
 
 }
 
 // [Flag]
-Channel.prototype.multicastRequestResponse = function(callback) {
+Channel.prototype.multicastRequestResponse = function(group_peer_id_list, request_data_bytes, on_a_group_peer_response, on_finish) {
 
 }
 
@@ -173,6 +215,13 @@ Channel.prototype.broadcastRequestResponse = function(callback) {
 
 
 // Handshake
+
+// [Flag]
+Channel.prototype._returnNewHandshakeSessionId = function() {
+  const session_id = this._enumerated_handshake_session_id;
+  this._enumerated_session_id += 1;
+  return session_id;
+}
 
 // [Flag]
 Channel.prototype.handshake = function(callback) {

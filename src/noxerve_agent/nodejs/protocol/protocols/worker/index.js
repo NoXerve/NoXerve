@@ -445,9 +445,9 @@ WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_wo
  * @private
  */
 WorkerProtocol.prototype._openHandshakeByWorkerId = function(
-  target_worker_peer_worker_id, synchronize_information, acknowledge_synchronization, finish_handshake) {
+  target_worker_peer_worker_id, synchronize_information, synchronize_acknowledgment, finish_handshake) {
   if (!this._worker_peer_settings_dict[target_worker_peer_worker_id]) {
-    acknowledge_synchronization(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker(id: ' + target_worker_peer_worker_id + ').'), null, ()=> {});
+    synchronize_acknowledgment(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker(id: ' + target_worker_peer_worker_id + ').'), null, ()=> {});
     return;
   }
   const connectors_settings = this._worker_peer_settings_dict[target_worker_peer_worker_id].connectors_settings;
@@ -461,7 +461,7 @@ WorkerProtocol.prototype._openHandshakeByWorkerId = function(
     }
     // No more next loop. Exit.
     else {
-      acknowledge_synchronization(open_handshanke_errors, null, () => {});
+      synchronize_acknowledgment(open_handshanke_errors, null, () => {});
     }
   };
 
@@ -470,7 +470,7 @@ WorkerProtocol.prototype._openHandshakeByWorkerId = function(
     const connector_settings = connectors_settings[index].connector_settings;
 
     // "_" is for distincting the one from parameters.
-    const _acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
+    const _synchronize_acknowledgment = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
       if (open_handshanke_error) {
         // Unable to open handshake. Next loop.
         open_handshanke_errors.push(open_handshanke_error);
@@ -480,8 +480,8 @@ WorkerProtocol.prototype._openHandshakeByWorkerId = function(
         next(false);
       } else {
 
-        // acknowledge_synchronization obtained from parameters.
-        return acknowledge_synchronization(open_handshanke_error, synchronize_acknowledgement_information, next);
+        // synchronize_acknowledgment obtained from parameters.
+        return synchronize_acknowledgment(open_handshanke_error, synchronize_acknowledgment_information, next);
       }
     };
 
@@ -492,7 +492,7 @@ WorkerProtocol.prototype._openHandshakeByWorkerId = function(
     };
 
     // Callbacks setup completed. Start handshake process.
-    this._open_handshake_function(interface_name, connector_settings, synchronize_information, _acknowledge_synchronization, _finish_handshake);
+    this._open_handshake_function(interface_name, connector_settings, synchronize_information, _synchronize_acknowledgment, _finish_handshake);
   };
 
   loop();
@@ -526,11 +526,11 @@ WorkerProtocol.prototype._multicastRequestResponse = function(worker_id_list, da
 
       // Check worker id is not 0.
       if (worker_id !== 0) {
-        const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
+        const synchronize_acknowledgment = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
           current_connections_count--;
 
           next(false);
-          on_a_worker_response(worker_id, open_handshanke_error, synchronize_acknowledgement_information, (error, is_finished) => {
+          on_a_worker_response(worker_id, open_handshanke_error, synchronize_acknowledgment_information, (error, is_finished) => {
             if (error) {
               worker_peers_errors[worker_id] = error;
               escape_loop_with_error = true;
@@ -545,9 +545,10 @@ WorkerProtocol.prototype._multicastRequestResponse = function(worker_id_list, da
         const finish_handshake = (error, tunnel) => {
           // Not suppose to be called.
           // Request, response only have 2 progress instead of 3 full handshake.
+          tunnel.close();
         };
 
-        this._openHandshakeByWorkerId(worker_id, data_bytes, acknowledge_synchronization, finish_handshake);
+        this._openHandshakeByWorkerId(worker_id, data_bytes, synchronize_acknowledgment, finish_handshake);
       } else {
         loop_next();
       }
@@ -703,9 +704,9 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
       worker_protocol_actions: {
         validateAuthenticityBytes: this._validateAuthenticityBytes.bind(this),
         encodeAuthenticityBytes: this._encodeAuthenticityBytes.bind(this),
-        openHandshakeByWorkerId: (target_worker_peer_worker_id, synchronize_information, acknowledge_synchronization, finish_handshake) => {
+        openHandshakeByWorkerId: (target_worker_peer_worker_id, synchronize_information, synchronize_acknowledgment, finish_handshake) => {
           const decorated_synchronize_information = Buf.concat([prefix_data_bytes, synchronize_information]);
-          const decorated_acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
+          const decorated_synchronize_acknowledgment = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
             const decorated_next = (data_bytes) => {
               if(Buf.isBuffer(data_bytes)) {
                 next(Buf.concat([prefix_data_bytes, data_bytes]));
@@ -715,19 +716,19 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
               }
             }
             if(open_handshanke_error) {
-              acknowledge_synchronization(open_handshanke_error, null, decorated_next);
+              synchronize_acknowledgment(open_handshanke_error, null, decorated_next);
             }
             else if(
-              synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_object[0] &&
-              synchronize_acknowledgement_information[1] === worker_object_protocol_code_1byte[0] &&
-              synchronize_acknowledgement_information[2] === worker_subprotocol_protocol_code_1byte[0]
+              synchronize_acknowledgment_information[0] === this._ProtocolCodes.worker_object[0] &&
+              synchronize_acknowledgment_information[1] === worker_object_protocol_code_1byte[0] &&
+              synchronize_acknowledgment_information[2] === worker_subprotocol_protocol_code_1byte[0]
             ) {
-              acknowledge_synchronization(open_handshanke_error, synchronize_acknowledgement_information.slice(3), decorated_next);
+              synchronize_acknowledgment(open_handshanke_error, synchronize_acknowledgment_information.slice(3), decorated_next);
             } else {
-              acknowledge_synchronization(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), synchronize_acknowledgement_information.slice(3), decorated_next);
+              synchronize_acknowledgment(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), synchronize_acknowledgment_information.slice(3), decorated_next);
             }
           };
-          this._openHandshakeByWorkerId(target_worker_peer_worker_id, decorated_synchronize_information, decorated_acknowledge_synchronization, finish_handshake);
+          this._openHandshakeByWorkerId(target_worker_peer_worker_id, decorated_synchronize_information, decorated_synchronize_acknowledgment, finish_handshake);
         },
         multicastRequestResponse: (worker_id_list, data_bytes, on_a_worker_response, on_finish) => {
           const decorated_data_bytes = Buf.concat([prefix_data_bytes, data_bytes]);
@@ -765,6 +766,9 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
           };
           this._multicastRequestResponse(worker_id_list, decorated_data_bytes, decorated_on_a_worker_response, on_finish);
         },
+      },
+      return_my_worker_id: () => {
+        return this._my_worker_id;
       },
       hash_manager: this._hash_manager,
       nsdt_embedded_protocol: this._nsdt_embedded_protocol,
@@ -925,7 +929,7 @@ WorkerProtocol.prototype.start = function(callback) {
         const interface_name = shuffled_connectors_settings_list[index].interface_name;
         const connector_settings = shuffled_connectors_settings_list[index].connector_settings;
 
-        const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
+        const synchronize_acknowledgment = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
           if (open_handshanke_error) {
             // Unable to open handshake. Next loop.
             loop_next();
@@ -933,15 +937,15 @@ WorkerProtocol.prototype.start = function(callback) {
             // Return acknowledge_information(not acknowledge).
             next(false);
           } else {
-            // Handshake opened. Check if synchronize_acknowledgement_information valid.
-            if (synchronize_acknowledgement_information[0] === this._ProtocolCodes.worker_affairs[0] && synchronize_acknowledgement_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond[0]) {
+            // Handshake opened. Check if synchronize_acknowledgment_information valid.
+            if (synchronize_acknowledgment_information[0] === this._ProtocolCodes.worker_affairs[0] && synchronize_acknowledgment_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond[0]) {
               // Acknowledgement information for handshake
               // const acknowledge_information = this._ProtocolCodes.worker_affairs;
-              if (synchronize_acknowledgement_information[2] === this._ProtocolCodes.accept[0]) {
+              if (synchronize_acknowledgment_information[2] === this._ProtocolCodes.accept[0]) {
                 // Accept.
-                const new_worker_id = Buf.decodeUInt32BE(synchronize_acknowledgement_information.slice(3, 7));
-                const static_global_random_seed_4096bytes = synchronize_acknowledgement_information.slice(7, 7 + 4096);
-                const worker_peer_settings_dict = this._nsdt_embedded_protocol.decode(synchronize_acknowledgement_information.slice(7 + 4096));
+                const new_worker_id = Buf.decodeUInt32BE(synchronize_acknowledgment_information.slice(3, 7));
+                const static_global_random_seed_4096bytes = synchronize_acknowledgment_information.slice(7, 7 + 4096);
+                const worker_peer_settings_dict = this._nsdt_embedded_protocol.decode(synchronize_acknowledgment_information.slice(7 + 4096));
 
                 // Update worker peers settings
                 this._worker_peer_settings_dict = worker_peer_settings_dict;
@@ -953,11 +957,11 @@ WorkerProtocol.prototype.start = function(callback) {
                 this._updateWorkerPeersIdsChecksum4Bytes(Object.keys(worker_peer_settings_dict));
 
                 me_join_callback(false, new_worker_id, worker_peer_settings_dict, static_global_random_seed_4096bytes);
-              } else if (Utils.areBuffersEqual(synchronize_acknowledgement_information.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
+              } else if (Utils.areBuffersEqual(synchronize_acknowledgment_information.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
                 me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'));
-              } else if (Utils.areBuffersEqual(synchronize_acknowledgement_information.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
+              } else if (Utils.areBuffersEqual(synchronize_acknowledgment_information.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
                 me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'));
-              } else if (Utils.areBuffersEqual(synchronize_acknowledgement_information.slice(2, 4), Buf.from([0x00, 0x02]))) {
+              } else if (Utils.areBuffersEqual(synchronize_acknowledgment_information.slice(2, 4), Buf.from([0x00, 0x02]))) {
                 me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Broadcast error'));
               }
               // Return acknowledge binary.
@@ -979,7 +983,7 @@ WorkerProtocol.prototype.start = function(callback) {
         };
 
         // Callbacks setup completed. Start handshake process (actually request response here).
-        this._open_handshake_function(interface_name, connector_settings, synchronize_information, acknowledge_synchronization, finish_handshake);
+        this._open_handshake_function(interface_name, connector_settings, synchronize_information, synchronize_acknowledgment, finish_handshake);
       };
       loop();
     } else {

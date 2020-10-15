@@ -186,7 +186,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
 /**
  * @memberof module:WorkerScopeProtocol
  * @param {buffer} synchronize_information
- * @return {buffer} synchronize_acknowledgement_information
+ * @return {buffer} synchronize_acknowledgment_information
  * @description Synchronize handshake from remote emitter.
  */
 WorkerScopeProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {

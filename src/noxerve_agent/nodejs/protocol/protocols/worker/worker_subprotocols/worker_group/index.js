@@ -31,6 +31,14 @@ function WorkerGroupProtocol(settings) {
    * @private
    */
   this._settings = settings;
+
+  /**
+   * @memberof module:WorkerGroupProtocol
+   * @type {object}
+   * @private
+   */
+  this._return_my_worker_id = settings.return_my_worker_id;
+
   /**
    * @memberof module:WorkerGroupProtocol
    * @type {object}
@@ -115,7 +123,10 @@ WorkerGroupProtocol.prototype.close = function(callback) {
  */
 WorkerGroupProtocol.prototype.start = function(callback) {
   this._worker_group_manager.on('worker-group-create-request', (worker_group_purpose_name, group_peer_id_list, inner_callback) => {
-    if (group_peer_id_list.length <= MaxGroupPeersCount) {
+    if(!group_peer_id_list.includes(this._return_my_worker_id())) {
+      inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('GroupPeersList\'s must include yourself (with worker id: ' + this._return_my_worker_id() + ').'));
+    }
+    else if (group_peer_id_list.length <= MaxGroupPeersCount) {
       let _tunnel_create_listener;
 
       const create_tunnel = (group_peer_id, create_tunnel_callback) => {
@@ -130,17 +141,17 @@ WorkerGroupProtocol.prototype.start = function(callback) {
           my_worker_authenticity_bytes,
         ]);
 
-        const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
+        const synchronize_acknowledgment = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
           if(open_handshanke_error) {
             inner_callback(open_handshanke_error);
             return;
           }
-          if(synchronize_acknowledgement_information[0] !== this._worker_global_protocol_codes.accept[0]) {
+          if(synchronize_acknowledgment_information[0] !== this._worker_global_protocol_codes.accept[0]) {
             inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('WorkerGroupProtocol create tunnel error. '));
             next(false);
             return;
           }
-          const remote_worker_peer_authenticity_bytes = synchronize_acknowledgement_information.slice(1);
+          const remote_worker_peer_authenticity_bytes = synchronize_acknowledgment_information.slice(1);
           this._worker_protocol_actions.validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
             _is_authenticity_valid = is_authenticity_valid;
             if (is_authenticity_valid && !error && remote_worker_peer_worker_id === worker_peer_worker_id) {
@@ -162,7 +173,7 @@ WorkerGroupProtocol.prototype.start = function(callback) {
             }
           }
         };
-        this._worker_protocol_actions.openHandshakeByWorkerId(worker_peer_worker_id, synchronize_information, acknowledge_synchronization, finish_handshake);
+        this._worker_protocol_actions.openHandshakeByWorkerId(worker_peer_worker_id, synchronize_information, synchronize_acknowledgment, finish_handshake);
       };
 
       const on_tunnel_create = (tunnel_create_listener) => {

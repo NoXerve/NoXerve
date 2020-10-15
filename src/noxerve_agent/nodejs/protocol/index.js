@@ -126,7 +126,7 @@ function Protocol(settings) {
  * Handshake routine:
  * open_handshake(initiative)
  * => synchronize(passive)
- * => acknowledge_synchronization(initiative finished)
+ * => synchronize_acknowledgment(initiative finished)
  * => acknowledge(passive finished)
  */
 
@@ -135,16 +135,16 @@ function Protocol(settings) {
   * @type {object}
   * @private
   */
-Protocol.prototype._openHandshake = function (interface_name, connector_settings, synchronize_information, acknowledge_synchronization, finish_handshake) {
+Protocol.prototype._openHandshake = function (interface_name, connector_settings, synchronize_information, synchronize_acknowledgment, finish_handshake) {
   this._node_module.createTunnel(interface_name, connector_settings, (error, tunnel) => {
-    if (error) {if(acknowledge_synchronization) acknowledge_synchronization(error, null, ()=> {});}
+    if (error) {if(synchronize_acknowledgment) synchronize_acknowledgment(error, null, ()=> {});}
     else {
       // Use stage variable to identify current handshake progress.
       // Avoiding proccess executed wrongly.
       // stage -1 => Emitted error.
       // Be called => stage 0
       // stage 0 => waiting to acknowledge synchronization.
-      // Error => call acknowledge_synchronization.
+      // Error => call synchronize_acknowledgment.
       // stage 1 => waiting to finish up.
       // Error => call finish_handshake.
       let stage = 0;
@@ -159,8 +159,8 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
 
       tunnel.on('data', (data) => {
         if (stage === 0) {
-          // Call acknowledge_synchronization function. Respond with acknowledge_information for remote.
-          acknowledge_synchronization(false, data, (acknowledge_information)=> {
+          // Call synchronize_acknowledgment function. Respond with acknowledge_information for remote.
+          synchronize_acknowledgment(false, data, (acknowledge_information)=> {
             // stage 1 => waiting to finish up. If any error happened call
             // "finish_handshake" from parameters.
             stage = 1;
@@ -201,7 +201,7 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
         if (stage === 0) {
           stage = -1;
           tunnel.close();
-          acknowledge_synchronization(error, null, ()=> {});
+          synchronize_acknowledgment(error, null, ()=> {});
         } else if (stage === 1) {
           stage = -1;
           tunnel.close();
@@ -211,7 +211,7 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
 
       tunnel.on('close', () => {
         if (stage === 0) {
-          acknowledge_synchronization(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'), null, ()=> {});
+          synchronize_acknowledgment(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'), null, ()=> {});
         } else if (stage === 1) {
           finish_handshake(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
         }

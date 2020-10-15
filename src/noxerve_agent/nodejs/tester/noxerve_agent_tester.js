@@ -216,7 +216,7 @@ NoXerveAgent.start((error)=> {
         yield_data({bar: 13579});
         yield_data(Utils.random8Bytes());
 
-        // Test acknowledgement.
+        // Test acknowledgment.
         yield_data(callable_struture, (acknowledge_information) => {
           console.log('[Service module] Service function acknowledge_information: ', acknowledge_information);
           yield_data(Buffer.from([1, 2, 3, 4, 5]));

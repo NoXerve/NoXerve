@@ -130,12 +130,12 @@ WorkerSocketProtocol.prototype.start = function(callback) {
 
     let _is_authenticity_valid = false;
 
-    const acknowledge_synchronization = (open_handshanke_error, synchronize_acknowledgement_information, next) => {
+    const synchronize_acknowledgment = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
       if (open_handshanke_error) {
         inner_callback(open_handshanke_error);
         next(false);
-      } else if (synchronize_acknowledgement_information[0] === this._worker_global_protocol_codes.accept[0]) {
-        const remote_worker_peer_authenticity_bytes = synchronize_acknowledgement_information.slice(1);
+      } else if (synchronize_acknowledgment_information[0] === this._worker_global_protocol_codes.accept[0]) {
+        const remote_worker_peer_authenticity_bytes = synchronize_acknowledgment_information.slice(1);
         // Auth remote worker.
         this._worker_protocol_actions.validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
           _is_authenticity_valid = is_authenticity_valid;
@@ -145,9 +145,9 @@ WorkerSocketProtocol.prototype.start = function(callback) {
             next(this._worker_global_protocol_codes.authentication_reason_reject_2_bytes); // Reject. Authenticication error.
           }
         });
-      } else if (synchronize_acknowledgement_information[0] === this._worker_global_protocol_codes.reject[0]
+      } else if (synchronize_acknowledgment_information[0] === this._worker_global_protocol_codes.reject[0]
       ) {
-        if (synchronize_acknowledgement_information[1] === this._worker_global_protocol_codes.authentication_reason_reject_2_bytes[1]) {
+        if (synchronize_acknowledgment_information[1] === this._worker_global_protocol_codes.authentication_reason_reject_2_bytes[1]) {
           inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'));
           next(false);
 
@@ -175,7 +175,7 @@ WorkerSocketProtocol.prototype.start = function(callback) {
       }
     };
 
-    this._worker_protocol_actions.openHandshakeByWorkerId(remote_worker_peer_worker_id, synchronize_information, acknowledge_synchronization, finish_handshake);
+    this._worker_protocol_actions.openHandshakeByWorkerId(remote_worker_peer_worker_id, synchronize_information, synchronize_acknowledgment, finish_handshake);
   });
   callback(false, this._worker_socket_manager);
 }
@@ -204,12 +204,12 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
         // For function-define and yielding-handle.
         let yielding_handler_dict = {};
 
-        let function_call_data_acknowledgement_callbacks = {};
+        let function_call_data_acknowledgment_callbacks = {};
 
         // For function-call and yielding-start.
         let function_call_callback_dict = {};
         let yielding_start_callback_dict = {};
-        let yielding_start_data_acknowledgement_callbacks = {};
+        let yielding_start_data_acknowledgment_callbacks = {};
 
         // Hash worker socket function name.
         worker_socket.on('function-define', (function_name) => {
@@ -283,11 +283,11 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
             try {
               const function_name = this._hash_manager.stringify4BytesHash(data.slice(0, 4));
               const function_parameter = nsdt_embedded_protocol_decode(data.slice(8));
-              if(function_call_callback_id) function_call_data_acknowledgement_callbacks[function_call_callback_id_base64] = {};
+              if(function_call_callback_id) function_call_data_acknowledgment_callbacks[function_call_callback_id_base64] = {};
 
               const return_function = (data) => {
-                // No longer need keep tracking acknowledgement.
-                delete function_call_data_acknowledgement_callbacks[function_call_callback_id_base64];
+                // No longer need keep tracking acknowledgment.
+                delete function_call_data_acknowledgment_callbacks[function_call_callback_id_base64];
 
                 // WorkerSocket Protocol type "function_call_data"
                 tunnel.send(Buf.concat([
@@ -297,21 +297,21 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
                 ]));
               };
 
-              let acknowledgement_id_enumerated = 0;
+              let acknowledgment_id_enumerated = 0;
 
-              const yield_function = (data, acknowledgement_callback) => {
-                let acknowledgement_id = 0;
-                if(acknowledgement_callback) {
-                  acknowledgement_id_enumerated++;
-                  acknowledgement_id = acknowledgement_id_enumerated;
-                  function_call_data_acknowledgement_callbacks[function_call_callback_id_base64][acknowledgement_id] = acknowledgement_callback;
+              const yield_function = (data, acknowledgment_callback) => {
+                let acknowledgment_id = 0;
+                if(acknowledgment_callback) {
+                  acknowledgment_id_enumerated++;
+                  acknowledgment_id = acknowledgment_id_enumerated;
+                  function_call_data_acknowledgment_callbacks[function_call_callback_id_base64][acknowledgment_id] = acknowledgment_callback;
                 }
 
                 // WorkerSocket Protocol type "function_call_data"
                 tunnel.send(Buf.concat([
                   this._ProtocolCodes.function_call_data,
                   function_call_callback_id,
-                  Buf.encodeUInt32BE(acknowledgement_id),
+                  Buf.encodeUInt32BE(acknowledgment_id),
                   nsdt_embedded_protocol_encode(data)
                 ]));
               };
@@ -324,7 +324,7 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
               );
             } catch (error) {
               console.log(error);
-              delete function_call_data_acknowledgement_callbacks[function_call_callback_id_base64];
+              delete function_call_data_acknowledgment_callbacks[function_call_callback_id_base64];
               tunnel.send(Buf.concat([
                 this._ProtocolCodes.function_call_error,
                 function_call_callback_id
@@ -332,11 +332,11 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
             }
           } else if (protocol_code === this._ProtocolCodes.function_call_data_acknowledge[0]) {
             const function_call_callback_id_base64 = data.slice(0, 4).toString('base64');
-            const acknowledgement_id = Buf.decodeUInt32BE(data.slice(4, 8));
-            const acknowledgement_information = nsdt_embedded_protocol_decode(data.slice(8));
+            const acknowledgment_id = Buf.decodeUInt32BE(data.slice(4, 8));
+            const acknowledgment_information = nsdt_embedded_protocol_decode(data.slice(8));
             try {
-              function_call_data_acknowledgement_callbacks[function_call_callback_id_base64][acknowledgement_id](acknowledgement_information);
-              if(function_call_data_acknowledgement_callbacks[function_call_callback_id_base64]) delete function_call_data_acknowledgement_callbacks[function_call_callback_id_base64][acknowledgement_id];
+              function_call_data_acknowledgment_callbacks[function_call_callback_id_base64][acknowledgment_id](acknowledgment_information);
+              if(function_call_data_acknowledgment_callbacks[function_call_callback_id_base64]) delete function_call_data_acknowledgment_callbacks[function_call_callback_id_base64][acknowledgment_id];
             }
             catch(error) {
               console.log(error);
@@ -373,19 +373,19 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
           } else if (protocol_code === this._ProtocolCodes.yielding_start_yield_data[0]) {
             const yielding_start_id = data.slice(0, 4);
             const yielding_start_id_base64 = yielding_start_id.toString('base64');
-            const acknowledgement_id = data.slice(4, 8);
+            const acknowledgment_id = data.slice(4, 8);
             const yielded_data = nsdt_embedded_protocol_decode(data.slice(8));
             let acknowledge_function;
 
             // Generate acknowledge_function
-            if(Buf.decodeUInt32BE(acknowledgement_id) !== 0) {
-              acknowledge_function = (acknowledgement_information) => {
-                // acknowledgement_information is nsdt supported.
+            if(Buf.decodeUInt32BE(acknowledgment_id) !== 0) {
+              acknowledge_function = (acknowledgment_information) => {
+                // acknowledgment_information is nsdt supported.
                 tunnel.send(Buf.concat([
                   this._ProtocolCodes.yielding_start_yield_data_acknowledge,
                   yielding_start_id,
-                  acknowledgement_id,
-                  nsdt_embedded_protocol_encode(acknowledgement_information)
+                  acknowledgment_id,
+                  nsdt_embedded_protocol_encode(acknowledgment_information)
                 ]));
               };
             }
@@ -413,19 +413,19 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
           } else if (protocol_code === this._ProtocolCodes.function_call_data[0]) {
             const function_call_callback_id = data.slice(0, 4);
             const function_call_callback_id_base64 = function_call_callback_id.toString('base64');
-            const acknowledgement_id = data.slice(4, 8);
+            const acknowledgment_id = data.slice(4, 8);
             const function_yielded_data = nsdt_embedded_protocol_decode(data.slice(8));
             let acknowledge_function;
 
             // Generate acknowledge_function
-            if(Buf.decodeUInt32BE(acknowledgement_id) !== 0) {
-              acknowledge_function = (acknowledgement_information) => {
-                // acknowledgement_information is nsdt supported.
+            if(Buf.decodeUInt32BE(acknowledgment_id) !== 0) {
+              acknowledge_function = (acknowledgment_information) => {
+                // acknowledgment_information is nsdt supported.
                 tunnel.send(Buf.concat([
                   this._ProtocolCodes.function_call_data_acknowledge,
                   function_call_callback_id,
-                  acknowledgement_id,
-                  nsdt_embedded_protocol_encode(acknowledgement_information)
+                  acknowledgment_id,
+                  nsdt_embedded_protocol_encode(acknowledgment_information)
                 ]));
               };
             }
@@ -465,12 +465,12 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
             // Catch error.
             try {
               const yielding_start_parameter = nsdt_embedded_protocol_decode(data.slice(4));
-              if(yielding_start_id) yielding_start_data_acknowledgement_callbacks[yielding_start_id_base64] = {};
+              if(yielding_start_id) yielding_start_data_acknowledgment_callbacks[yielding_start_id_base64] = {};
 
               const finish_yield_function = (data) => {
 
-                // No longer need keep tracking acknowledgement.
-                delete yielding_start_data_acknowledgement_callbacks[yielding_start_id_base64];
+                // No longer need keep tracking acknowledgment.
+                delete yielding_start_data_acknowledgment_callbacks[yielding_start_id_base64];
 
                 // WorkerSocket Protocol type "yielding_data_eof".
                 tunnel.send(Buf.concat([
@@ -480,21 +480,21 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
                 ]));
               };
 
-              let acknowledgement_id_enumerated = 0;
+              let acknowledgment_id_enumerated = 0;
 
-              const yield_data_function = (data, acknowledgement_callback) => {
-                let acknowledgement_id = 0;
-                if(acknowledgement_callback) {
-                  acknowledgement_id_enumerated++;
-                  acknowledgement_id = acknowledgement_id_enumerated;
-                  yielding_start_data_acknowledgement_callbacks[yielding_start_id_base64][acknowledgement_id] = acknowledgement_callback;
+              const yield_data_function = (data, acknowledgment_callback) => {
+                let acknowledgment_id = 0;
+                if(acknowledgment_callback) {
+                  acknowledgment_id_enumerated++;
+                  acknowledgment_id = acknowledgment_id_enumerated;
+                  yielding_start_data_acknowledgment_callbacks[yielding_start_id_base64][acknowledgment_id] = acknowledgment_callback;
                 }
 
                 // WorkerSocket Protocol type "yielding_data".
                 tunnel.send(Buf.concat([
                   this._ProtocolCodes.yielding_start_yield_data,
                   yielding_start_id,
-                  Buf.encodeUInt32BE(acknowledgement_id),
+                  Buf.encodeUInt32BE(acknowledgment_id),
                   nsdt_embedded_protocol_encode(data)
                 ]));
               };
@@ -508,7 +508,7 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
 
             } catch (error) {
               console.log(error);
-              delete yielding_start_data_acknowledgement_callbacks[yielding_start_id_base64];
+              delete yielding_start_data_acknowledgment_callbacks[yielding_start_id_base64];
               tunnel.send(Buf.concat([
                 this._ProtocolCodes.yielding_start_error,
                 yielding_start_id
@@ -517,11 +517,11 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
 
           } else if (protocol_code === this._ProtocolCodes.yielding_start_yield_data_acknowledge[0]) {
             const yielding_start_callback_id_base64 = data.slice(0, 4).toString('base64');
-            const acknowledgement_id = Buf.decodeUInt32BE(data.slice(4, 8));
-            const acknowledgement_information = nsdt_embedded_protocol_decode(data.slice(8));
+            const acknowledgment_id = Buf.decodeUInt32BE(data.slice(4, 8));
+            const acknowledgment_information = nsdt_embedded_protocol_decode(data.slice(8));
             try {
-              yielding_start_data_acknowledgement_callbacks[yielding_start_callback_id_base64][acknowledgement_id](acknowledgement_information);
-              if(yielding_start_data_acknowledgement_callbacks[yielding_start_callback_id_base64]) delete yielding_start_data_acknowledgement_callbacks[yielding_start_callback_id_base64][acknowledgement_id];
+              yielding_start_data_acknowledgment_callbacks[yielding_start_callback_id_base64][acknowledgment_id](acknowledgment_information);
+              if(yielding_start_data_acknowledgment_callbacks[yielding_start_callback_id_base64]) delete yielding_start_data_acknowledgment_callbacks[yielding_start_callback_id_base64][acknowledgment_id];
             }
             catch(error) {
               console.log(error);

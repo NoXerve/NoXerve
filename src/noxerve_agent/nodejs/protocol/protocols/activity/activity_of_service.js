@@ -90,7 +90,7 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
         // For "service-function-call" event.
         let service_function_call_callback_dict = {};
         let yielding_start_callback_dict = {};
-        let yielding_start_data_acknowledgement_callbacks = {};
+        let yielding_start_data_acknowledgment_callbacks = {};
 
         // Start communication with service.
         activity_of_service.on('service-function-call',
@@ -140,19 +140,19 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
           } else if (protocol_code === this._ProtocolCodes.service_function_call_data[0]) {
             const service_function_call_callback_id = data.slice(0, 4);
             const service_function_call_callback_id_base64 = service_function_call_callback_id.toString('base64');
-            const acknowledgement_id = data.slice(4, 8);
+            const acknowledgment_id = data.slice(4, 8);
             const service_function_yielded_data = nsdt_embedded_protocol_decode(data.slice(8));
             let acknowledge_function;
 
             // Generate acknowledge_function
-            if(Buf.decodeUInt32BE(acknowledgement_id) !== 0) {
-              acknowledge_function = (acknowledgement_information) => {
-                // acknowledgement_information is nsdt supported.
+            if(Buf.decodeUInt32BE(acknowledgment_id) !== 0) {
+              acknowledge_function = (acknowledgment_information) => {
+                // acknowledgment_information is nsdt supported.
                 tunnel.send(Buf.concat([
                   this._ProtocolCodes.service_function_call_data_acknowledge,
                   service_function_call_callback_id,
-                  acknowledgement_id,
-                  nsdt_embedded_protocol_encode(acknowledgement_information)
+                  acknowledgment_id,
+                  nsdt_embedded_protocol_encode(acknowledgment_information)
                 ]));
               };
             }
@@ -192,12 +192,12 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
             // Catch error.
             try {
               const yielding_start_parameter = nsdt_embedded_protocol_decode(data.slice(4));
-              if(yielding_start_id) yielding_start_data_acknowledgement_callbacks[yielding_start_id_base64] = {};
+              if(yielding_start_id) yielding_start_data_acknowledgment_callbacks[yielding_start_id_base64] = {};
 
               const finish_yield_function = (data) => {
 
-                // No longer need keep tracking acknowledgement.
-                delete yielding_start_data_acknowledgement_callbacks[yielding_start_id_base64];
+                // No longer need keep tracking acknowledgment.
+                delete yielding_start_data_acknowledgment_callbacks[yielding_start_id_base64];
 
                 // Service Protocol type "yielding_data_eof".
                 tunnel.send(Buf.concat([
@@ -207,21 +207,21 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
                 ]));
               };
 
-              let acknowledgement_id_enumerated = 0;
+              let acknowledgment_id_enumerated = 0;
 
-              const yield_data_function = (data, acknowledgement_callback) => {
-                let acknowledgement_id = 0;
-                if(acknowledgement_callback) {
-                  acknowledgement_id_enumerated++;
-                  acknowledgement_id = acknowledgement_id_enumerated;
-                  yielding_start_data_acknowledgement_callbacks[yielding_start_id_base64][acknowledgement_id] = acknowledgement_callback;
+              const yield_data_function = (data, acknowledgment_callback) => {
+                let acknowledgment_id = 0;
+                if(acknowledgment_callback) {
+                  acknowledgment_id_enumerated++;
+                  acknowledgment_id = acknowledgment_id_enumerated;
+                  yielding_start_data_acknowledgment_callbacks[yielding_start_id_base64][acknowledgment_id] = acknowledgment_callback;
                 }
 
                 // Service Protocol type "yielding_data".
                 tunnel.send(Buf.concat([
                   this._ProtocolCodes.yielding_start_yield_data,
                   yielding_start_id,
-                  Buf.encodeUInt32BE(acknowledgement_id),
+                  Buf.encodeUInt32BE(acknowledgment_id),
                   nsdt_embedded_protocol_encode(data)
                 ]));
               };
@@ -235,7 +235,7 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
 
             } catch (error) {
               console.log(error);
-              delete yielding_start_data_acknowledgement_callbacks[yielding_start_id_base64];
+              delete yielding_start_data_acknowledgment_callbacks[yielding_start_id_base64];
               tunnel.send(Buf.concat([
                 this._ProtocolCodes.yielding_start_error,
                 yielding_start_id
@@ -244,11 +244,11 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
 
           } else if (protocol_code === this._ProtocolCodes.yielding_start_yield_data_acknowledge[0]) {
             const yielding_start_callback_id_base64 = data.slice(0, 4).toString('base64');
-            const acknowledgement_id = Buf.decodeUInt32BE(data.slice(4, 8));
-            const acknowledgement_information = nsdt_embedded_protocol_decode(data.slice(8));
+            const acknowledgment_id = Buf.decodeUInt32BE(data.slice(4, 8));
+            const acknowledgment_information = nsdt_embedded_protocol_decode(data.slice(8));
             try {
-              yielding_start_data_acknowledgement_callbacks[yielding_start_callback_id_base64][acknowledgement_id](acknowledgement_information);
-              if(yielding_start_data_acknowledgement_callbacks[yielding_start_callback_id_base64]) delete yielding_start_data_acknowledgement_callbacks[yielding_start_callback_id_base64][acknowledgement_id];
+              yielding_start_data_acknowledgment_callbacks[yielding_start_callback_id_base64][acknowledgment_id](acknowledgment_information);
+              if(yielding_start_data_acknowledgment_callbacks[yielding_start_callback_id_base64]) delete yielding_start_data_acknowledgment_callbacks[yielding_start_callback_id_base64][acknowledgment_id];
             }
             catch(error) {
               console.log(error);
