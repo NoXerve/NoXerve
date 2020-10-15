@@ -51,18 +51,31 @@ function Channel(settings) {
   this._unregister_on_data = settings.unregister_on_data;
 
   /**
+   * @memberof module:Channel
+   * @type {object}
+   * @private
+   */
+  this._return_group_peer_id_list = settings.return_group_peer_id_list;
+
+  /**
    * @memberof module:WorkerGroup
    * @type {object}
    * @private
    */
   this._event_listener_dict = {
-    'data': () => {},
-    'request-response': () => {},
-    'handshake': () => {}
+    'data': () => {
+
+    },
+    'request-response': () => {
+
+    },
+    'handshake': () => {
+
+    }
   };
 }
 
-Channel.prototype.ProtocolCodes = {
+Channel.prototype._ProtocolCodes = {
   onetime_data: Buf.from([0x00]),
   request_response: Buf.from([0x01]),
   handshake: Buf.from([0x01])
@@ -75,8 +88,12 @@ Channel.prototype.start = function(callback) {
     console.log(group_peer_id, data);
   });
 
-  this._send_by_group_peer_id(1, Buf.from([0x00, 0x01, 0x02]), (group_peer_id, data)=> {
-    console.log(group_peer_id, data);
+  this._send_by_group_peer_id(1, Buf.from([0x00, 0x01, 0x02]), (error)=> {
+    console.log(error);
+  });
+
+  this.broadcast(Buf.from([0x00, 0x01, 0x02, 0x04]), (error, finished_group_peer_id_list) => {
+    console.log(error, finished_group_peer_id_list);
   });
 }
 
@@ -89,18 +106,52 @@ Channel.prototype.close = function(callback) {
 // Onetime data
 
 // [Flag]
-Channel.prototype.send = function(callback) {
-
+Channel.prototype.unicast = function(group_peer_id, data_bytes, callback) {
+  this._send_by_group_peer_id(group_peer_id,
+    Buf.concat([
+    this._ProtocolCodes.onetime_data,
+    data_bytes
+  ]), callback);
 }
 
 // [Flag]
-Channel.prototype.multicast = function(callback) {
+Channel.prototype.multicast = function(group_peer_id_list, data_bytes, callback) {
+  let demultiplexing_callback_called_count = 0;
+  let finished_group_peer_id_list = [];
+  let error_dict = {};
 
+  const demultiplexing_callback = (group_peer_id, error)=> {
+    demultiplexing_callback_called_count ++;
+
+    // Check if error, then append to list. Otherwise push to finished list.
+    if(error) {
+      error_dict[group_peer_id] = error;
+    }
+    else {
+      finished_group_peer_id_list.push(group_peer_id);
+    }
+
+    // Check if should call the original callback or not.
+    if(demultiplexing_callback_called_count === group_peer_id_list.length) {
+      if(Object.keys(error_dict).length === 0) {
+        error_dict = false;
+      }
+      callback(error_dict, finished_group_peer_id_list);
+    }
+  };
+
+  // Sending messages.
+  for(let index in group_peer_id_list) {
+    const group_peer_id = group_peer_id_list[index];
+    this.unicast(group_peer_id, data_bytes, (error) => {
+      demultiplexing_callback(group_peer_id, error);
+    });
+  }
 }
 
 // [Flag]
-Channel.prototype.broadcast = function(callback) {
-
+Channel.prototype.broadcast = function(data_bytes, callback) {
+  this.multicast(this._return_group_peer_id_list(), data_bytes, callback);
 }
 
 // Request response

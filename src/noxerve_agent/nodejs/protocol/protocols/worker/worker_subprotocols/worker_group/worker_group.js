@@ -42,7 +42,7 @@ function WorkerGroup(settings) {
    * @type {object}
    * @private
    */
-  // this._group_peer_list = settings.group_peer_list;
+  this._group_peer_id_list = settings.group_peer_id_list;
 
   /**
    * @memberof module:WorkerGroup
@@ -209,6 +209,9 @@ WorkerGroup.prototype._createChannel = function(channel_type_code, channel_id_8b
     },
     unregister_on_data: ()=> {
       this._unregisterOnDataOfChannelTypeAndChannelId(channel_type_code, channel_id_8bytes);
+    },
+    return_group_peer_id_list: () => {
+      return this._group_peer_id_list;
     }
   });
 
@@ -245,7 +248,7 @@ WorkerGroup.prototype.destroy = function(callback) {
 }
 
 // [Flag]
-WorkerGroup.prototype.close = function() {
+WorkerGroup.prototype.close = function(callback) {
 
 }
 
