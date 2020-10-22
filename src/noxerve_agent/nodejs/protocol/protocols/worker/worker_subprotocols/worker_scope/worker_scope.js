@@ -122,7 +122,7 @@ WorkerScope.prototype.returnScopePeerList = function() {
  * @param {module:WorkerScope~finished_listener} finished_listener
  * @description Worker scope multicast request response.
  */
-WorkerScope.prototype.multicastRequestResponse = function(scope_peer_id_list, data_bytes, a_worker_response_listener, finished_listener) {
+WorkerScope.prototype.multicastRequest = function(scope_peer_id_list, data_bytes, a_worker_response_listener, finished_listener) {
   this._settings.multicast_request_response(scope_peer_id_list, data_bytes, a_worker_response_listener, finished_listener);
 }
 
@@ -145,7 +145,7 @@ WorkerScope.prototype.multicastRequestResponse = function(scope_peer_id_list, da
  * @param {module:WorkerScope~finished_listener} finished_listener
  * @description Worker scope multicast request response.
  */
-WorkerScope.prototype.broadcastRequestResponse = function(data_bytes, a_worker_response_listener, finished_listener) {
+WorkerScope.prototype.broadcastRequest = function(data_bytes, a_worker_response_listener, finished_listener) {
   this._settings.broadcast_request_response(data_bytes, a_worker_response_listener, finished_listener);
 }
 

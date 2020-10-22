@@ -114,7 +114,7 @@ function Protocol(settings) {
 
       this._protocol_modules[Protocol.protocol_name] = new(Protocol.module)({
         related_module: this._imported_modules[Protocol.related_module_name],
-        open_handshake: this._openHandshake.bind(this),
+        synchronize: this._synchronize.bind(this),
         hash_manager: this._hash_manager,
         embedded_protocols: this._embedded_protocol_modules
       });
@@ -124,10 +124,12 @@ function Protocol(settings) {
 
 /**
  * Handshake routine:
- * open_handshake(initiative)
- * => synchronize(passive)
- * => synchronize_acknowledgment_listener(initiative finished)
- * => acknowledge(passive finished)
+ * synchronize(initiative side)
+ * => synchronize_listener(passive side)
+ * => synchronize_acknowledgment(passive side)
+ * => synchronize_acknowledgment_listener(initiative side finished)
+ * => acknowledge(initiative side)
+ * => acknowledge_listener(passive side finished)
  */
 
  /**
@@ -135,7 +137,7 @@ function Protocol(settings) {
   * @type {object}
   * @private
   */
-Protocol.prototype._openHandshake = function (interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener) {
+Protocol.prototype._synchronize = function (interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener) {
   this._node_module.createTunnel(interface_name, connector_settings, (error, tunnel) => {
     if (error) {if(synchronize_acknowledgment_listener) synchronize_acknowledgment_listener(error, null, ()=> {});}
     else {

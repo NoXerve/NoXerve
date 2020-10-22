@@ -129,10 +129,10 @@ WorkerScopeProtocol.prototype.start = function(callback) {
           worker_scope_purpose_name_4bytes,
           data_bytes
         ]);
-        this._worker_protocol_actions.multicastRequestResponse(scope_peer_list, data_bytes, a_worker_response_listener, finished_listener);
+        this._worker_protocol_actions.multicastRequest(scope_peer_list, data_bytes, a_worker_response_listener, finished_listener);
       },
       multicast_request_response: (worker_id_list, data_bytes, a_worker_response_listener, finished_listener) => {
-        this._worker_protocol_actions.multicastRequestResponse(worker_id_list, data_bytes, a_worker_response_listener, finished_listener);
+        this._worker_protocol_actions.multicastRequest(worker_id_list, data_bytes, a_worker_response_listener, finished_listener);
       },
       check_integrity: (callback) => {
         const data_bytes = Buf.concat([
@@ -173,7 +173,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
             // Integrity passed. Broadcast integrity pass information.
           }
         };
-        this._worker_protocol_actions.multicastRequestResponse(scope_peer_list, data_bytes, a_worker_response_listener, finished_listener);
+        this._worker_protocol_actions.multicastRequest(scope_peer_list, data_bytes, a_worker_response_listener, finished_listener);
       }
     });
 

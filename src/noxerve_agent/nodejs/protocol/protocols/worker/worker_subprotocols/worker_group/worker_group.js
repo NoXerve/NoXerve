@@ -259,17 +259,17 @@ WorkerGroup.prototype.start = function(callback) {
       channel.broadcast(Buf.from([0x00, 0x01, 0x02, 0x04]), (error, finished_group_peer_id_list) => {
         console.log(error, finished_group_peer_id_list);
       });
-      channel.requestResponse(1, Buf.from([0x55]), (error, response_data_bytes) => {
+      channel.request(1, Buf.from([0x55]), (error, response_data_bytes) => {
         console.log('response');
         console.log(error, response_data_bytes);
       });
 
-      channel.broadcastRequestResponse(Buf.from([0x53]), (group_peer_id, error, response_data_bytes, next) => {
+      channel.broadcastRequest(Buf.from([0x53]), (group_peer_id, error, response_data_bytes, next) => {
         console.log('response(broadcast)');
         console.log(group_peer_id, error, response_data_bytes);
         next(false, true);
       }, (error, finished_group_peer_id_list) => {
-        console.log('broadcastRequestResponse onfinish');
+        console.log('broadcastRequest onfinish');
         console.log(error, finished_group_peer_id_list);
       });
     });

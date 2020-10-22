@@ -44,7 +44,7 @@ function ServiceProtocol(settings) {
    * @private
    * @description Open a handshake. Actually useless for ServiceProtocol module.
    */
-  this._open_handshake_function = settings.open_handshake;
+  this._synchronize_function = settings.synchronize;
 
   /**
    * @memberof module:ServiceProtocol

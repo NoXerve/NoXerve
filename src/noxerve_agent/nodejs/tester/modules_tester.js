@@ -297,7 +297,7 @@ Node2.createInterface('WebSocket', {
           let list = worker_scope.returnScopePeerList();
           console.log('workers in scope: ' + list);
           finish('worker_scope_get_peer_list');
-          worker_scope.broadcastRequestResponse(Buffer.from([6,6,6,6,6]),
+          worker_scope.broadcastRequest(Buffer.from([6,6,6,6,6]),
             (worker_id, open_handshanke_error, synchronize_acknowledgment_message_bytes, callback) => {
               console.log('[worker_scope]'+ worker_id +'respond !');
               console.log('sync_ack info: ' + synchronize_acknowledgment_message_bytes);
@@ -309,11 +309,11 @@ Node2.createInterface('WebSocket', {
             },
             (error, finished_worker_list) => {
               if(error) {
-                console.log('[worker_scope] finish broadcastRequestResponse with error:' + error);
+                console.log('[worker_scope] finish broadcastRequest with error:' + error);
                 console.log('only ' + finished_worker_list + ' finished');
               }
               else{
-                console.log('[worker_scope] finish broadcastRequestResponse');
+                console.log('[worker_scope] finish broadcastRequest');
                 console.log('all finished. ( ' + finished_worker_list + ' )');
               }
             }

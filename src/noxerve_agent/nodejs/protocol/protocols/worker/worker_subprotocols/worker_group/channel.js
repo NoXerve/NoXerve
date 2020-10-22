@@ -232,15 +232,15 @@ Channel.prototype.broadcast = function(data_bytes, callback) {
 // Request response
 
 // [Flag]
-Channel.prototype._returnNewRequestResponseSessionId = function() {
+Channel.prototype._returnNewRequestSessionId = function() {
   const session_id = this._enumerated_request_response_session_id;
   this._enumerated_request_response_session_id += 1;
   return session_id;
 }
 
 // [Flag]
-Channel.prototype.requestResponse = function(group_peer_id, request_data_bytes, on_group_peer_response) {
-  const session_id_int = this._returnNewRequestResponseSessionId();
+Channel.prototype.request = function(group_peer_id, request_data_bytes, on_group_peer_response) {
+  const session_id_int = this._returnNewRequestSessionId();
 
   this._send_by_group_peer_id(group_peer_id,
     Buf.concat([
@@ -257,7 +257,7 @@ Channel.prototype.requestResponse = function(group_peer_id, request_data_bytes, 
 }
 
 // [Flag]
-Channel.prototype.multicastRequestResponse = function(group_peer_id_list, request_data_bytes, a_group_peer_response_listener, finished_listener) {
+Channel.prototype.multicastRequest = function(group_peer_id_list, request_data_bytes, a_group_peer_response_listener, finished_listener) {
   let demultiplexing_callback_called_count = 0;
   let finished_group_peer_id_list = [];
   let error_dict = {};
@@ -284,7 +284,7 @@ Channel.prototype.multicastRequestResponse = function(group_peer_id_list, reques
   // Sending messages.
   for(let index in group_peer_id_list) {
     const group_peer_id = group_peer_id_list[index];
-    this.requestResponse(group_peer_id, request_data_bytes, (error, response_data_bytes) => {
+    this.request(group_peer_id, request_data_bytes, (error, response_data_bytes) => {
       a_group_peer_response_listener(group_peer_id, error, response_data_bytes, (error, is_finished) => {
         demultiplexing_callback(group_peer_id, error, is_finished);
       });
@@ -293,8 +293,8 @@ Channel.prototype.multicastRequestResponse = function(group_peer_id_list, reques
 }
 
 // [Flag]
-Channel.prototype.broadcastRequestResponse = function(request_data_bytes, a_group_peer_response_listener, finished_listener) {
-  this.multicastRequestResponse(this._return_group_peer_id_list(), request_data_bytes, a_group_peer_response_listener, finished_listener);
+Channel.prototype.broadcastRequest = function(request_data_bytes, a_group_peer_response_listener, finished_listener) {
+  this.multicastRequest(this._return_group_peer_id_list(), request_data_bytes, a_group_peer_response_listener, finished_listener);
 }
 
 

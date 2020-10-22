@@ -175,7 +175,7 @@ WorkerSocketProtocol.prototype.start = function(callback) {
       }
     };
 
-    this._worker_protocol_actions.openHandshakeByWorkerId(remote_worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener);
+    this._worker_protocol_actions.synchronizeWorkerPeerByWorkerId(remote_worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener);
   });
   callback(false, this._worker_socket_manager);
 }

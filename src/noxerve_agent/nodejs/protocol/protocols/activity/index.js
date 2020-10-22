@@ -58,7 +58,7 @@ function ActivityProtocol(settings) {
    * @private
    * @description Open a handshake.
    */
-  this._open_handshake_function = settings.open_handshake;
+  this._synchronize_function = settings.synchronize;
 
   /**
    * @memberof module:ActivityProtocol
@@ -187,7 +187,7 @@ ActivityProtocol.prototype.start = function(callback) {
       };
 
       // Callbacks setup completed. Start handshake process.
-      this._open_handshake_function(interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener);
+      this._synchronize_function(interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener);
     };
     loop();
   });

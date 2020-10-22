@@ -173,7 +173,7 @@ WorkerGroupProtocol.prototype.start = function(callback) {
             }
           }
         };
-        this._worker_protocol_actions.openHandshakeByWorkerId(worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener);
+        this._worker_protocol_actions.synchronizeWorkerPeerByWorkerId(worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener);
       };
 
       const on_tunnel_create = (tunnel_create_listener) => {
