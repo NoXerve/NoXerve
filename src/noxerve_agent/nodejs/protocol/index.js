@@ -265,17 +265,17 @@ Protocol.prototype.start = function(callback) {
           // stage 0 => waiting to synchronize.
           // Error => call nothing.
           // stage 1 => waiting to acknowledge.
-          // Error => call synchronization_error_handler.
+          // Error => call synchronize_acknowledgment_error_listener.
           let stage = 0;
 
           let ready_state = false;
           let related_module = null;
 
-          let synchronization_error_handler;
+          let synchronize_acknowledgment_error_listener;
           let acknowledge_handler;
 
           const on_synchronize_acknowledgment_error = (callback) => {
-            synchronization_error_handler = callback;
+            synchronize_acknowledgment_error_listener = callback;
           };
           const on_acknowledge = (callback) => {
             acknowledge_handler = callback;
@@ -312,17 +312,17 @@ Protocol.prototype.start = function(callback) {
                         if (error) {
                           stage = -1;
                           tunnel.close();
-                          synchronization_error_handler(error, data);
+                          synchronize_acknowledgment_error_listener(error, data);
                         }
                       });
                     } catch (error) {
                       stage = -1;
                       tunnel.close();
-                      synchronization_error_handler(error, data);
+                      synchronize_acknowledgment_error_listener(error, data);
                     }
                   } else if(synchronize_protocol_left_count === 0) {
                     // Reset handlers.
-                    synchronization_error_handler = null;
+                    synchronize_acknowledgment_error_listener = null;
                     acknowledge_handler = null;
                     tunnel.close();
                   }
@@ -353,7 +353,7 @@ Protocol.prototype.start = function(callback) {
               } else if (stage === 1) {
                 stage = -1;
                 tunnel.close();
-                synchronization_error_handler(error);
+                synchronize_acknowledgment_error_listener(error);
               }
             } else {
               // Happened error even not ready at all. Abort operation without any further actions.
@@ -364,7 +364,7 @@ Protocol.prototype.start = function(callback) {
 
           tunnel.on('close', () => {
             if (stage === 1) {
-              synchronization_error_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
+              synchronize_acknowledgment_error_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
             }
           });
         }

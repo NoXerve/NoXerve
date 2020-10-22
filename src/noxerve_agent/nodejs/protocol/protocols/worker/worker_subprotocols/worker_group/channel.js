@@ -309,7 +309,16 @@ Channel.prototype._returnNewHandshakeSessionId = function() {
 
 // [Flag]
 Channel.prototype.handshake = function(group_peer_id, synchronize_data_bytes, synchronize_acknowledgment_listener, handshake_finished_listener) {
+  const session_id_int = this._returnNewHandshakeSessionId();
 
+  this._send_by_group_peer_id(group_peer_id,
+    Buf.concat([
+    this._ProtocolCodes.request_response_request,
+    Buf.encodeUInt32BE(session_id_int),
+    request_data_bytes
+  ]), (error)=> {
+
+  });
 }
 
 // [Flag]
