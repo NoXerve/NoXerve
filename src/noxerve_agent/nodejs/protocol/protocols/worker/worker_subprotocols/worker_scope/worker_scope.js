@@ -106,7 +106,7 @@ WorkerScope.prototype.returnScopePeerList = function() {
  * @callback module:WorkerScope~on_a_worker_response
  * @param {integer} scope_peer_id
  * @param {error} error
- * @param {buffer} response_bytes
+ * @param {buffer} response_data_bytes
  * @param {function} next - parameters are "error" and "is_finished".
  */
 /**
@@ -130,7 +130,7 @@ WorkerScope.prototype.multicastRequestResponse = function(scope_peer_id_list, da
  * @callback module:WorkerScope~on_a_worker_response
  * @param {integer} scope_peer_id
  * @param {error} error
- * @param {buffer} response_bytes
+ * @param {buffer} response_data_bytes
  * @param {function} next - parameters are "error" and "is_finished".
  */
 /**

@@ -206,19 +206,19 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
     broadcast_bytes
   ]);
 
-  const on_a_worker_response = (worker_id, error, response_bytes, next_of_on_a_worker_response) => {
+  const on_a_worker_response = (worker_id, error, response_data_bytes, next_of_on_a_worker_response) => {
     if (error) {
       next_of_on_a_worker_response(error, false);
-    } else if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === worker_peer_opreation_byte[0]) {
-      if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
+    } else if (response_data_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_data_bytes[1] === worker_peer_opreation_byte[0]) {
+      if (response_data_bytes[2] === this._ProtocolCodes.accept[0]) {
         next_of_on_a_worker_response(error, true);
-      } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
+      } else if (Utils.areBuffersEqual(response_data_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
         // [Flag]
         next_of_on_a_worker_response(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'), false);
-      } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
+      } else if (Utils.areBuffersEqual(response_data_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
         // [Flag]
         next_of_on_a_worker_response(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'), false);
-      } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), Buf.from([0x00, 0x02]))) {
+      } else if (Utils.areBuffersEqual(response_data_bytes.slice(2, 4), Buf.from([0x00, 0x02]))) {
         // [Flag]
         next_of_on_a_worker_response(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker affairs operation collision error.'), false);
       } else {
@@ -239,15 +239,15 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
         encoded_authenticity_bytes
       ]);
 
-      const on_a_worker_response = (worker_id, error, response_bytes, next_of_on_a_worker_response) => {
-        if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
-          if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
+      const on_a_worker_response = (worker_id, error, response_data_bytes, next_of_on_a_worker_response) => {
+        if (response_data_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_data_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
+          if (response_data_bytes[2] === this._ProtocolCodes.accept[0]) {
             next_of_on_a_worker_response(false, true);
 
-          } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
+          } else if (Utils.areBuffersEqual(response_data_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
             next_of_on_a_worker_response(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'), false);
 
-          } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
+          } else if (Utils.areBuffersEqual(response_data_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
             next_of_on_a_worker_response(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'), false);
 
           } else {
@@ -273,15 +273,15 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
         encoded_authenticity_bytes
       ]);
 
-      const on_a_worker_response = (worker_id, error, response_bytes, next_of_on_a_worker_response) => {
-        if (response_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
-          if (response_bytes[2] === this._ProtocolCodes.accept[0]) {
+      const on_a_worker_response = (worker_id, error, response_data_bytes, next_of_on_a_worker_response) => {
+        if (response_data_bytes[0] === this._ProtocolCodes.worker_affairs[0] && response_data_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
+          if (response_data_bytes[2] === this._ProtocolCodes.accept[0]) {
             next_of_on_a_worker_response(false, true);
 
-          } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
+          } else if (Utils.areBuffersEqual(response_data_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
             next_of_on_a_worker_response(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'), false);
 
-          } else if (Utils.areBuffersEqual(response_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
+          } else if (Utils.areBuffersEqual(response_data_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
             next_of_on_a_worker_response(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'), false);
 
           } else {
@@ -732,36 +732,36 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
         },
         multicastRequestResponse: (worker_id_list, data_bytes, on_a_worker_response, on_finish) => {
           const decorated_data_bytes = Buf.concat([prefix_data_bytes, data_bytes]);
-          const decorated_on_a_worker_response = (worker_id, error, response_bytes, next) => {
+          const decorated_on_a_worker_response = (worker_id, error, response_data_bytes, next) => {
             if(error) {
               on_a_worker_response(worker_id, error, null, next);
             }
             else if(
-              response_bytes[0] === this._ProtocolCodes.worker_object[0] &&
-              response_bytes[1] === worker_object_protocol_code_1byte[0] &&
-              response_bytes[2] === worker_subprotocol_protocol_code_1byte[0]
+              response_data_bytes[0] === this._ProtocolCodes.worker_object[0] &&
+              response_data_bytes[1] === worker_object_protocol_code_1byte[0] &&
+              response_data_bytes[2] === worker_subprotocol_protocol_code_1byte[0]
             ) {
-              on_a_worker_response(worker_id, error, response_bytes.slice(3), next);
+              on_a_worker_response(worker_id, error, response_data_bytes.slice(3), next);
             } else {
-              on_a_worker_response(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_bytes.slice(3), next);
+              on_a_worker_response(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_data_bytes.slice(3), next);
             }
           };
           this._multicastRequestResponse(worker_id_list, decorated_data_bytes, decorated_on_a_worker_response, on_finish);
         },
         broadcastRequestResponseToAllWorkers: (data_bytes, on_a_worker_response, on_finish) => {
           const decorated_data_bytes = Buf.concat([prefix_data_bytes, data_bytes]);
-          const decorated_on_a_worker_response = (worker_id, error, response_bytes, next) => {
+          const decorated_on_a_worker_response = (worker_id, error, response_data_bytes, next) => {
             if(error) {
               on_a_worker_response(worker_id, error, null, next);
             }
             else if(
-              response_bytes[0] === this._ProtocolCodes.worker_object[0] &&
-              response_bytes[1] === worker_object_protocol_code_1byte[0] &&
-              response_bytes[2] === worker_subprotocol_protocol_code_1byte[0]
+              response_data_bytes[0] === this._ProtocolCodes.worker_object[0] &&
+              response_data_bytes[1] === worker_object_protocol_code_1byte[0] &&
+              response_data_bytes[2] === worker_subprotocol_protocol_code_1byte[0]
             ) {
-              on_a_worker_response(worker_id, error, response_bytes.slice(3), next);
+              on_a_worker_response(worker_id, error, response_data_bytes.slice(3), next);
             } else {
-              on_a_worker_response(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_bytes.slice(3), next);
+              on_a_worker_response(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_data_bytes.slice(3), next);
             }
           };
           this._multicastRequestResponse(worker_id_list, decorated_data_bytes, decorated_on_a_worker_response, on_finish);

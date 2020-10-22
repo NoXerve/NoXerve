@@ -141,17 +141,17 @@ WorkerScopeProtocol.prototype.start = function(callback) {
           my_worker_authenticity_bytes,
           worker_scope_purpose_name_4bytes,
         ]);
-        const on_a_worker_response = (worker_id, error, response_bytes, next) => {
+        const on_a_worker_response = (worker_id, error, response_data_bytes, next) => {
           if(error) {
             next(error, false);
           }
-          else if(response_bytes[0] === this._ProtocolCodes.integrity_check[0]) {
-            if(response_bytes[1] !== this._worker_global_protocol_codes.accept[0]) {
+          else if(response_data_bytes[0] === this._ProtocolCodes.integrity_check[0]) {
+            if(response_data_bytes[1] !== this._worker_global_protocol_codes.accept[0]) {
               // error, is_finished
               next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker(id: ' + worker_id + ') rejected or failed integrity check.'), false);
             }
             else {
-              this._worker_protocol_actions.validateAuthenticityBytes(response_bytes.slice(2), (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
+              this._worker_protocol_actions.validateAuthenticityBytes(response_data_bytes.slice(2), (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
                 if (is_authenticity_valid && !error) {
                   next(false, true);
                 } else {

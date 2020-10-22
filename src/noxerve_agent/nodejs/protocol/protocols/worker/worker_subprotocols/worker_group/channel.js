@@ -64,9 +64,9 @@ function Channel(settings) {
    */
   this._event_listener_dict = {
     'data': (group_peer_id, data_bytes) => {
-      console.log(group_peer_id, data_bytes);
+
     },
-    'request-response': () => {
+    'request-response': (group_peer_id, data_bytes, response) => {
 
     },
     'handshake': () => {
@@ -112,8 +112,10 @@ function Channel(settings) {
 
 Channel.prototype._ProtocolCodes = {
   onetime_data: Buf.from([0x00]),
-  request_response: Buf.from([0x01]),
-  handshake: Buf.from([0x01])
+  request_response_request: Buf.from([0x01]),
+  request_response_response: Buf.from([0x02]),
+  request_response_close: Buf.from([0x03]),
+  handshake: Buf.from([0x04])
 };
 
 
@@ -126,17 +128,48 @@ Channel.prototype.start = function(callback) {
     if(protocol_code_int === this._ProtocolCodes.onetime_data[0]) {
       this._event_listener_dict['data'](group_peer_id, data_bytes);
     }
-    else if (protocol_code_int === this._ProtocolCodes.request_response[0]) {
-
+    else if (protocol_code_int === this._ProtocolCodes.request_response_request[0]) {
+      const session_id_4bytes = data_bytes.slice(0, 4);
+      this._event_listener_dict['request-response'](group_peer_id, data_bytes.slice(4), (response_data_bytes, inner_callback) => {
+        if(Buf.isBuffer(response_data_bytes)) {
+          this._send_by_group_peer_id(group_peer_id,
+            Buf.concat([
+            this._ProtocolCodes.request_response_response,
+            session_id_4bytes,
+            response_data_bytes
+          ]), (error) => {
+            if(inner_callback) inner_callback(error);
+          });
+        }
+        else {
+          // Is not buffer inform remote.
+          this._send_by_group_peer_id(group_peer_id,
+            Buf.concat([
+            this._ProtocolCodes.request_response_close,
+            session_id_4bytes
+          ]), (error) => {
+            if(inner_callback) inner_callback(error);
+          });
+        }
+      });
+    }
+    else if (protocol_code_int === this._ProtocolCodes.request_response_response[0]) {
+      const session_id_4bytes = data_bytes.slice(0, 4);
+      const session_id_int = Buf.decodeUInt32BE(session_id_4bytes);
+      this._response_listener_dict_of_request_response[session_id_int](false, data_bytes.slice(4));
+      delete this._response_listener_dict_of_request_response[session_id_int];
+    }
+    else if (protocol_code_int === this._ProtocolCodes.request_response_close[0]) {
+      const session_id_4bytes = data_bytes.slice(0, 4);
+      const session_id_int = Buf.decodeUInt32BE(session_id_4bytes);
+      this._response_listener_dict_of_request_response[session_id_int](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker group remote closed before responsed.'), null);
+      delete this._response_listener_dict_of_request_response[session_id_int];
     }
     else if (protocol_code_int === this._ProtocolCodes.handshake[0]) {
 
     }
   });
-
-  this.broadcast(Buf.from([0x00, 0x01, 0x02, 0x04]), (error, finished_group_peer_id_list) => {
-    console.log(error, finished_group_peer_id_list);
-  });
+  callback(false);
 }
 
 
@@ -201,23 +234,67 @@ Channel.prototype.broadcast = function(data_bytes, callback) {
 // [Flag]
 Channel.prototype._returnNewRequestResponseSessionId = function() {
   const session_id = this._enumerated_request_response_session_id;
-  this._enumerated_session_id += 1;
+  this._enumerated_request_response_session_id += 1;
   return session_id;
 }
 
 // [Flag]
 Channel.prototype.requestResponse = function(group_peer_id, request_data_bytes, on_group_peer_response) {
+  const session_id_int = this._returnNewRequestResponseSessionId();
 
+  this._send_by_group_peer_id(group_peer_id,
+    Buf.concat([
+    this._ProtocolCodes.request_response_request,
+    Buf.encodeUInt32BE(session_id_int),
+    request_data_bytes
+  ]), (error) => {
+    if(error) {
+      on_group_peer_response(error);
+      return;
+    }
+    this._response_listener_dict_of_request_response[session_id_int] = on_group_peer_response;
+  });
 }
 
 // [Flag]
 Channel.prototype.multicastRequestResponse = function(group_peer_id_list, request_data_bytes, on_a_group_peer_response, on_finish) {
+  let demultiplexing_callback_called_count = 0;
+  let finished_group_peer_id_list = [];
+  let error_dict = {};
 
+  const demultiplexing_callback = (group_peer_id, error, is_finished)=> {
+    demultiplexing_callback_called_count ++;
+
+    if (error) {
+      error_dict[group_peer_id] = error;
+    }
+    if (is_finished) {
+      finished_group_peer_id_list.push(group_peer_id);
+    }
+
+    // Check if should call the original callback or not.
+    if(demultiplexing_callback_called_count === group_peer_id_list.length) {
+      if(Object.keys(error_dict).length === 0) {
+        error_dict = false;
+      }
+      on_finish(error_dict, finished_group_peer_id_list);
+    }
+  };
+
+  // Sending messages.
+  for(let index in group_peer_id_list) {
+    const group_peer_id = group_peer_id_list[index];
+    this.requestResponse(group_peer_id, request_data_bytes, (error, response_data_bytes) => {
+      on_a_group_peer_response(group_peer_id, error, response_data_bytes, (error, is_finished) => {
+        demultiplexing_callback(group_peer_id, error, is_finished);
+      });
+    });
+  }
 }
 
 // [Flag]
-Channel.prototype.broadcastRequestResponse = function(callback) {
-
+Channel.prototype.broadcastRequestResponse = function(request_data_bytes, on_a_group_peer_response, on_finish) {
+  this.multicastRequestResponse(this._return_group_peer_id_list(), request_data_bytes, on_a_group_peer_response, on_finish);
 }
 
 
