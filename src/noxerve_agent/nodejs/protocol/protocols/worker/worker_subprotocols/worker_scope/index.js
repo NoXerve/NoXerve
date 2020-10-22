@@ -129,10 +129,10 @@ WorkerScopeProtocol.prototype.start = function(callback) {
           worker_scope_purpose_name_4bytes,
           data_bytes
         ]);
-        this._worker_protocol_actions.multicastRequestResponse(scope_peer_list, );
+        this._worker_protocol_actions.multicastRequestResponse(scope_peer_list, data_bytes, on_a_worker_response, on_finish);
       },
       multicast_request_response: (worker_id_list, data_bytes, on_a_worker_response, on_finish) => {
-        this._worker_protocol_actions.multicastRequestResponse(worker_id_list);
+        this._worker_protocol_actions.multicastRequestResponse(worker_id_list, data_bytes, on_a_worker_response, on_finish);
       },
       check_integrity: (callback) => {
         const data_bytes = Buf.concat([
