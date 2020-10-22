@@ -290,16 +290,6 @@ WorkerGroup.prototype.close = function(callback) {
 
 }
 
-// /**
-//  * @memberof module:WorkerGroup
-//  * @param {buffer} synchronize_information
-//  * @return {buffer} synchronize_acknowledgment_information
-//  * @description Synchronize handshake from remote emitter.
-//  */
-// WorkerGroup.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
-//
-// }
-
 /**
  * @callback module:WorkerGroup~callback_of_on
  * @description callback parameter based on event's type.

@@ -100,7 +100,7 @@ function Channel(settings) {
    * @type {object}
    * @private
    */
-  this._synchronize_acknowledgment_listener_dict_of_handshake = {};
+  this._synchronize_acknowledgment_listener_listener_dict_of_handshake = {};
 
   /**
    * @memberof module:Channel

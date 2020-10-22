@@ -126,7 +126,7 @@ function Protocol(settings) {
  * Handshake routine:
  * open_handshake(initiative)
  * => synchronize(passive)
- * => synchronize_acknowledgment(initiative finished)
+ * => synchronize_acknowledgment_listener(initiative finished)
  * => acknowledge(passive finished)
  */
 
@@ -135,16 +135,16 @@ function Protocol(settings) {
   * @type {object}
   * @private
   */
-Protocol.prototype._openHandshake = function (interface_name, connector_settings, synchronize_information, synchronize_acknowledgment, finish_handshake) {
+Protocol.prototype._openHandshake = function (interface_name, connector_settings, synchronize_information, synchronize_acknowledgment_listener, finish_handshake) {
   this._node_module.createTunnel(interface_name, connector_settings, (error, tunnel) => {
-    if (error) {if(synchronize_acknowledgment) synchronize_acknowledgment(error, null, ()=> {});}
+    if (error) {if(synchronize_acknowledgment_listener) synchronize_acknowledgment_listener(error, null, ()=> {});}
     else {
       // Use stage variable to identify current handshake progress.
       // Avoiding proccess executed wrongly.
       // stage -1 => Emitted error.
       // Be called => stage 0
       // stage 0 => waiting to acknowledge synchronization.
-      // Error => call synchronize_acknowledgment.
+      // Error => call synchronize_acknowledgment_listener.
       // stage 1 => waiting to finish up.
       // Error => call finish_handshake.
       let stage = 0;
@@ -159,8 +159,8 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
 
       tunnel.on('data', (data) => {
         if (stage === 0) {
-          // Call synchronize_acknowledgment function. Respond with acknowledge_information for remote.
-          synchronize_acknowledgment(false, data, (acknowledge_information)=> {
+          // Call synchronize_acknowledgment_listener function. Respond with acknowledge_information for remote.
+          synchronize_acknowledgment_listener(false, data, (acknowledge_information)=> {
             // stage 1 => waiting to finish up. If any error happened call
             // "finish_handshake" from parameters.
             stage = 1;
@@ -201,7 +201,7 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
         if (stage === 0) {
           stage = -1;
           tunnel.close();
-          synchronize_acknowledgment(error, null, ()=> {});
+          synchronize_acknowledgment_listener(error, null, ()=> {});
         } else if (stage === 1) {
           stage = -1;
           tunnel.close();
@@ -211,7 +211,7 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
 
       tunnel.on('close', () => {
         if (stage === 0) {
-          synchronize_acknowledgment(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'), null, ()=> {});
+          synchronize_acknowledgment_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'), null, ()=> {});
         } else if (stage === 1) {
           finish_handshake(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
         }
@@ -274,7 +274,7 @@ Protocol.prototype.start = function(callback) {
           let synchronization_error_handler;
           let acknowledge_handler;
 
-          const onSynchronizationError = (callback) => {
+          const onSynchronizeAcknowledgmetError = (callback) => {
             synchronization_error_handler = callback;
           };
           const onAcknowledge = (callback) => {
@@ -292,7 +292,7 @@ Protocol.prototype.start = function(callback) {
               // Check if any protocol module synchronize with the data or not.
               for (const protocol_name in this._protocol_modules) {
                 // Call synchronize function. Check will it respond with data or not.
-                this._protocol_modules[protocol_name].synchronize(data, onSynchronizationError, onAcknowledge, (synchronize_returned_data)=> {
+                this._protocol_modules[protocol_name].synchronize(data, onSynchronizeAcknowledgmetError, onAcknowledge, (synchronize_returned_data)=> {
                   synchronize_protocol_left_count--;
 
                   // If responded then finish up.

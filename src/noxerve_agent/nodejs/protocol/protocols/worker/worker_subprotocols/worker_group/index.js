@@ -141,7 +141,7 @@ WorkerGroupProtocol.prototype.start = function(callback) {
           my_worker_authenticity_bytes,
         ]);
 
-        const synchronize_acknowledgment = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
+        const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
           if(open_handshanke_error) {
             inner_callback(open_handshanke_error);
             return;
@@ -173,7 +173,7 @@ WorkerGroupProtocol.prototype.start = function(callback) {
             }
           }
         };
-        this._worker_protocol_actions.openHandshakeByWorkerId(worker_peer_worker_id, synchronize_information, synchronize_acknowledgment, finish_handshake);
+        this._worker_protocol_actions.openHandshakeByWorkerId(worker_peer_worker_id, synchronize_information, synchronize_acknowledgment_listener, finish_handshake);
       };
 
       const on_tunnel_create = (tunnel_create_listener) => {
@@ -181,7 +181,7 @@ WorkerGroupProtocol.prototype.start = function(callback) {
       };
 
       // Register this worker group synchronization action.
-      this._worker_group_synchronization_dict[worker_group_purpose_name] = (synchronize_information, onError, onAcknowledge, next) => {
+      this._worker_group_synchronization_dict[worker_group_purpose_name] = (synchronize_information, onSynchronizeAcknowledgmetError, onAcknowledge, next) => {
         const remote_worker_peer_authenticity_bytes = synchronize_information.slice(4);
 
         this._worker_protocol_actions.validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
@@ -230,24 +230,24 @@ WorkerGroupProtocol.prototype.start = function(callback) {
 }
 
 /**
- * @callback module:WorkerGroupProtocol~callback_of_next
+ * @callback module:WorkerGroupProtocol~callback_of_synchronize_acknowledgment
  * @param {buffer} synchronize_returned_data
  */
 /**
  * @memberof module:WorkerGroupProtocol
  * @param {buffer} synchronize_information
- * @param {function} onError
+ * @param {function} onSynchronizeAcknowledgmetError
  * @param {function} onAcknowledge
- * @param {module:WorkerGroupProtocol~callback_of_next} next
+ * @param {module:WorkerGroupProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerGroupProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
+WorkerGroupProtocol.prototype.synchronize = function(synchronize_information, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
   const worker_group_purpose_name_4bytes = synchronize_information.slice(0, 4);
   const worker_group_purpose_name = this._hash_manager.stringify4BytesHash(worker_group_purpose_name_4bytes);
   if (this._worker_group_synchronization_dict[worker_group_purpose_name]) {
-    this._worker_group_synchronization_dict[worker_group_purpose_name](synchronize_information, onError, onAcknowledge, next);
+    this._worker_group_synchronization_dict[worker_group_purpose_name](synchronize_information, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment);
   } else {
-    next(this._worker_global_protocol_codes.unknown_reason_reject_2_bytes);
+    synchronize_acknowledgment(this._worker_global_protocol_codes.unknown_reason_reject_2_bytes);
   }
 }
 

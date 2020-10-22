@@ -116,18 +116,18 @@ ServiceProtocol.prototype.close = function(callback) {
 }
 
 /**
- * @callback module:ServiceProtocol~callback_of_next
+ * @callback module:ServiceProtocol~callback_of_synchronize_acknowledgment
  * @param {buffer} synchronize_returned_data
  */
 /**
  * @memberof module:ServiceProtocol
  * @param {buffer} synchronize_information
- * @param {function} onError
+ * @param {function} onSynchronizeAcknowledgmetError
  * @param {function} onAcknowledge
- * @param {module:ServiceProtocol~callback_of_next} next
+ * @param {module:ServiceProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-ServiceProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
+ServiceProtocol.prototype.synchronize = function(synchronize_information, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
   // Synchronize information for handshake
   // Format:
   // service-activity byte
@@ -139,7 +139,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
     const activity_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(1, 5));
     const activity_purpose_parameter = this._nsdt_embedded_protocol.decode(synchronize_information.slice(5));
 
-    onError((error) => {
+    onSynchronizeAcknowledgmetError((error) => {
       console.log('Serivce protocol verbose.', error);
     });
 
@@ -161,7 +161,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
 
     if(this._service_module.emitEventListener('service-of-activity-purpose-exist', activity_purpose_name)) {
       // Send 8 bytes id;
-      next(Buf.concat([
+      synchronize_acknowledgment(Buf.concat([
         this._ProtocolCodes.service_and_activity,
         this._ProtocolCodes.accept,
         // generated_activity_id
@@ -169,7 +169,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
     }
     else {
       // Send 8 bytes id;
-      next(Buf.concat([
+      synchronize_acknowledgment(Buf.concat([
         this._ProtocolCodes.service_and_activity,
         this._ProtocolCodes.not_exist_reason_reject_2_bytes,
         // generated_activity_id
@@ -177,7 +177,7 @@ ServiceProtocol.prototype.synchronize = function(synchronize_information, onErro
     }
 
 
-  } else next(false);
+  } else synchronize_acknowledgment(false);
 }
 
 module.exports = {

@@ -130,7 +130,7 @@ WorkerSocketProtocol.prototype.start = function(callback) {
 
     let _is_authenticity_valid = false;
 
-    const synchronize_acknowledgment = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
+    const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
       if (open_handshanke_error) {
         inner_callback(open_handshanke_error);
         next(false);
@@ -175,7 +175,7 @@ WorkerSocketProtocol.prototype.start = function(callback) {
       }
     };
 
-    this._worker_protocol_actions.openHandshakeByWorkerId(remote_worker_peer_worker_id, synchronize_information, synchronize_acknowledgment, finish_handshake);
+    this._worker_protocol_actions.openHandshakeByWorkerId(remote_worker_peer_worker_id, synchronize_information, synchronize_acknowledgment_listener, finish_handshake);
   });
   callback(false, this._worker_socket_manager);
 }
@@ -550,22 +550,22 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
 }
 
 /**
- * @callback module:WorkerSocketProtocol~callback_of_next
+ * @callback module:WorkerSocketProtocol~callback_of_synchronize_acknowledgment
  * @param {buffer} synchronize_returned_data
  */
 /**
  * @memberof module:WorkerSocketProtocol
  * @param {buffer} synchronize_information
- * @param {function} onError
+ * @param {function} onSynchronizeAcknowledgmetError
  * @param {function} onAcknowledge
- * @param {module:WorkerSocketProtocol~callback_of_next} next
+ * @param {module:WorkerSocketProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerSocketProtocol.prototype.synchronize = function(synchronize_information, onError, onAcknowledge, next) {
+WorkerSocketProtocol.prototype.synchronize = function(synchronize_information, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
   const worker_id = Buf.decodeUInt32BE(synchronize_information.slice(0, 4));
   const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(0, 4));
 
-  onError((error) => {
+  onSynchronizeAcknowledgmetError((error) => {
     // Server side error.
     console.log(error);
   });
@@ -587,7 +587,7 @@ WorkerSocketProtocol.prototype.synchronize = function(synchronize_information, o
         }
       });
 
-      next(Buf.concat([
+      synchronize_acknowledgment(Buf.concat([
         this._worker_global_protocol_codes.accept, // Accept.
         this._worker_protocol_actions.encodeAuthenticityBytes()
       ]));
@@ -597,7 +597,7 @@ WorkerSocketProtocol.prototype.synchronize = function(synchronize_information, o
         // Reject.
         tunnel.close();
       });
-      next(this._worker_global_protocol_codes.authentication_reason_reject_2_bytes); // Reject. Authenticication error.
+      synchronize_acknowledgment(this._worker_global_protocol_codes.authentication_reason_reject_2_bytes); // Reject. Authenticication error.
     }
   });
 }
