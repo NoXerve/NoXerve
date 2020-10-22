@@ -257,7 +257,7 @@ Channel.prototype.requestResponse = function(group_peer_id, request_data_bytes, 
 }
 
 // [Flag]
-Channel.prototype.multicastRequestResponse = function(group_peer_id_list, request_data_bytes, a_group_peer_response_listener, on_finish) {
+Channel.prototype.multicastRequestResponse = function(group_peer_id_list, request_data_bytes, a_group_peer_response_listener, finished_listener) {
   let demultiplexing_callback_called_count = 0;
   let finished_group_peer_id_list = [];
   let error_dict = {};
@@ -277,7 +277,7 @@ Channel.prototype.multicastRequestResponse = function(group_peer_id_list, reques
       if(Object.keys(error_dict).length === 0) {
         error_dict = false;
       }
-      on_finish(error_dict, finished_group_peer_id_list);
+      finished_listener(error_dict, finished_group_peer_id_list);
     }
   };
 
@@ -293,8 +293,8 @@ Channel.prototype.multicastRequestResponse = function(group_peer_id_list, reques
 }
 
 // [Flag]
-Channel.prototype.broadcastRequestResponse = function(request_data_bytes, a_group_peer_response_listener, on_finish) {
-  this.multicastRequestResponse(this._return_group_peer_id_list(), request_data_bytes, a_group_peer_response_listener, on_finish);
+Channel.prototype.broadcastRequestResponse = function(request_data_bytes, a_group_peer_response_listener, finished_listener) {
+  this.multicastRequestResponse(this._return_group_peer_id_list(), request_data_bytes, a_group_peer_response_listener, finished_listener);
 }
 
 
