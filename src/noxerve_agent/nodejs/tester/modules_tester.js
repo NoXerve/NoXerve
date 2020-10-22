@@ -24,6 +24,8 @@ let Tests = [
   'worker_field2_yield_test',
   'worker_field1_yield_test',
   'worker_scope_check_integrity',
+  'worker_scope_get_peer_list',
+  'worker_scope_broad_request_reponse',
   'nsdt_test',
   'worker_group',
   'other_test'
@@ -292,6 +294,31 @@ Node2.createInterface('WebSocket', {
             if (error) console.log('[Worker module] "checkIntegrity" error.', error);
             finish('worker_scope_check_integrity');
           });
+          let list = worker_scope.returnScopePeerList();
+          console.log('workers in scope: ' + list);
+          finish('worker_scope_get_peer_list');
+          worker_scope.broadcastRequestResponse(Buffer.from([6,6,6,6,6]),
+            (worker_id, open_handshanke_error, synchronize_acknowledgment_information, callback) => {
+              console.log('[worker_scope]'+ worker_id +'respond !');
+              console.log('sync_ack info: ' + synchronize_acknowledgment_information);
+              if(open_handshanke_error) {
+                console.log('with error: '+ open_handshanke_error);
+                callback(open_handshanke_error, false);
+              }
+              else callback(false, true);
+            },
+            (error, finished_worker_list) => {
+              if(error) {
+                console.log('[worker_scope] finish broadcastRequestResponse with error:' + error);
+                console.log('only ' + finished_worker_list + ' finished');
+              }
+              else{
+                console.log('[worker_scope] finish broadcastRequestResponse');
+                console.log('all finished. ( ' + finished_worker_list + ' )');
+              }
+            }
+          );
+          finish('worker_scope_broad_request_reponse');
         });
 
         // WorkerGroup tests
