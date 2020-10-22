@@ -191,8 +191,8 @@ initialize_interfaces(() => {
           console.log('[Worker ' + my_worker_id + '] "field1" yielding_start_parameter value: ', yielding_start_parameter);
 
           yield_data(321);
-          yield_data({foo: 321}, (acknowledge_information)=> {
-            console.log('[Worker module] "field1" acknowledge_information.', acknowledge_information);
+          yield_data({foo: 321}, (acknowledge_message_bytes)=> {
+            console.log('[Worker module] "field1" acknowledge_message_bytes.', acknowledge_message_bytes);
             yield_data(Buffer.from([5, 4, 3, 0, 1]));
             finish_yield('hehe');
           });

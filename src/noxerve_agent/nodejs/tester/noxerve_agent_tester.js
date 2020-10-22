@@ -122,8 +122,8 @@ NoXerveAgent.start((error)=> {
             console.log('[Worker module] "field1" yielding_start_parameter value: ', yielding_start_parameter);
 
             yield_data(321);
-            yield_data({foo: 321}, (acknowledge_information)=> {
-              console.log('[Worker module] "field1" acknowledge_information.', acknowledge_information);
+            yield_data({foo: 321}, (acknowledge_message_bytes)=> {
+              console.log('[Worker module] "field1" acknowledge_message_bytes.', acknowledge_message_bytes);
               yield_data(Buffer.from([5, 4, 3, 0, 1]));
               finish_yield('hehe');
             });
@@ -141,8 +141,8 @@ NoXerveAgent.start((error)=> {
             worker_socket.define('func1', (service_function_parameter, return_data, yield_data) => {
               console.log('[Worker module] WorkerSocket function on createWorkerSocket called.');
               yield_data(123);
-              yield_data({foo: 123}, (acknowledge_information)=> {
-                console.log('[Worker module] WorkerSocket function on createWorkerSocket. acknowledge_information', acknowledge_information);
+              yield_data({foo: 123}, (acknowledge_message_bytes)=> {
+                console.log('[Worker module] WorkerSocket function on createWorkerSocket. acknowledge_message_bytes', acknowledge_message_bytes);
                 yield_data(Buffer.from([5, 4, 3, 2, 1]));
                 return_data('haha');
               });
@@ -217,8 +217,8 @@ NoXerveAgent.start((error)=> {
         yield_data(Utils.random8Bytes());
 
         // Test acknowledgment.
-        yield_data(callable_struture, (acknowledge_information) => {
-          console.log('[Service module] Service function acknowledge_information: ', acknowledge_information);
+        yield_data(callable_struture, (acknowledge_message_bytes) => {
+          console.log('[Service module] Service function acknowledge_message_bytes: ', acknowledge_message_bytes);
           yield_data(Buffer.from([1, 2, 3, 4, 5]));
           return_data({bar: 'last round'});
           finish('service_function_test');
@@ -249,8 +249,8 @@ NoXerveAgent.start((error)=> {
           console.log('[Activity module] yielding_start_parameter value: ', yielding_start_parameter);
 
           yield_data(123);
-          yield_data({foo: 123}, (acknowledge_information) => {
-            console.log('[Activity module] Yield acknowledge_information.', acknowledge_information);
+          yield_data({foo: 123}, (acknowledge_message_bytes) => {
+            console.log('[Activity module] Yield acknowledge_message_bytes.', acknowledge_message_bytes);
             yield_data(Buffer.from([5, 4, 3, 2, 1]));
             finish_yield('haha');
           });

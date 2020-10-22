@@ -135,23 +135,23 @@ WorkerGroupProtocol.prototype.start = function(callback) {
         const worker_peer_worker_id = group_peer_id_list[group_peer_id - 1];
         let _is_authenticity_valid = false;
 
-        const synchronize_information = Buf.concat([
+        const synchronize_message_bytes = Buf.concat([
           // Buf.encodeUInt32BE(my_worker_authenticity_bytes.length),
           worker_group_purpose_name_4bytes,
           my_worker_authenticity_bytes,
         ]);
 
-        const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
+        const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_message_bytes, next) => {
           if(open_handshanke_error) {
             inner_callback(open_handshanke_error);
             return;
           }
-          if(synchronize_acknowledgment_information[0] !== this._worker_global_protocol_codes.accept[0]) {
+          if(synchronize_acknowledgment_message_bytes[0] !== this._worker_global_protocol_codes.accept[0]) {
             inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('WorkerGroupProtocol create tunnel error. '));
             next(false);
             return;
           }
-          const remote_worker_peer_authenticity_bytes = synchronize_acknowledgment_information.slice(1);
+          const remote_worker_peer_authenticity_bytes = synchronize_acknowledgment_message_bytes.slice(1);
           this._worker_protocol_actions.validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
             _is_authenticity_valid = is_authenticity_valid;
             if (is_authenticity_valid && !error && remote_worker_peer_worker_id === worker_peer_worker_id) {
@@ -173,7 +173,7 @@ WorkerGroupProtocol.prototype.start = function(callback) {
             }
           }
         };
-        this._worker_protocol_actions.openHandshakeByWorkerId(worker_peer_worker_id, synchronize_information, synchronize_acknowledgment_listener, finish_handshake);
+        this._worker_protocol_actions.openHandshakeByWorkerId(worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, finish_handshake);
       };
 
       const on_tunnel_create = (tunnel_create_listener) => {
@@ -181,13 +181,13 @@ WorkerGroupProtocol.prototype.start = function(callback) {
       };
 
       // Register this worker group synchronization action.
-      this._worker_group_synchronization_dict[worker_group_purpose_name] = (synchronize_information, onSynchronizeAcknowledgmetError, onAcknowledge, next) => {
-        const remote_worker_peer_authenticity_bytes = synchronize_information.slice(4);
+      this._worker_group_synchronization_dict[worker_group_purpose_name] = (synchronize_message_bytes, onSynchronizeAcknowledgmetError, onAcknowledge, next) => {
+        const remote_worker_peer_authenticity_bytes = synchronize_message_bytes.slice(4);
 
         this._worker_protocol_actions.validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
           if (is_authenticity_valid && !error && group_peer_id_list.indexOf(remote_worker_peer_worker_id) !== -1) {
-            onAcknowledge((acknowledge_information, tunnel) => {
-              if (acknowledge_information[0] === this._worker_global_protocol_codes.accept[0]) {
+            onAcknowledge((acknowledge_message_bytes, tunnel) => {
+              if (acknowledge_message_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
                 // Transfer worker id into group id.
                 _tunnel_create_listener(group_peer_id_list.indexOf(remote_worker_peer_worker_id) + 1, tunnel);
               } else {
@@ -200,7 +200,7 @@ WorkerGroupProtocol.prototype.start = function(callback) {
               this._worker_protocol_actions.encodeAuthenticityBytes()
             ]));
           } else {
-            onAcknowledge((acknowledge_information, tunnel) => {
+            onAcknowledge((acknowledge_message_bytes, tunnel) => {
               // Reject.
               tunnel.close();
             });
@@ -235,17 +235,17 @@ WorkerGroupProtocol.prototype.start = function(callback) {
  */
 /**
  * @memberof module:WorkerGroupProtocol
- * @param {buffer} synchronize_information
+ * @param {buffer} synchronize_message_bytes
  * @param {function} onSynchronizeAcknowledgmetError
  * @param {function} onAcknowledge
  * @param {module:WorkerGroupProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerGroupProtocol.prototype.synchronize = function(synchronize_information, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
-  const worker_group_purpose_name_4bytes = synchronize_information.slice(0, 4);
+WorkerGroupProtocol.prototype.synchronize = function(synchronize_message_bytes, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
+  const worker_group_purpose_name_4bytes = synchronize_message_bytes.slice(0, 4);
   const worker_group_purpose_name = this._hash_manager.stringify4BytesHash(worker_group_purpose_name_4bytes);
   if (this._worker_group_synchronization_dict[worker_group_purpose_name]) {
-    this._worker_group_synchronization_dict[worker_group_purpose_name](synchronize_information, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment);
+    this._worker_group_synchronization_dict[worker_group_purpose_name](synchronize_message_bytes, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment);
   } else {
     synchronize_acknowledgment(this._worker_global_protocol_codes.unknown_reason_reject_2_bytes);
   }

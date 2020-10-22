@@ -106,7 +106,7 @@ ActivityProtocol.prototype.start = function(callback) {
     // Synchronize information for handshake
     const activity_purpose_name_4bytes = this._hash_manager.hashString4Bytes(activity_purpose_name);
     const activity_purpose_parameter_bytes = this._nsdt_embedded_protocol.encode(activity_purpose_parameter);
-    const synchronize_information = Buf.concat([
+    const synchronize_message_bytes = Buf.concat([
       this._ProtocolCodes.service_and_activity,
       activity_purpose_name_4bytes,
       activity_purpose_parameter_bytes
@@ -129,27 +129,27 @@ ActivityProtocol.prototype.start = function(callback) {
       const interface_name = shuffled_connector_settings_list[index].interface_name;
       const connector_settings = shuffled_connector_settings_list[index].connector_settings;
 
-      const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
+      const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_message_bytes, next) => {
         if (open_handshanke_error) {
 
           // Unable to open handshake. Next loop.
           loop_next();
 
-          // Return acknowledge_information(not acknowledge).
+          // Return acknowledge_message_bytes(not acknowledge).
           next(false);
         } else {
-          // Handshake opened. Check if synchronize_acknowledgment_information valid.
+          // Handshake opened. Check if synchronize_acknowledgment_message_bytes valid.
           try {
-            if(synchronize_acknowledgment_information[0] === this._ProtocolCodes.service_and_activity[0] && synchronize_acknowledgment_information[1] === this._ProtocolCodes.accept[0]) {
+            if(synchronize_acknowledgment_message_bytes[0] === this._ProtocolCodes.service_and_activity[0] && synchronize_acknowledgment_message_bytes[1] === this._ProtocolCodes.accept[0]) {
 
               // Acknowledgement information for handshake
-              const acknowledge_information = this._ProtocolCodes.service_and_activity;
+              const acknowledge_message_bytes = this._ProtocolCodes.service_and_activity;
 
               // Return acknowledge binary.
-              next(acknowledge_information);
+              next(acknowledge_message_bytes);
             }
-            else if(synchronize_acknowledgment_information[0] === this._ProtocolCodes.service_and_activity[0] && synchronize_acknowledgment_information[1] === this._ProtocolCodes.reject[0]) {
-              if(synchronize_acknowledgment_information[2] === this._ProtocolCodes.not_exist_reason_reject_2_bytes[1]) {
+            else if(synchronize_acknowledgment_message_bytes[0] === this._ProtocolCodes.service_and_activity[0] && synchronize_acknowledgment_message_bytes[1] === this._ProtocolCodes.reject[0]) {
+              if(synchronize_acknowledgment_message_bytes[2] === this._ProtocolCodes.not_exist_reason_reject_2_bytes[1]) {
                 create_activity_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY('Create activity error. Service for such purpose does not exist.'));
                 next(false);
               }
@@ -161,14 +161,14 @@ ActivityProtocol.prototype.start = function(callback) {
             else {
               loop_next();
 
-              // Return acknowledge_information(not acknowledge).
+              // Return acknowledge_message_bytes(not acknowledge).
               next(false);
             }
           } catch (error) {
             // Unable to open handshake. Next loop.
             loop_next();
 
-            // Return acknowledge_information(not acknowledge).
+            // Return acknowledge_message_bytes(not acknowledge).
             next(false);
           }
         }
@@ -187,7 +187,7 @@ ActivityProtocol.prototype.start = function(callback) {
       };
 
       // Callbacks setup completed. Start handshake process.
-      this._open_handshake_function(interface_name, connector_settings, synchronize_information, synchronize_acknowledgment_listener, finish_handshake);
+      this._open_handshake_function(interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, finish_handshake);
     };
     loop();
   });
@@ -213,13 +213,13 @@ ActivityProtocol.prototype.close = function(callback) {
  */
 /**
  * @memberof module:ActivityProtocol
- * @param {buffer} synchronize_information
+ * @param {buffer} synchronize_message_bytes
  * @param {function} onSynchronizeAcknowledgmetError
  * @param {function} onAcknowledge
  * @param {module:ActivityProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-ActivityProtocol.prototype.synchronize = function(synchronize_information, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
+ActivityProtocol.prototype.synchronize = function(synchronize_message_bytes, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
   // Activity doesn't support SYN.
   synchronize_acknowledgment(false);
 }

@@ -196,8 +196,8 @@ initialize_interfaces(()=> {
                       yield_data(callable_struture);
 
                       yield_data(123);
-                      yield_data({foo: 123}, (acknowledge_information)=> {
-                        console.log('[Worker module] WorkerSocket function on createWorkerSocket. acknowledge_information', acknowledge_information);
+                      yield_data({foo: 123}, (acknowledge_message_bytes)=> {
+                        console.log('[Worker module] WorkerSocket function on createWorkerSocket. acknowledge_message_bytes', acknowledge_message_bytes);
                         yield_data(Buffer.from([5, 4, 3, 2, 1]));
                         return_data('haha');
                       });

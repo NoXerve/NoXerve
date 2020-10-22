@@ -135,7 +135,7 @@ function Protocol(settings) {
   * @type {object}
   * @private
   */
-Protocol.prototype._openHandshake = function (interface_name, connector_settings, synchronize_information, synchronize_acknowledgment_listener, finish_handshake) {
+Protocol.prototype._openHandshake = function (interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, finish_handshake) {
   this._node_module.createTunnel(interface_name, connector_settings, (error, tunnel) => {
     if (error) {if(synchronize_acknowledgment_listener) synchronize_acknowledgment_listener(error, null, ()=> {});}
     else {
@@ -153,24 +153,24 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
 
       tunnel.on('ready', () => {
         ready_state = true;
-        // Send synchronize_information as tunnel is ready.
-        tunnel.send(synchronize_information);
+        // Send synchronize_message_bytes as tunnel is ready.
+        tunnel.send(synchronize_message_bytes);
       });
 
       tunnel.on('data', (data) => {
         if (stage === 0) {
-          // Call synchronize_acknowledgment_listener function. Respond with acknowledge_information for remote.
-          synchronize_acknowledgment_listener(false, data, (acknowledge_information)=> {
+          // Call synchronize_acknowledgment_listener function. Respond with acknowledge_message_bytes for remote.
+          synchronize_acknowledgment_listener(false, data, (acknowledge_message_bytes)=> {
             // stage 1 => waiting to finish up. If any error happened call
             // "finish_handshake" from parameters.
             stage = 1;
             try {
-              if (acknowledge_information === false) {
+              if (acknowledge_message_bytes === false) {
                 stage = -1;
                 tunnel.close();
               }
               else {
-                tunnel.send(acknowledge_information, (error) => {
+                tunnel.send(acknowledge_message_bytes, (error) => {
                   if (error) {
                     stage = -1;
                     tunnel.close();

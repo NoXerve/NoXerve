@@ -121,30 +121,30 @@ ServiceProtocol.prototype.close = function(callback) {
  */
 /**
  * @memberof module:ServiceProtocol
- * @param {buffer} synchronize_information
+ * @param {buffer} synchronize_message_bytes
  * @param {function} onSynchronizeAcknowledgmetError
  * @param {function} onAcknowledge
  * @param {module:ServiceProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-ServiceProtocol.prototype.synchronize = function(synchronize_information, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
+ServiceProtocol.prototype.synchronize = function(synchronize_message_bytes, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
   // Synchronize information for handshake
   // Format:
   // service-activity byte
   // 0x01
-  if (synchronize_information[0] === this._ProtocolCodes.service_and_activity[0]) {
+  if (synchronize_message_bytes[0] === this._ProtocolCodes.service_and_activity[0]) {
     // const generated_activity_id = Utils.random8Bytes();
     // const generated_activity_id_base64 = generated_activity_id.toString('base64');
 
-    const activity_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(1, 5));
-    const activity_purpose_parameter = this._nsdt_embedded_protocol.decode(synchronize_information.slice(5));
+    const activity_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_message_bytes.slice(1, 5));
+    const activity_purpose_parameter = this._nsdt_embedded_protocol.decode(synchronize_message_bytes.slice(5));
 
     onSynchronizeAcknowledgmetError((error) => {
       console.log('Serivce protocol verbose.', error);
     });
 
-    onAcknowledge((acknowledge_information, tunnel) => {
-      if (acknowledge_information[0] === this._ProtocolCodes.service_and_activity[0]) {
+    onAcknowledge((acknowledge_message_bytes, tunnel) => {
+      if (acknowledge_message_bytes[0] === this._ProtocolCodes.service_and_activity[0]) {
         this._service_module.emitEventListener('service-of-activity-request', (error, service_of_activity) => {
           this._service_of_activity_protocol.handleTunnel(error, service_of_activity, tunnel);
           try {

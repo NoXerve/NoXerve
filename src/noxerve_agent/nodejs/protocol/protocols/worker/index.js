@@ -319,7 +319,7 @@ WorkerProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = function(o
  * @memberof module:WorkerProtocol
  * @private
  */
-WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = function(operation_type, synchronize_information, next) {
+WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = function(operation_type, synchronize_message_bytes, next) {
   const worker_affairs_worker_peer_operations_ProtocolCodes = {
     'join': this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast,
     'update': this._ProtocolCodes.worker_affairs_worker_peer_update_broadcast,
@@ -335,8 +335,8 @@ WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = func
   const worker_peer_opreation_byte = worker_affairs_worker_peer_operations_ProtocolCodes[operation_type];
   const event_listener_name = event_listener_names[operation_type];
 
-  const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
-  const remote_worker_peer_authenticity_bytes = synchronize_information.slice(6, 6 + remote_worker_peer_authenticity_bytes_length);
+  const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_message_bytes.slice(2, 6));
+  const remote_worker_peer_authenticity_bytes = synchronize_message_bytes.slice(6, 6 + remote_worker_peer_authenticity_bytes_length);
   this._validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
     if ((operation_type === 'update' || operation_type === 'leave') && !Object.keys(this._worker_peer_settings_dict).includes(remote_worker_peer_worker_id + '')) {
       next(Buf.concat([
@@ -345,7 +345,7 @@ WorkerProtocol.prototype._handleWorkerAffairsWorkerPeerOperationBroadcast = func
         this._ProtocolCodes.authentication_reason_reject_2_bytes // Reject. Authenticication error.
       ]));
     } else if (is_authenticity_valid) {
-      const bytes_offseted = synchronize_information.slice(6 + remote_worker_peer_authenticity_bytes_length);
+      const bytes_offseted = synchronize_message_bytes.slice(6 + remote_worker_peer_authenticity_bytes_length);
       const target_worker_peer_worker_id = Buf.decodeUInt32BE(bytes_offseted.slice(0, 4));
       const new_worker_peer_connectors_settings_bytes_length = (operation_type === 'leave') ? null : Buf.decodeUInt32BE(bytes_offseted.slice(4, 8));
       let new_worker_peer_connectors_settings = (operation_type === 'leave') ? null : this._nsdt_embedded_protocol.decode(bytes_offseted.slice(8, 8 + new_worker_peer_connectors_settings_bytes_length));
@@ -445,7 +445,7 @@ WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_wo
  * @private
  */
 WorkerProtocol.prototype._openHandshakeByWorkerId = function(
-  target_worker_peer_worker_id, synchronize_information, synchronize_acknowledgment_listener, finish_handshake) {
+  target_worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, finish_handshake) {
   if (!this._worker_peer_settings_dict[target_worker_peer_worker_id]) {
     synchronize_acknowledgment_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker(id: ' + target_worker_peer_worker_id + ').'), null, ()=> {});
     return;
@@ -470,18 +470,18 @@ WorkerProtocol.prototype._openHandshakeByWorkerId = function(
     const connector_settings = connectors_settings[index].connector_settings;
 
     // "_" is for distincting the one from parameters.
-    const _synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
+    const _synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_message_bytes, next) => {
       if (open_handshanke_error) {
         // Unable to open handshake. Next loop.
         open_handshanke_errors.push(open_handshanke_error);
         loop_next();
 
-        // Return acknowledge_information(not acknowledge).
+        // Return acknowledge_message_bytes(not acknowledge).
         next(false);
       } else {
 
         // synchronize_acknowledgment_listener obtained from parameters.
-        return synchronize_acknowledgment_listener(open_handshanke_error, synchronize_acknowledgment_information, next);
+        return synchronize_acknowledgment_listener(open_handshanke_error, synchronize_acknowledgment_message_bytes, next);
       }
     };
 
@@ -492,7 +492,7 @@ WorkerProtocol.prototype._openHandshakeByWorkerId = function(
     };
 
     // Callbacks setup completed. Start handshake process.
-    this._open_handshake_function(interface_name, connector_settings, synchronize_information, _synchronize_acknowledgment_listener, _finish_handshake);
+    this._open_handshake_function(interface_name, connector_settings, synchronize_message_bytes, _synchronize_acknowledgment_listener, _finish_handshake);
   };
 
   loop();
@@ -526,11 +526,11 @@ WorkerProtocol.prototype._multicastRequestResponse = function(worker_id_list, da
 
       // Check worker id is not 0.
       if (worker_id !== 0) {
-        const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
+        const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_message_bytes, next) => {
           current_connections_count--;
 
           next(false);
-          on_a_worker_response(worker_id, open_handshanke_error, synchronize_acknowledgment_information, (error, is_finished) => {
+          on_a_worker_response(worker_id, open_handshanke_error, synchronize_acknowledgment_message_bytes, (error, is_finished) => {
             if (error) {
               worker_peers_errors[worker_id] = error;
               escape_loop_with_error = true;
@@ -704,9 +704,9 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
       worker_protocol_actions: {
         validateAuthenticityBytes: this._validateAuthenticityBytes.bind(this),
         encodeAuthenticityBytes: this._encodeAuthenticityBytes.bind(this),
-        openHandshakeByWorkerId: (target_worker_peer_worker_id, synchronize_information, synchronize_acknowledgment_listener, finish_handshake) => {
-          const decorated_synchronize_information = Buf.concat([prefix_data_bytes, synchronize_information]);
-          const decorated_synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
+        openHandshakeByWorkerId: (target_worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, finish_handshake) => {
+          const decorated_synchronize_message_bytes = Buf.concat([prefix_data_bytes, synchronize_message_bytes]);
+          const decorated_synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_message_bytes, next) => {
             const decorated_next = (data_bytes) => {
               if(Buf.isBuffer(data_bytes)) {
                 next(Buf.concat([prefix_data_bytes, data_bytes]));
@@ -719,16 +719,16 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
               synchronize_acknowledgment_listener(open_handshanke_error, null, decorated_next);
             }
             else if(
-              synchronize_acknowledgment_information[0] === this._ProtocolCodes.worker_object[0] &&
-              synchronize_acknowledgment_information[1] === worker_object_protocol_code_1byte[0] &&
-              synchronize_acknowledgment_information[2] === worker_subprotocol_protocol_code_1byte[0]
+              synchronize_acknowledgment_message_bytes[0] === this._ProtocolCodes.worker_object[0] &&
+              synchronize_acknowledgment_message_bytes[1] === worker_object_protocol_code_1byte[0] &&
+              synchronize_acknowledgment_message_bytes[2] === worker_subprotocol_protocol_code_1byte[0]
             ) {
-              synchronize_acknowledgment_listener(open_handshanke_error, synchronize_acknowledgment_information.slice(3), decorated_next);
+              synchronize_acknowledgment_listener(open_handshanke_error, synchronize_acknowledgment_message_bytes.slice(3), decorated_next);
             } else {
-              synchronize_acknowledgment_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), synchronize_acknowledgment_information.slice(3), decorated_next);
+              synchronize_acknowledgment_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), synchronize_acknowledgment_message_bytes.slice(3), decorated_next);
             }
           };
-          this._openHandshakeByWorkerId(target_worker_peer_worker_id, decorated_synchronize_information, decorated_synchronize_acknowledgment_listener, finish_handshake);
+          this._openHandshakeByWorkerId(target_worker_peer_worker_id, decorated_synchronize_message_bytes, decorated_synchronize_acknowledgment_listener, finish_handshake);
         },
         multicastRequestResponse: (worker_id_list, data_bytes, on_a_worker_response, on_finish) => {
           const decorated_data_bytes = Buf.concat([prefix_data_bytes, data_bytes]);
@@ -901,7 +901,7 @@ WorkerProtocol.prototype.start = function(callback) {
       const my_worker_connectors_settings_bytes = this._nsdt_embedded_protocol.encode(my_worker_connectors_settings);
       const my_worker_detail_bytes = this._nsdt_embedded_protocol.encode(my_worker_detail);
 
-      const synchronize_information = Buf.concat([
+      const synchronize_message_bytes = Buf.concat([
         this._ProtocolCodes.worker_affairs,
         this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
         Buf.encodeUInt32BE(my_worker_authentication_data_bytes.length),
@@ -929,23 +929,23 @@ WorkerProtocol.prototype.start = function(callback) {
         const interface_name = shuffled_connectors_settings_list[index].interface_name;
         const connector_settings = shuffled_connectors_settings_list[index].connector_settings;
 
-        const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
+        const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_message_bytes, next) => {
           if (open_handshanke_error) {
             // Unable to open handshake. Next loop.
             loop_next();
 
-            // Return acknowledge_information(not acknowledge).
+            // Return acknowledge_message_bytes(not acknowledge).
             next(false);
           } else {
-            // Handshake opened. Check if synchronize_acknowledgment_information valid.
-            if (synchronize_acknowledgment_information[0] === this._ProtocolCodes.worker_affairs[0] && synchronize_acknowledgment_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond[0]) {
+            // Handshake opened. Check if synchronize_acknowledgment_message_bytes valid.
+            if (synchronize_acknowledgment_message_bytes[0] === this._ProtocolCodes.worker_affairs[0] && synchronize_acknowledgment_message_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond[0]) {
               // Acknowledgement information for handshake
-              // const acknowledge_information = this._ProtocolCodes.worker_affairs;
-              if (synchronize_acknowledgment_information[2] === this._ProtocolCodes.accept[0]) {
+              // const acknowledge_message_bytes = this._ProtocolCodes.worker_affairs;
+              if (synchronize_acknowledgment_message_bytes[2] === this._ProtocolCodes.accept[0]) {
                 // Accept.
-                const new_worker_id = Buf.decodeUInt32BE(synchronize_acknowledgment_information.slice(3, 7));
-                const static_global_random_seed_4096bytes = synchronize_acknowledgment_information.slice(7, 7 + 4096);
-                const worker_peer_settings_dict = this._nsdt_embedded_protocol.decode(synchronize_acknowledgment_information.slice(7 + 4096));
+                const new_worker_id = Buf.decodeUInt32BE(synchronize_acknowledgment_message_bytes.slice(3, 7));
+                const static_global_random_seed_4096bytes = synchronize_acknowledgment_message_bytes.slice(7, 7 + 4096);
+                const worker_peer_settings_dict = this._nsdt_embedded_protocol.decode(synchronize_acknowledgment_message_bytes.slice(7 + 4096));
 
                 // Update worker peers settings
                 this._worker_peer_settings_dict = worker_peer_settings_dict;
@@ -957,11 +957,11 @@ WorkerProtocol.prototype.start = function(callback) {
                 this._updateWorkerPeersIdsChecksum4Bytes(Object.keys(worker_peer_settings_dict));
 
                 me_join_callback(false, new_worker_id, worker_peer_settings_dict, static_global_random_seed_4096bytes);
-              } else if (Utils.areBuffersEqual(synchronize_acknowledgment_information.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
+              } else if (Utils.areBuffersEqual(synchronize_acknowledgment_message_bytes.slice(2, 4), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
                 me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'));
-              } else if (Utils.areBuffersEqual(synchronize_acknowledgment_information.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
+              } else if (Utils.areBuffersEqual(synchronize_acknowledgment_message_bytes.slice(2, 4), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
                 me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'));
-              } else if (Utils.areBuffersEqual(synchronize_acknowledgment_information.slice(2, 4), Buf.from([0x00, 0x02]))) {
+              } else if (Utils.areBuffersEqual(synchronize_acknowledgment_message_bytes.slice(2, 4), Buf.from([0x00, 0x02]))) {
                 me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Broadcast error'));
               }
               // Return acknowledge binary.
@@ -983,7 +983,7 @@ WorkerProtocol.prototype.start = function(callback) {
         };
 
         // Callbacks setup completed. Start handshake process (actually request response here).
-        this._open_handshake_function(interface_name, connector_settings, synchronize_information, synchronize_acknowledgment_listener, finish_handshake);
+        this._open_handshake_function(interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, finish_handshake);
       };
       loop();
     } else {
@@ -1064,23 +1064,23 @@ WorkerProtocol.prototype.close = function(callback) {
  */
 /**
  * @memberof module:WorkerProtocol
- * @param {buffer} synchronize_information
+ * @param {buffer} synchronize_message_bytes
  * @param {function} onSynchronizeAcknowledgmetError
  * @param {function} onAcknowledge
  * @param {module:WorkerProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerProtocol.prototype.synchronize = function(synchronize_information, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
+WorkerProtocol.prototype.synchronize = function(synchronize_message_bytes, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
   // Synchronize information for handshake
   // Worker Affairs Protocol
-  const protocol_code_int = synchronize_information[0];
+  const protocol_code_int = synchronize_message_bytes[0];
   if (protocol_code_int === this._ProtocolCodes.worker_affairs[0]) {
     onSynchronizeAcknowledgmetError((error) => {
       // Server side error.
       // console.log(error);
     });
 
-    if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond[0]) {
+    if (synchronize_message_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond[0]) {
       // Corrupted settings.
       if (!this._static_global_random_seed_4096bytes || this._static_global_random_seed_4096bytes.length !== 4096) {
         synchronize_acknowledgment(Buf.concat([
@@ -1092,17 +1092,17 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onSynch
         return;
       }
 
-      const new_worker_authentication_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
-      const new_worker_authentication_data = this._nsdt_embedded_protocol.decode(synchronize_information.slice(6, 6 + new_worker_authentication_bytes_length));
+      const new_worker_authentication_bytes_length = Buf.decodeUInt32BE(synchronize_message_bytes.slice(2, 6));
+      const new_worker_authentication_data = this._nsdt_embedded_protocol.decode(synchronize_message_bytes.slice(6, 6 + new_worker_authentication_bytes_length));
       try {
         // Emit worker authentication from worker module.
         this._worker_module.emitEventListener('worker-peer-authentication', 0, new_worker_authentication_data, (is_authenticity_valid) => {
           if (is_authenticity_valid) {
             // Broadcast worker join.
             const bytes_offset_length = 6 + new_worker_authentication_bytes_length;
-            const new_worker_peer_connectors_settings_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(bytes_offset_length, bytes_offset_length + 4));
-            const new_worker_peer_connectors_settings = this._nsdt_embedded_protocol.decode(synchronize_information.slice(bytes_offset_length + 4, bytes_offset_length + 4 + new_worker_peer_connectors_settings_bytes_length));
-            const new_worker_peer_detail = this._nsdt_embedded_protocol.decode(synchronize_information.slice(bytes_offset_length + 4 + new_worker_peer_connectors_settings_bytes_length));
+            const new_worker_peer_connectors_settings_bytes_length = Buf.decodeUInt32BE(synchronize_message_bytes.slice(bytes_offset_length, bytes_offset_length + 4));
+            const new_worker_peer_connectors_settings = this._nsdt_embedded_protocol.decode(synchronize_message_bytes.slice(bytes_offset_length + 4, bytes_offset_length + 4 + new_worker_peer_connectors_settings_bytes_length));
+            const new_worker_peer_detail = this._nsdt_embedded_protocol.decode(synchronize_message_bytes.slice(bytes_offset_length + 4 + new_worker_peer_connectors_settings_bytes_length));
 
             // Obtain new Id.
             const worker_id_list = Object.keys(this._worker_peer_settings_dict).map(x => parseInt(x));
@@ -1119,7 +1119,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onSynch
 
             const worker_affairs_worker_peer_join_broadcast_bytes = Buf.concat([
               Buf.encodeUInt32BE(new_worker_id),
-              synchronize_information.slice(bytes_offset_length)
+              synchronize_message_bytes.slice(bytes_offset_length)
             ]);
 
             this._broadcastWorkerAffairsWorkerPeerOperation('join', new_worker_id, worker_affairs_worker_peer_join_broadcast_bytes, (error) => {
@@ -1170,15 +1170,15 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onSynch
           this._ProtocolCodes.unknown_reason_reject_2_bytes
         ]));
       }
-    } else if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast[0]) {
-      this._handleWorkerAffairsWorkerPeerOperationBroadcast('join', synchronize_information, synchronize_acknowledgment);
-    } else if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_update_broadcast[0]) {
-      this._handleWorkerAffairsWorkerPeerOperationBroadcast('update', synchronize_information, synchronize_acknowledgment);
-    } else if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_leave_broadcast[0]) {
-      this._handleWorkerAffairsWorkerPeerOperationBroadcast('leave', synchronize_information, synchronize_acknowledgment);
-    } else if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_comfirm_broadcast[0]) {
-      const target_worker_peer_worker_id = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
-      const remote_worker_peer_authenticity_bytes = synchronize_information.slice(6);
+    } else if (synchronize_message_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast[0]) {
+      this._handleWorkerAffairsWorkerPeerOperationBroadcast('join', synchronize_message_bytes, synchronize_acknowledgment);
+    } else if (synchronize_message_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_update_broadcast[0]) {
+      this._handleWorkerAffairsWorkerPeerOperationBroadcast('update', synchronize_message_bytes, synchronize_acknowledgment);
+    } else if (synchronize_message_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_leave_broadcast[0]) {
+      this._handleWorkerAffairsWorkerPeerOperationBroadcast('leave', synchronize_message_bytes, synchronize_acknowledgment);
+    } else if (synchronize_message_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_comfirm_broadcast[0]) {
+      const target_worker_peer_worker_id = Buf.decodeUInt32BE(synchronize_message_bytes.slice(2, 6));
+      const remote_worker_peer_authenticity_bytes = synchronize_message_bytes.slice(6);
 
       this._validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
         // Validate authentication first.
@@ -1206,9 +1206,9 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onSynch
           ]));
         }
       });
-    } else if (synchronize_information[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
-      const target_worker_peer_worker_id = Buf.decodeUInt32BE(synchronize_information.slice(2, 6));
-      const remote_worker_peer_authenticity_bytes = synchronize_information.slice(6);
+    } else if (synchronize_message_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
+      const target_worker_peer_worker_id = Buf.decodeUInt32BE(synchronize_message_bytes.slice(2, 6));
+      const remote_worker_peer_authenticity_bytes = synchronize_message_bytes.slice(6);
       this._validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
         if (is_authenticity_valid) {
           const synchronize_acknowledgment_of_cancel = (error) => {
@@ -1246,21 +1246,21 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onSynch
     // Worker Object Protocols
   } else if (protocol_code_int === this._ProtocolCodes.worker_object[0]) {
     // Below codes are mainly related to prefix proccessing of worker object protocols.
-    const worker_object_protocol_code_1byte = Buf.from([synchronize_information[1]]);
-    const worker_subprotocol_protocol_code_1byte = Buf.from([synchronize_information[2]]);
-    const sliced_synchronize_information = synchronize_information.slice(3);
+    const worker_object_protocol_code_1byte = Buf.from([synchronize_message_bytes[1]]);
+    const worker_subprotocol_protocol_code_1byte = Buf.from([synchronize_message_bytes[2]]);
+    const sliced_synchronize_message_bytes = synchronize_message_bytes.slice(3);
     const worker_subprotocol_module = this._worker_object_protocol_with_worker_subprotocol_modules_dict[worker_object_protocol_code_1byte[0]][worker_subprotocol_protocol_code_1byte[0]];
 
     let error_listener;
 
     const decorated_on_acknowledge = (callback) => {
-      onAcknowledge((acknowledge_information, tunnel) => {
+      onAcknowledge((acknowledge_message_bytes, tunnel) => {
         if (
-          acknowledge_information[0] === this._ProtocolCodes.worker_object[0] &&
-          acknowledge_information[1] === worker_object_protocol_code_1byte[0] &&
-          acknowledge_information[2] === worker_subprotocol_protocol_code_1byte[0]
+          acknowledge_message_bytes[0] === this._ProtocolCodes.worker_object[0] &&
+          acknowledge_message_bytes[1] === worker_object_protocol_code_1byte[0] &&
+          acknowledge_message_bytes[2] === worker_subprotocol_protocol_code_1byte[0]
         ) {
-          callback(acknowledge_information.slice(3), tunnel);
+          callback(acknowledge_message_bytes.slice(3), tunnel);
         } else {
           error_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), tunnel);
           tunnel.close();
@@ -1287,7 +1287,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_information, onSynch
       onSynchronizeAcknowledgmetError(error_listener);
     };
 
-    worker_subprotocol_module.synchronize(sliced_synchronize_information, onSynchronizeAcknowledgmetError, decorated_on_acknowledge, decorated_synchronize_acknowledgment);
+    worker_subprotocol_module.synchronize(sliced_synchronize_message_bytes, onSynchronizeAcknowledgmetError, decorated_on_acknowledge, decorated_synchronize_acknowledgment);
   } else {
     synchronize_acknowledgment(false);
   };

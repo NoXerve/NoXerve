@@ -185,21 +185,21 @@ WorkerScopeProtocol.prototype.start = function(callback) {
 
 /**
  * @memberof module:WorkerScopeProtocol
- * @param {buffer} synchronize_information
- * @return {buffer} synchronize_acknowledgment_information
+ * @param {buffer} synchronize_message_bytes
+ * @return {buffer} synchronize_acknowledgment_message_bytes
  * @description Synchronize handshake from remote emitter.
  */
-WorkerScopeProtocol.prototype.synchronize = function(synchronize_information, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
-  const protocol_code_int = synchronize_information[0];
+WorkerScopeProtocol.prototype.synchronize = function(synchronize_message_bytes, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
+  const protocol_code_int = synchronize_message_bytes[0];
   if(protocol_code_int === this._ProtocolCodes.integrity_check[0]) {
     onSynchronizeAcknowledgmetError((error) => {
 
     });
-    const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_information.slice(1, 5));
-    this._worker_protocol_actions.validateAuthenticityBytes(synchronize_information.slice(5, 5 + remote_worker_peer_authenticity_bytes_length), (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
+    const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_message_bytes.slice(1, 5));
+    this._worker_protocol_actions.validateAuthenticityBytes(synchronize_message_bytes.slice(5, 5 + remote_worker_peer_authenticity_bytes_length), (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
 
       if (is_authenticity_valid && !error) {
-        const worker_scope_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_information.slice(5 + remote_worker_peer_authenticity_bytes_length, 5 + remote_worker_peer_authenticity_bytes_length + 4));
+        const worker_scope_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_message_bytes.slice(5 + remote_worker_peer_authenticity_bytes_length, 5 + remote_worker_peer_authenticity_bytes_length + 4));
         if(this._worker_scopes_dict[worker_scope_purpose_name] && this._worker_scopes_dict[worker_scope_purpose_name].returnScopePeerList().includes(remote_worker_peer_worker_id)) {
           synchronize_acknowledgment(Buf.concat([
             this._ProtocolCodes.integrity_check,
