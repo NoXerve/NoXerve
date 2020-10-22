@@ -1070,7 +1070,7 @@ WorkerProtocol.prototype.close = function(callback) {
  * @param {module:WorkerProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerProtocol.prototype.synchronize = function(synchronize_message_bytes, on_synchronize_acknowledgment_error, on_acknowledge, synchronize_acknowledgment) {
+WorkerProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, on_synchronize_acknowledgment_error, on_acknowledge) {
   // Synchronize information for handshake
   // Worker Affairs Protocol
   const protocol_code_int = synchronize_message_bytes[0];
@@ -1287,7 +1287,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_message_bytes, on_sy
       on_synchronize_acknowledgment_error(error_listener);
     };
 
-    worker_subprotocol_module.synchronize(sliced_synchronize_message_bytes, on_synchronize_acknowledgment_error, decorated_on_acknowledge, decorated_synchronize_acknowledgment);
+    worker_subprotocol_module.SynchronizeListener(sliced_synchronize_message_bytes, decorated_synchronize_acknowledgment, on_synchronize_acknowledgment_error, decorated_on_acknowledge);
   } else {
     synchronize_acknowledgment(false);
   };

@@ -272,35 +272,35 @@ Protocol.prototype.start = function(callback) {
           let related_module = null;
 
           let synchronize_acknowledgment_error_listener;
-          let acknowledge_handler;
-
-          const on_synchronize_acknowledgment_error = (callback) => {
-            synchronize_acknowledgment_error_listener = callback;
-          };
-          const on_acknowledge = (callback) => {
-            acknowledge_handler = callback;
-          };
+          let acknowledge_listener;
 
           tunnel.on('ready', () => {
             ready_state = true;
           });
           tunnel.on('data', (data) => {
             if (stage === 0) {
-              let has_any_synchronize_returned_data = false;
+              const synchronize_message_bytes = data;
+              let has_any_synchronize_acknowledgment_message_bytes = false;
               let synchronize_protocol_left_count = Object.keys(this._protocol_modules).length;
+
+              const on_synchronize_acknowledgment_error = (listener) => {
+                synchronize_acknowledgment_error_listener = listener;
+              };
+              const on_acknowledge = (listener) => {
+                acknowledge_listener = listener;
+              };
 
               // Check if any protocol module synchronize with the data or not.
               for (const protocol_name in this._protocol_modules) {
-                // Call synchronize function. Check will it respond with data or not.
-                this._protocol_modules[protocol_name].synchronize(data, on_synchronize_acknowledgment_error, on_acknowledge, (synchronize_returned_data)=> {
+                const synchronize_acknowledgment = (synchronize_acknowledgment_message_bytes) => {
                   synchronize_protocol_left_count--;
 
                   // If responded then finish up.
-                  if(has_any_synchronize_returned_data) {
+                  if(has_any_synchronize_acknowledgment_message_bytes) {
                     return;
                   }
-                  else if (synchronize_returned_data !== false && synchronize_returned_data !== null) {
-                    has_any_synchronize_returned_data = true;
+                  else if (synchronize_acknowledgment_message_bytes !== false && synchronize_acknowledgment_message_bytes !== null) {
+                    has_any_synchronize_acknowledgment_message_bytes = true;
                     // Associate protocol module and send data to remote.
                     related_module = this._protocol_modules[protocol_name];
 
@@ -308,25 +308,28 @@ Protocol.prototype.start = function(callback) {
 
                     // Send synchronize() return value to remote.
                     try {
-                      tunnel.send(synchronize_returned_data, (error) => {
+                      tunnel.send(synchronize_acknowledgment_message_bytes, (error) => {
                         if (error) {
                           stage = -1;
                           tunnel.close();
-                          synchronize_acknowledgment_error_listener(error, data);
+                          synchronize_acknowledgment_error_listener(error);
                         }
                       });
                     } catch (error) {
                       stage = -1;
                       tunnel.close();
-                      synchronize_acknowledgment_error_listener(error, data);
+                      synchronize_acknowledgment_error_listener(error);
                     }
                   } else if(synchronize_protocol_left_count === 0) {
                     // Reset handlers.
                     synchronize_acknowledgment_error_listener = null;
-                    acknowledge_handler = null;
+                    acknowledge_listener = null;
                     tunnel.close();
                   }
-                });
+                }
+
+                // Call synchronize function. Check will it respond with data or not.
+                this._protocol_modules[protocol_name].SynchronizeListener(synchronize_message_bytes, synchronize_acknowledgment, on_synchronize_acknowledgment_error, on_acknowledge);
               }
 
               // // If no protocol module synchronize with the data. Close tunnel.
@@ -334,13 +337,14 @@ Protocol.prototype.start = function(callback) {
               //   tunnel.close()
               // }
             } else if (stage === 1) {
+              const acknowledge_message_bytes = data;
               // Reset events.
               tunnel.on('ready', () => {});
               tunnel.on('data', () => {});
               tunnel.on('error', () => {});
 
               // Finished handshake. Transfer tunnel ownership.
-              acknowledge_handler(data, tunnel);
+              acknowledge_listener(acknowledge_message_bytes, tunnel);
             }
           });
 

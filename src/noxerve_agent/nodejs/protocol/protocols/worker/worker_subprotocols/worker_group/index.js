@@ -241,7 +241,7 @@ WorkerGroupProtocol.prototype.start = function(callback) {
  * @param {module:WorkerGroupProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerGroupProtocol.prototype.synchronize = function(synchronize_message_bytes, on_synchronize_acknowledgment_error, on_acknowledge, synchronize_acknowledgment) {
+WorkerGroupProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, on_synchronize_acknowledgment_error, on_acknowledge) {
   const worker_group_purpose_name_4bytes = synchronize_message_bytes.slice(0, 4);
   const worker_group_purpose_name = this._hash_manager.stringify4BytesHash(worker_group_purpose_name_4bytes);
   if (this._worker_group_synchronization_dict[worker_group_purpose_name]) {

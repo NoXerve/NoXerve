@@ -561,7 +561,7 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
  * @param {module:WorkerSocketProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerSocketProtocol.prototype.synchronize = function(synchronize_message_bytes, on_synchronize_acknowledgment_error, on_acknowledge, synchronize_acknowledgment) {
+WorkerSocketProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, on_synchronize_acknowledgment_error, on_acknowledge) {
   const worker_id = Buf.decodeUInt32BE(synchronize_message_bytes.slice(0, 4));
   const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_message_bytes.slice(0, 4));
 

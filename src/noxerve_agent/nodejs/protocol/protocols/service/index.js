@@ -127,7 +127,7 @@ ServiceProtocol.prototype.close = function(callback) {
  * @param {module:ServiceProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-ServiceProtocol.prototype.synchronize = function(synchronize_message_bytes, on_synchronize_acknowledgment_error, on_acknowledge, synchronize_acknowledgment) {
+ServiceProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, on_synchronize_acknowledgment_error, on_acknowledge) {
   // Synchronize information for handshake
   // Format:
   // service-activity byte
