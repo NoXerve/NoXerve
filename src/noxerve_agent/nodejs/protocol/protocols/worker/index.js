@@ -1065,17 +1065,17 @@ WorkerProtocol.prototype.close = function(callback) {
 /**
  * @memberof module:WorkerProtocol
  * @param {buffer} synchronize_message_bytes
- * @param {function} onSynchronizeAcknowledgmetError
- * @param {function} onAcknowledge
+ * @param {function} on_synchronize_acknowledgment_error
+ * @param {function} on_acknowledge
  * @param {module:WorkerProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerProtocol.prototype.synchronize = function(synchronize_message_bytes, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
+WorkerProtocol.prototype.synchronize = function(synchronize_message_bytes, on_synchronize_acknowledgment_error, on_acknowledge, synchronize_acknowledgment) {
   // Synchronize information for handshake
   // Worker Affairs Protocol
   const protocol_code_int = synchronize_message_bytes[0];
   if (protocol_code_int === this._ProtocolCodes.worker_affairs[0]) {
-    onSynchronizeAcknowledgmetError((error) => {
+    on_synchronize_acknowledgment_error((error) => {
       // Server side error.
       // console.log(error);
     });
@@ -1254,7 +1254,7 @@ WorkerProtocol.prototype.synchronize = function(synchronize_message_bytes, onSyn
     let error_listener;
 
     const decorated_on_acknowledge = (callback) => {
-      onAcknowledge((acknowledge_message_bytes, tunnel) => {
+      on_acknowledge((acknowledge_message_bytes, tunnel) => {
         if (
           acknowledge_message_bytes[0] === this._ProtocolCodes.worker_object[0] &&
           acknowledge_message_bytes[1] === worker_object_protocol_code_1byte[0] &&
@@ -1284,10 +1284,10 @@ WorkerProtocol.prototype.synchronize = function(synchronize_message_bytes, onSyn
 
     const decorated_on_error = (listener) => {
       error_listener = listener;
-      onSynchronizeAcknowledgmetError(error_listener);
+      on_synchronize_acknowledgment_error(error_listener);
     };
 
-    worker_subprotocol_module.synchronize(sliced_synchronize_message_bytes, onSynchronizeAcknowledgmetError, decorated_on_acknowledge, decorated_synchronize_acknowledgment);
+    worker_subprotocol_module.synchronize(sliced_synchronize_message_bytes, on_synchronize_acknowledgment_error, decorated_on_acknowledge, decorated_synchronize_acknowledgment);
   } else {
     synchronize_acknowledgment(false);
   };

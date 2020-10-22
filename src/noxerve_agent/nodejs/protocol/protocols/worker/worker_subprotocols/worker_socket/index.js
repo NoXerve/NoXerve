@@ -556,16 +556,16 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
 /**
  * @memberof module:WorkerSocketProtocol
  * @param {buffer} synchronize_message_bytes
- * @param {function} onSynchronizeAcknowledgmetError
- * @param {function} onAcknowledge
+ * @param {function} on_synchronize_acknowledgment_error
+ * @param {function} on_acknowledge
  * @param {module:WorkerSocketProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerSocketProtocol.prototype.synchronize = function(synchronize_message_bytes, onSynchronizeAcknowledgmetError, onAcknowledge, synchronize_acknowledgment) {
+WorkerSocketProtocol.prototype.synchronize = function(synchronize_message_bytes, on_synchronize_acknowledgment_error, on_acknowledge, synchronize_acknowledgment) {
   const worker_id = Buf.decodeUInt32BE(synchronize_message_bytes.slice(0, 4));
   const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_message_bytes.slice(0, 4));
 
-  onSynchronizeAcknowledgmetError((error) => {
+  on_synchronize_acknowledgment_error((error) => {
     // Server side error.
     console.log(error);
   });
@@ -577,7 +577,7 @@ WorkerSocketProtocol.prototype.synchronize = function(synchronize_message_bytes,
       const worker_socket_purpose_parameter = this._nsdt_embedded_protocol.decode(synchronize_message_bytes.slice(4 + remote_worker_peer_authenticity_bytes_length + 4));
       // console.log(is_authenticity_valid, remote_worker_peer_worker_id, remote_worker_peer_authenticity_bytes_length, remote_worker_peer_authenticity_bytes, worker_socket_purpose_name, worker_socket_purpose_parameter);
 
-      onAcknowledge((acknowledge_message_bytes, tunnel) => {
+      on_acknowledge((acknowledge_message_bytes, tunnel) => {
         if (acknowledge_message_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
           const worker_socket = new WorkerSocket();
           this._setupTunnel(error, worker_socket, tunnel);
@@ -593,7 +593,7 @@ WorkerSocketProtocol.prototype.synchronize = function(synchronize_message_bytes,
       ]));
 
     } else {
-      onAcknowledge((acknowledge_message_bytes, tunnel) => {
+      on_acknowledge((acknowledge_message_bytes, tunnel) => {
         // Reject.
         tunnel.close();
       });

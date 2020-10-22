@@ -274,10 +274,10 @@ Protocol.prototype.start = function(callback) {
           let synchronization_error_handler;
           let acknowledge_handler;
 
-          const onSynchronizeAcknowledgmetError = (callback) => {
+          const on_synchronize_acknowledgment_error = (callback) => {
             synchronization_error_handler = callback;
           };
-          const onAcknowledge = (callback) => {
+          const on_acknowledge = (callback) => {
             acknowledge_handler = callback;
           };
 
@@ -292,7 +292,7 @@ Protocol.prototype.start = function(callback) {
               // Check if any protocol module synchronize with the data or not.
               for (const protocol_name in this._protocol_modules) {
                 // Call synchronize function. Check will it respond with data or not.
-                this._protocol_modules[protocol_name].synchronize(data, onSynchronizeAcknowledgmetError, onAcknowledge, (synchronize_returned_data)=> {
+                this._protocol_modules[protocol_name].synchronize(data, on_synchronize_acknowledgment_error, on_acknowledge, (synchronize_returned_data)=> {
                   synchronize_protocol_left_count--;
 
                   // If responded then finish up.
