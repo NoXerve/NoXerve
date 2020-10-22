@@ -123,16 +123,16 @@ WorkerScopeProtocol.prototype.start = function(callback) {
     const worker_scope = new WorkerScope({
       worker_scope_purpose_name: worker_scope_purpose_name,
       scope_peer_list: scope_peer_list,
-      broadcast_request_response: (data_bytes, on_a_worker_response, on_finish) => {
+      broadcast_request_response: (data_bytes, a_worker_response_listener, on_finish) => {
         const decorated_data_bytes = Buf.concat([
           this._ProtocolCodes.request_response,
           worker_scope_purpose_name_4bytes,
           data_bytes
         ]);
-        this._worker_protocol_actions.multicastRequestResponse(scope_peer_list, data_bytes, on_a_worker_response, on_finish);
+        this._worker_protocol_actions.multicastRequestResponse(scope_peer_list, data_bytes, a_worker_response_listener, on_finish);
       },
-      multicast_request_response: (worker_id_list, data_bytes, on_a_worker_response, on_finish) => {
-        this._worker_protocol_actions.multicastRequestResponse(worker_id_list, data_bytes, on_a_worker_response, on_finish);
+      multicast_request_response: (worker_id_list, data_bytes, a_worker_response_listener, on_finish) => {
+        this._worker_protocol_actions.multicastRequestResponse(worker_id_list, data_bytes, a_worker_response_listener, on_finish);
       },
       check_integrity: (callback) => {
         const data_bytes = Buf.concat([
@@ -141,7 +141,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
           my_worker_authenticity_bytes,
           worker_scope_purpose_name_4bytes,
         ]);
-        const on_a_worker_response = (worker_id, error, response_data_bytes, next) => {
+        const a_worker_response_listener = (worker_id, error, response_data_bytes, next) => {
           if(error) {
             next(error, false);
           }
@@ -173,7 +173,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
             // Integrity passed. Broadcast integrity pass information.
           }
         };
-        this._worker_protocol_actions.multicastRequestResponse(scope_peer_list, data_bytes, on_a_worker_response, on_finish);
+        this._worker_protocol_actions.multicastRequestResponse(scope_peer_list, data_bytes, a_worker_response_listener, on_finish);
       }
     });
 

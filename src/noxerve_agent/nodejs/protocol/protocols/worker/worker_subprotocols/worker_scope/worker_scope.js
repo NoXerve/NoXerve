@@ -103,7 +103,7 @@ WorkerScope.prototype.returnScopePeerList = function() {
 }
 
 /**
- * @callback module:WorkerScope~on_a_worker_response
+ * @callback module:WorkerScope~a_worker_response_listener
  * @param {integer} scope_peer_id
  * @param {error} error
  * @param {buffer} response_data_bytes
@@ -118,16 +118,16 @@ WorkerScope.prototype.returnScopePeerList = function() {
  * @memberof module:WorkerScope
  * @param {list} scope_peer_id_list
  * @param {buffer} data_bytes
- * @param {module:WorkerScope~on_a_worker_response} on_a_worker_response
+ * @param {module:WorkerScope~a_worker_response_listener} a_worker_response_listener
  * @param {module:WorkerScope~on_finish} on_finish
  * @description Worker scope multicast request response.
  */
-WorkerScope.prototype.multicastRequestResponse = function(scope_peer_id_list, data_bytes, on_a_worker_response, on_finish) {
-  this._settings.multicast_request_response(scope_peer_id_list, data_bytes, on_a_worker_response, on_finish);
+WorkerScope.prototype.multicastRequestResponse = function(scope_peer_id_list, data_bytes, a_worker_response_listener, on_finish) {
+  this._settings.multicast_request_response(scope_peer_id_list, data_bytes, a_worker_response_listener, on_finish);
 }
 
 /**
- * @callback module:WorkerScope~on_a_worker_response
+ * @callback module:WorkerScope~a_worker_response_listener
  * @param {integer} scope_peer_id
  * @param {error} error
  * @param {buffer} response_data_bytes
@@ -141,12 +141,12 @@ WorkerScope.prototype.multicastRequestResponse = function(scope_peer_id_list, da
 /**
  * @memberof module:WorkerScope
  * @param {buffer} data_bytes
- * @param {module:WorkerScope~on_a_worker_response} on_a_worker_response
+ * @param {module:WorkerScope~a_worker_response_listener} a_worker_response_listener
  * @param {module:WorkerScope~on_finish} on_finish
  * @description Worker scope multicast request response.
  */
-WorkerScope.prototype.broadcastRequestResponse = function(data_bytes, on_a_worker_response, on_finish) {
-  this._settings.broadcast_request_response(data_bytes, on_a_worker_response, on_finish);
+WorkerScope.prototype.broadcastRequestResponse = function(data_bytes, a_worker_response_listener, on_finish) {
+  this._settings.broadcast_request_response(data_bytes, a_worker_response_listener, on_finish);
 }
 
 /**
