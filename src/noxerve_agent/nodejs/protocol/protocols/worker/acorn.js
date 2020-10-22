@@ -34,7 +34,7 @@ function ACORN() {
 	}
 }
 
-ACORN.prototype.IsInputValid = function(seed, length) {
+ACORN.prototype.isInputValid = function(seed, length) {
 	if (Number.isNaN(seed)) {
 		console.log('Invalid seed. Must be a number.');
 		return false;
@@ -78,7 +78,7 @@ ACORN.prototype.setProperty = function(precision_multiplier, order, auto_correct
 ACORN.prototype.random = function(seed, length) {
 	seed = seed % this.M;
 	this.seed = seed;
-	if (!this.IsInputValid(this.seed, length)) return undefined;
+	if (!this.isInputValid(this.seed, length)) return undefined;
 	this.N = length + 1;
 
 	let Y1 = [];
