@@ -115,12 +115,12 @@ ActivityProtocol.prototype.start = function(callback) {
     // Proceed tunnel creations loop.
     let index = 0;
     // Loop loop() with condition.
-    const loop_synchronize_acknowledgment = () => {
+    const loop_next = () => {
       index++;
       if (index < shuffled_connector_settings_list.length) {
         loop();
       }
-      // No more synchronize_acknowledgment loop. Exit.
+      // No more next loop. Exit.
       else {
         create_activity_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY('Create activity error. Could not connect to any interfaces.'));
       }
@@ -129,14 +129,14 @@ ActivityProtocol.prototype.start = function(callback) {
       const interface_name = shuffled_connector_settings_list[index].interface_name;
       const connector_settings = shuffled_connector_settings_list[index].connector_settings;
 
-      const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_information, synchronize_acknowledgment) => {
+      const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_information, next) => {
         if (open_handshanke_error) {
 
           // Unable to open handshake. Next loop.
-          loop_synchronize_acknowledgment();
+          loop_next();
 
           // Return acknowledge_information(not acknowledge).
-          synchronize_acknowledgment(false);
+          next(false);
         } else {
           // Handshake opened. Check if synchronize_acknowledgment_information valid.
           try {
@@ -146,30 +146,30 @@ ActivityProtocol.prototype.start = function(callback) {
               const acknowledge_information = this._ProtocolCodes.service_and_activity;
 
               // Return acknowledge binary.
-              synchronize_acknowledgment(acknowledge_information);
+              next(acknowledge_information);
             }
             else if(synchronize_acknowledgment_information[0] === this._ProtocolCodes.service_and_activity[0] && synchronize_acknowledgment_information[1] === this._ProtocolCodes.reject[0]) {
               if(synchronize_acknowledgment_information[2] === this._ProtocolCodes.not_exist_reason_reject_2_bytes[1]) {
                 create_activity_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY('Create activity error. Service for such purpose does not exist.'));
-                synchronize_acknowledgment(false);
+                next(false);
               }
               else {
                 create_activity_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_ACTIVITY('Create activity error. Rejected for unknown reason.'));
-                synchronize_acknowledgment(false);
+                next(false);
               }
             }
             else {
-              loop_synchronize_acknowledgment();
+              loop_next();
 
               // Return acknowledge_information(not acknowledge).
-              synchronize_acknowledgment(false);
+              next(false);
             }
           } catch (error) {
             // Unable to open handshake. Next loop.
-            loop_synchronize_acknowledgment();
+            loop_next();
 
             // Return acknowledge_information(not acknowledge).
-            synchronize_acknowledgment(false);
+            next(false);
           }
         }
       };
@@ -177,7 +177,7 @@ ActivityProtocol.prototype.start = function(callback) {
       const finish_handshake = (error, tunnel) => {
         if (error) {
           // Unable to open handshake. Next loop.
-          loop_synchronize_acknowledgment();
+          loop_next();
         } else {
           this._activity_module.emitEventListener('activity-of-service-request', (error, activity_of_service) => {
             this._activity_of_service_protocol.handleTunnel(error, activity_of_service, tunnel);
