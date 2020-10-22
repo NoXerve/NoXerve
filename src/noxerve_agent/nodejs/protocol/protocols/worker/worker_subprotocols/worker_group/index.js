@@ -162,7 +162,7 @@ WorkerGroupProtocol.prototype.start = function(callback) {
           });
         };
 
-        const finish_handshake = (error, tunnel) => {
+        const handshake_finished_listener = (error, tunnel) => {
           if (error) {
             create_tunnel_callback(error);
           } else {
@@ -173,7 +173,7 @@ WorkerGroupProtocol.prototype.start = function(callback) {
             }
           }
         };
-        this._worker_protocol_actions.openHandshakeByWorkerId(worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, finish_handshake);
+        this._worker_protocol_actions.openHandshakeByWorkerId(worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener);
       };
 
       const on_tunnel_create = (tunnel_create_listener) => {

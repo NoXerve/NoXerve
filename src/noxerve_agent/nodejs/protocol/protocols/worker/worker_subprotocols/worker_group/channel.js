@@ -308,7 +308,7 @@ Channel.prototype._returnNewHandshakeSessionId = function() {
 }
 
 // [Flag]
-Channel.prototype.handshake = function(group_peer_id, synchronize_data_bytes, synchronize_acknowledgment_listener) {
+Channel.prototype.handshake = function(group_peer_id, synchronize_data_bytes, synchronize_acknowledgment_listener, handshake_finished_listener) {
 
 }
 

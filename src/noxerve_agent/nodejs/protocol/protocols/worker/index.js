@@ -445,7 +445,7 @@ WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_wo
  * @private
  */
 WorkerProtocol.prototype._openHandshakeByWorkerId = function(
-  target_worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, finish_handshake) {
+  target_worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener) {
   if (!this._worker_peer_settings_dict[target_worker_peer_worker_id]) {
     synchronize_acknowledgment_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker(id: ' + target_worker_peer_worker_id + ').'), null, ()=> {});
     return;
@@ -486,13 +486,13 @@ WorkerProtocol.prototype._openHandshakeByWorkerId = function(
     };
 
     // "_" is for distincting the one from parameters.
-    const _finish_handshake = (error, tunnel) => {
-      // finish_handshake obtained from parameters.
-      finish_handshake(error, tunnel);
+    const _handshake_finished_listener = (error, tunnel) => {
+      // handshake_finished_listener obtained from parameters.
+      handshake_finished_listener(error, tunnel);
     };
 
     // Callbacks setup completed. Start handshake process.
-    this._open_handshake_function(interface_name, connector_settings, synchronize_message_bytes, _synchronize_acknowledgment_listener, _finish_handshake);
+    this._open_handshake_function(interface_name, connector_settings, synchronize_message_bytes, _synchronize_acknowledgment_listener, _handshake_finished_listener);
   };
 
   loop();
@@ -542,13 +542,13 @@ WorkerProtocol.prototype._multicastRequestResponse = function(worker_id_list, da
           });
         };
 
-        const finish_handshake = (error, tunnel) => {
+        const handshake_finished_listener = (error, tunnel) => {
           // Not suppose to be called.
           // Request, response only have 2 progress instead of 3 full handshake.
           tunnel.close();
         };
 
-        this._openHandshakeByWorkerId(worker_id, data_bytes, synchronize_acknowledgment_listener, finish_handshake);
+        this._openHandshakeByWorkerId(worker_id, data_bytes, synchronize_acknowledgment_listener, handshake_finished_listener);
       } else {
         loop_next();
       }
@@ -704,7 +704,7 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
       worker_protocol_actions: {
         validateAuthenticityBytes: this._validateAuthenticityBytes.bind(this),
         encodeAuthenticityBytes: this._encodeAuthenticityBytes.bind(this),
-        openHandshakeByWorkerId: (target_worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, finish_handshake) => {
+        openHandshakeByWorkerId: (target_worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener) => {
           const decorated_synchronize_message_bytes = Buf.concat([prefix_data_bytes, synchronize_message_bytes]);
           const decorated_synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_message_bytes, next) => {
             const decorated_next = (data_bytes) => {
@@ -728,7 +728,7 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
               synchronize_acknowledgment_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), synchronize_acknowledgment_message_bytes.slice(3), decorated_next);
             }
           };
-          this._openHandshakeByWorkerId(target_worker_peer_worker_id, decorated_synchronize_message_bytes, decorated_synchronize_acknowledgment_listener, finish_handshake);
+          this._openHandshakeByWorkerId(target_worker_peer_worker_id, decorated_synchronize_message_bytes, decorated_synchronize_acknowledgment_listener, handshake_finished_listener);
         },
         multicastRequestResponse: (worker_id_list, data_bytes, a_worker_response_listener, on_finish) => {
           const decorated_data_bytes = Buf.concat([prefix_data_bytes, data_bytes]);
@@ -973,7 +973,7 @@ WorkerProtocol.prototype.start = function(callback) {
           }
         };
 
-        const finish_handshake = (error, tunnel) => {
+        const handshake_finished_listener = (error, tunnel) => {
           if (error) {
             // Unable to open handshake. Next loop.
             loop_next();
@@ -983,7 +983,7 @@ WorkerProtocol.prototype.start = function(callback) {
         };
 
         // Callbacks setup completed. Start handshake process (actually request response here).
-        this._open_handshake_function(interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, finish_handshake);
+        this._open_handshake_function(interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener);
       };
       loop();
     } else {

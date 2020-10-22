@@ -135,7 +135,7 @@ function Protocol(settings) {
   * @type {object}
   * @private
   */
-Protocol.prototype._openHandshake = function (interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, finish_handshake) {
+Protocol.prototype._openHandshake = function (interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener) {
   this._node_module.createTunnel(interface_name, connector_settings, (error, tunnel) => {
     if (error) {if(synchronize_acknowledgment_listener) synchronize_acknowledgment_listener(error, null, ()=> {});}
     else {
@@ -146,7 +146,7 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
       // stage 0 => waiting to acknowledge synchronization.
       // Error => call synchronize_acknowledgment_listener.
       // stage 1 => waiting to finish up.
-      // Error => call finish_handshake.
+      // Error => call handshake_finished_listener.
       let stage = 0;
 
       let ready_state = false;
@@ -162,7 +162,7 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
           // Call synchronize_acknowledgment_listener function. Respond with acknowledge_message_bytes for remote.
           synchronize_acknowledgment_listener(false, data, (acknowledge_message_bytes)=> {
             // stage 1 => waiting to finish up. If any error happened call
-            // "finish_handshake" from parameters.
+            // "handshake_finished_listener" from parameters.
             stage = 1;
             try {
               if (acknowledge_message_bytes === false) {
@@ -174,7 +174,7 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
                   if (error) {
                     stage = -1;
                     tunnel.close();
-                    finish_handshake(error);
+                    handshake_finished_listener(error);
                   } else {
                     // Reset events.
                     tunnel.on('ready', () => {});
@@ -182,14 +182,14 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
                     tunnel.on('error', () => {});
 
                     // Finish up
-                    finish_handshake(error, tunnel);
+                    handshake_finished_listener(error, tunnel);
                   }
                 });
               }
             } catch (error) {
               stage = -1;
               tunnel.close();
-              finish_handshake(error);
+              handshake_finished_listener(error);
             }
           });
         } else if (stage === 1) {
@@ -205,7 +205,7 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
         } else if (stage === 1) {
           stage = -1;
           tunnel.close();
-          finish_handshake(error);
+          handshake_finished_listener(error);
         }
       });
 
@@ -213,7 +213,7 @@ Protocol.prototype._openHandshake = function (interface_name, connector_settings
         if (stage === 0) {
           synchronize_acknowledgment_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'), null, ()=> {});
         } else if (stage === 1) {
-          finish_handshake(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
+          handshake_finished_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
         }
       });
     }
