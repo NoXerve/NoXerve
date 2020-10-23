@@ -123,7 +123,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
     const worker_scope = new WorkerScope({
       worker_scope_purpose_name: worker_scope_purpose_name,
       scope_peer_list: scope_peer_list,
-      broadcast_request_response: (data_bytes, a_worker_response_listener, finished_listener) => {
+      broadcast_request: (data_bytes, a_worker_response_listener, finished_listener) => {
         const decorated_data_bytes = Buf.concat([
           this._ProtocolCodes.request_response,
           worker_scope_purpose_name_4bytes,
@@ -131,7 +131,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
         ]);
         this._worker_protocol_actions.multicastRequest(scope_peer_list, data_bytes, a_worker_response_listener, finished_listener);
       },
-      multicast_request_response: (worker_id_list, data_bytes, a_worker_response_listener, finished_listener) => {
+      multicast_request: (worker_id_list, data_bytes, a_worker_response_listener, finished_listener) => {
         this._worker_protocol_actions.multicastRequest(worker_id_list, data_bytes, a_worker_response_listener, finished_listener);
       },
       check_integrity: (callback) => {
