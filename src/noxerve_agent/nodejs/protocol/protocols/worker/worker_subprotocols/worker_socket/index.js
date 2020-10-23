@@ -128,54 +128,45 @@ WorkerSocketProtocol.prototype.start = function(callback) {
       worker_socket_purpose_parameter_bytes
     ]);
 
-    let _is_authenticity_valid = false;
+    const synchronize_error_handler = (open_handshanke_error) => {
+      inner_callback(open_handshanke_error);
+    };
 
-    const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_message_bytes, next) => {
-      if (open_handshanke_error) {
-        inner_callback(open_handshanke_error);
-        next(false);
-      } else if (synchronize_acknowledgment_message_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
+    const synchronize_acknowledgment_handler = (synchronize_acknowledgment_message_bytes, acknowledge) => {
+      if (synchronize_acknowledgment_message_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
         const remote_worker_peer_authenticity_bytes = synchronize_acknowledgment_message_bytes.slice(1);
         // Auth remote worker.
         this._worker_protocol_actions.validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
-          _is_authenticity_valid = is_authenticity_valid;
           if (is_authenticity_valid && !error) {
-            next(this._worker_global_protocol_codes.accept); // Accept.
+
+            acknowledge(this._worker_global_protocol_codes.accept, (error, tunnel) => {
+              const worker_socket = new WorkerSocket();
+              this._setupTunnel(error, worker_socket, tunnel);
+              inner_callback(error, worker_socket);
+            }); // Accept.
           } else {
-            next(this._worker_global_protocol_codes.authentication_reason_reject_2_bytes); // Reject. Authenticication error.
+            inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Remote worker authentication failed.'));
+            acknowledge(this._worker_global_protocol_codes.authentication_reason_reject_2_bytes, (error, tunnel) => {
+              tunnel.close();
+            }); // Reject. Authenticication error.
           }
         });
-      } else if (synchronize_acknowledgment_message_bytes[0] === this._worker_global_protocol_codes.reject[0]
-      ) {
+      } else if (synchronize_acknowledgment_message_bytes[0] === this._worker_global_protocol_codes.reject[0]) {
         if (synchronize_acknowledgment_message_bytes[1] === this._worker_global_protocol_codes.authentication_reason_reject_2_bytes[1]) {
           inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'));
-          next(false);
+          acknowledge(false);
 
         } else {
           inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'));
-          next(false);
+          acknowledge(false);
         }
       } else {
         inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'));
-        next(false);
+        acknowledge(false);
       }
     };
 
-    const handshake_finished_listener = (error, tunnel) => {
-      if (error) {
-        inner_callback(error);
-      } else {
-        if (_is_authenticity_valid) {
-          const worker_socket = new WorkerSocket();
-          this._setupTunnel(error, worker_socket, tunnel);
-          inner_callback(error, worker_socket);
-        } else {
-          inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Remote worker authentication failed.'));
-        }
-      }
-    };
-
-    this._worker_protocol_actions.synchronizeWorkerPeerByWorkerId(remote_worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener);
+    this._worker_protocol_actions.synchronizeWorkerPeerByWorkerId(remote_worker_peer_worker_id, synchronize_message_bytes, synchronize_error_handler, synchronize_acknowledgment_handler);
   });
   callback(false, this._worker_socket_manager);
 }
@@ -556,16 +547,16 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
 /**
  * @memberof module:WorkerSocketProtocol
  * @param {buffer} synchronize_message_bytes
- * @param {function} on_synchronize_acknowledgment_error
- * @param {function} on_acknowledge
+ * @param {function} handle_synchronize_acknowledgment_error
+ * @param {function} handle_acknowledge
  * @param {module:WorkerSocketProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerSocketProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, on_synchronize_acknowledgment_error, on_acknowledge) {
+WorkerSocketProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, handle_synchronize_acknowledgment_error, handle_acknowledge) {
   const worker_id = Buf.decodeUInt32BE(synchronize_message_bytes.slice(0, 4));
   const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_message_bytes.slice(0, 4));
 
-  on_synchronize_acknowledgment_error((error) => {
+  handle_synchronize_acknowledgment_error((error) => {
     // Server side error.
     console.log(error);
   });
@@ -577,7 +568,7 @@ WorkerSocketProtocol.prototype.SynchronizeListener = function(synchronize_messag
       const worker_socket_purpose_parameter = this._nsdt_embedded_protocol.decode(synchronize_message_bytes.slice(4 + remote_worker_peer_authenticity_bytes_length + 4));
       // console.log(is_authenticity_valid, remote_worker_peer_worker_id, remote_worker_peer_authenticity_bytes_length, remote_worker_peer_authenticity_bytes, worker_socket_purpose_name, worker_socket_purpose_parameter);
 
-      on_acknowledge((acknowledge_message_bytes, tunnel) => {
+      handle_acknowledge((acknowledge_message_bytes, tunnel) => {
         if (acknowledge_message_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
           const worker_socket = new WorkerSocket();
           this._setupTunnel(error, worker_socket, tunnel);
@@ -593,7 +584,7 @@ WorkerSocketProtocol.prototype.SynchronizeListener = function(synchronize_messag
       ]));
 
     } else {
-      on_acknowledge((acknowledge_message_bytes, tunnel) => {
+      handle_acknowledge((acknowledge_message_bytes, tunnel) => {
         // Reject.
         tunnel.close();
       });

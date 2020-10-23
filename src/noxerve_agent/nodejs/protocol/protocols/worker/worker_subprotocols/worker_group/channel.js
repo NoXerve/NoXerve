@@ -100,7 +100,7 @@ function Channel(settings) {
    * @type {object}
    * @private
    */
-  this._synchronize_acknowledgment_listener_dict_of_handshake = {};
+  this._synchronize_acknowledgment_handler_dict_of_handshake = {};
 
   /**
    * @memberof module:Channel
@@ -308,7 +308,7 @@ Channel.prototype._returnNewHandshakeSessionId = function() {
 }
 
 // [Flag]
-Channel.prototype.handshake = function(group_peer_id, synchronize_data_bytes, synchronize_acknowledgment_listener, handshake_finished_listener) {
+Channel.prototype.handshake = function(group_peer_id, synchronize_data_bytes, synchronize_acknowledgment_handler, handshake_finished_listener) {
   const session_id_int = this._returnNewHandshakeSessionId();
 
   this._send_by_group_peer_id(group_peer_id,

@@ -129,7 +129,7 @@ ActivityProtocol.prototype.start = function(callback) {
       const interface_name = shuffled_connector_settings_list[index].interface_name;
       const connector_settings = shuffled_connector_settings_list[index].connector_settings;
 
-      const synchronize_acknowledgment_listener = (open_handshanke_error, synchronize_acknowledgment_message_bytes, next) => {
+      const synchronize_acknowledgment_handler = (open_handshanke_error, synchronize_acknowledgment_message_bytes, next) => {
         if (open_handshanke_error) {
 
           // Unable to open handshake. Next loop.
@@ -187,7 +187,7 @@ ActivityProtocol.prototype.start = function(callback) {
       };
 
       // Callbacks setup completed. Start handshake process.
-      this._synchronize_function(interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener);
+      this._synchronize_function(interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_handler, handshake_finished_listener);
     };
     loop();
   });
@@ -214,12 +214,12 @@ ActivityProtocol.prototype.close = function(callback) {
 /**
  * @memberof module:ActivityProtocol
  * @param {buffer} synchronize_message_bytes
- * @param {function} on_synchronize_acknowledgment_error
- * @param {function} on_acknowledge
+ * @param {function} handle_synchronize_acknowledgment_error
+ * @param {function} handle_acknowledge
  * @param {module:ActivityProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-ActivityProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, on_synchronize_acknowledgment_error, on_acknowledge) {
+ActivityProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, handle_synchronize_acknowledgment_error, handle_acknowledge) {
   // Activity doesn't support SYN.
   synchronize_acknowledgment(false);
 }

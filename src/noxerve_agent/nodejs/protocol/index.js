@@ -127,9 +127,9 @@ function Protocol(settings) {
  * synchronize(initiative side)
  * => synchronize_listener(passive side)
  * => synchronize_acknowledgment(passive side)
- * => synchronize_acknowledgment_listener(initiative side finished)
+ * => synchronize_acknowledgment_handler(initiative side finished pass the tunnel)
  * => acknowledge(initiative side)
- * => acknowledge_listener(passive side finished)
+ * => acknowledge_handler(passive side finished pass the tunnel)
  */
 
  /**
@@ -137,46 +137,44 @@ function Protocol(settings) {
   * @type {object}
   * @private
   */
-Protocol.prototype._synchronize = function (interface_name, connector_settings, synchronize_message_bytes, synchronize_acknowledgment_listener, handshake_finished_listener) {
+Protocol.prototype._synchronize = function (interface_name, connector_settings, synchronize_message_bytes, synchronize_error_handler, synchronize_acknowledgment_handler) {
   this._node_module.createTunnel(interface_name, connector_settings, (error, tunnel) => {
-    if (error) {if(synchronize_acknowledgment_listener) synchronize_acknowledgment_listener(error, null, ()=> {});}
+    if (error) {if(synchronize_acknowledgment_handler) synchronize_error_handler(error);}
     else {
-      // Use stage variable to identify current handshake progress.
-      // Avoiding proccess executed wrongly.
-      // stage -1 => Emitted error.
-      // Be called => stage 0
-      // stage 0 => waiting to acknowledge synchronization.
-      // Error => call synchronize_acknowledgment_listener.
-      // stage 1 => waiting to finish up.
-      // Error => call handshake_finished_listener.
-      let stage = 0;
-
-      let ready_state = false;
+      let synchronize_message_bytes_sent = false;
+      let acknowledged = false;
+      let acknowledge_callback_outside = () => {};
 
       tunnel.on('ready', () => {
-        ready_state = true;
         // Send synchronize_message_bytes as tunnel is ready.
-        tunnel.send(synchronize_message_bytes);
+        tunnel.send(synchronize_message_bytes, (error) => {
+          if(error) {
+            synchronize_error_handler(error);
+            synchronize_error_handler = () => {};
+            tunnel.close();
+          }
+          else {
+            synchronize_message_bytes_sent = true;
+          }
+        });
       });
 
       tunnel.on('data', (data) => {
-        if (stage === 0) {
-          // Call synchronize_acknowledgment_listener function. Respond with acknowledge_message_bytes for remote.
-          synchronize_acknowledgment_listener(false, data, (acknowledge_message_bytes)=> {
-            // stage 1 => waiting to finish up. If any error happened call
-            // "handshake_finished_listener" from parameters.
-            stage = 1;
-            try {
-              if (acknowledge_message_bytes === false) {
-                stage = -1;
-                tunnel.close();
-              }
-              else {
+        if(synchronize_message_bytes_sent) {
+          const synchronize_acknowledgment_message_bytes = data;
+
+          const acknowledge = (acknowledge_message_bytes, acknowledge_callback) => {
+            acknowledged = true;
+            if (acknowledge_message_bytes === false) {
+              tunnel.close();
+            }
+            else {
+              try {
+                acknowledge_callback_outside = acknowledge_callback;
                 tunnel.send(acknowledge_message_bytes, (error) => {
                   if (error) {
-                    stage = -1;
                     tunnel.close();
-                    handshake_finished_listener(error);
+                    acknowledge_callback(error, null);
                   } else {
                     // Reset events.
                     tunnel.on('ready', () => {});
@@ -184,38 +182,42 @@ Protocol.prototype._synchronize = function (interface_name, connector_settings, 
                     tunnel.on('error', () => {});
 
                     // Finish up
-                    handshake_finished_listener(error, tunnel);
+                    acknowledge_callback(error, tunnel);
                   }
                 });
+              } catch (error) {
+                tunnel.close();
+                acknowledge_callback(error, null);
               }
-            } catch (error) {
-              stage = -1;
-              tunnel.close();
-              handshake_finished_listener(error);
             }
-          });
-        } else if (stage === 1) {
-          // Nothing happened
+          }
+
+          // Call synchronize_acknowledgment_handler function. Respond with acknowledge_message_bytes for remote.
+          synchronize_acknowledgment_handler(synchronize_acknowledgment_message_bytes, acknowledge);
+        }
+        else {
+          synchronize_error_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Remote sent data before synchronized.'));
+          synchronize_error_handler = () => {};
+          tunnel.close();
         }
       });
 
       tunnel.on('error', (error) => {
-        if (stage === 0) {
-          stage = -1;
+        if(acknowledged) {
+          acknowledge_callback_outside(error);
+          acknowledge_callback_outside = () => {};
           tunnel.close();
-          synchronize_acknowledgment_listener(error, null, ()=> {});
-        } else if (stage === 1) {
-          stage = -1;
+        }
+        else {
+          synchronize_error_handler(error);
+          synchronize_error_handler = () => {};
           tunnel.close();
-          handshake_finished_listener(error);
         }
       });
 
       tunnel.on('close', () => {
-        if (stage === 0) {
-          synchronize_acknowledgment_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'), null, ()=> {});
-        } else if (stage === 1) {
-          handshake_finished_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
+        if(!acknowledged) {
+          synchronize_error_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
         }
       });
     }
@@ -267,14 +269,14 @@ Protocol.prototype.start = function(callback) {
           // stage 0 => waiting to synchronize.
           // Error => call nothing.
           // stage 1 => waiting to acknowledge.
-          // Error => call synchronize_acknowledgment_error_listener.
+          // Error => call synchronize_acknowledgment_error_handler.
           let stage = 0;
 
           let ready_state = false;
           let related_module = null;
 
-          let synchronize_acknowledgment_error_listener;
-          let acknowledge_listener;
+          let synchronize_acknowledgment_error_handler;
+          let acknowledge_handler;
 
           tunnel.on('ready', () => {
             ready_state = true;
@@ -285,11 +287,11 @@ Protocol.prototype.start = function(callback) {
               let has_any_synchronize_acknowledgment_message_bytes = false;
               let synchronize_protocol_left_count = Object.keys(this._protocol_modules).length;
 
-              const on_synchronize_acknowledgment_error = (listener) => {
-                synchronize_acknowledgment_error_listener = listener;
+              const handle_synchronize_acknowledgment_error = (listener) => {
+                synchronize_acknowledgment_error_handler = listener;
               };
-              const on_acknowledge = (listener) => {
-                acknowledge_listener = listener;
+              const handle_acknowledge = (listener) => {
+                acknowledge_handler = listener;
               };
 
               // Check if any protocol module synchronize with the data or not.
@@ -314,24 +316,24 @@ Protocol.prototype.start = function(callback) {
                         if (error) {
                           stage = -1;
                           tunnel.close();
-                          synchronize_acknowledgment_error_listener(error);
+                          synchronize_acknowledgment_error_handler(error);
                         }
                       });
                     } catch (error) {
                       stage = -1;
                       tunnel.close();
-                      synchronize_acknowledgment_error_listener(error);
+                      synchronize_acknowledgment_error_handler(error);
                     }
                   } else if(synchronize_protocol_left_count === 0) {
                     // Reset handlers.
-                    synchronize_acknowledgment_error_listener = null;
-                    acknowledge_listener = null;
+                    synchronize_acknowledgment_error_handler = null;
+                    acknowledge_handler = null;
                     tunnel.close();
                   }
                 }
 
                 // Call synchronize function. Check will it respond with data or not.
-                this._protocol_modules[protocol_name].SynchronizeListener(synchronize_message_bytes, synchronize_acknowledgment, on_synchronize_acknowledgment_error, on_acknowledge);
+                this._protocol_modules[protocol_name].SynchronizeListener(synchronize_message_bytes, synchronize_acknowledgment, handle_synchronize_acknowledgment_error, handle_acknowledge);
               }
 
               // // If no protocol module synchronize with the data. Close tunnel.
@@ -346,7 +348,7 @@ Protocol.prototype.start = function(callback) {
               tunnel.on('error', () => {});
 
               // Finished handshake. Transfer tunnel ownership.
-              acknowledge_listener(acknowledge_message_bytes, tunnel);
+              acknowledge_handler(acknowledge_message_bytes, tunnel);
             }
           });
 
@@ -359,7 +361,7 @@ Protocol.prototype.start = function(callback) {
               } else if (stage === 1) {
                 stage = -1;
                 tunnel.close();
-                synchronize_acknowledgment_error_listener(error);
+                synchronize_acknowledgment_error_handler(error);
               }
             } else {
               // Happened error even not ready at all. Abort operation without any further actions.
@@ -370,7 +372,7 @@ Protocol.prototype.start = function(callback) {
 
           tunnel.on('close', () => {
             if (stage === 1) {
-              synchronize_acknowledgment_error_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
+              synchronize_acknowledgment_error_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL('Tunnel closed before handshake finished.'));
             }
           });
         }
@@ -392,8 +394,15 @@ Protocol.prototype.start = function(callback) {
  * @memberof module:Protocol
  * @param {module:Protocol~callback_of_close} callback
  */
-Protocol.prototype.close = function() {
+Protocol.prototype.close = function(callback) {
+  const protocol_modules_counts = Object.keys(this._protocol_modules).length;
+  const decorated_callback = () => {
 
+  };
+  // Check if any protocol module synchronize with the data or not.
+  for (const protocol_name in this._protocol_modules) {
+    this._protocol_modules[protocol_name].close(decorated_callback);
+  }
 }
 
 module.exports = Protocol;

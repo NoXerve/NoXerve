@@ -122,12 +122,12 @@ ServiceProtocol.prototype.close = function(callback) {
 /**
  * @memberof module:ServiceProtocol
  * @param {buffer} synchronize_message_bytes
- * @param {function} on_synchronize_acknowledgment_error
- * @param {function} on_acknowledge
+ * @param {function} handle_synchronize_acknowledgment_error
+ * @param {function} handle_acknowledge
  * @param {module:ServiceProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-ServiceProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, on_synchronize_acknowledgment_error, on_acknowledge) {
+ServiceProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, handle_synchronize_acknowledgment_error, handle_acknowledge) {
   // Synchronize information for handshake
   // Format:
   // service-activity byte
@@ -139,11 +139,11 @@ ServiceProtocol.prototype.SynchronizeListener = function(synchronize_message_byt
     const activity_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_message_bytes.slice(1, 5));
     const activity_purpose_parameter = this._nsdt_embedded_protocol.decode(synchronize_message_bytes.slice(5));
 
-    on_synchronize_acknowledgment_error((error) => {
+    handle_synchronize_acknowledgment_error((error) => {
       console.log('Serivce protocol verbose.', error);
     });
 
-    on_acknowledge((acknowledge_message_bytes, tunnel) => {
+    handle_acknowledge((acknowledge_message_bytes, tunnel) => {
       if (acknowledge_message_bytes[0] === this._ProtocolCodes.service_and_activity[0]) {
         this._service_module.emitEventListener('service-of-activity-request', (error, service_of_activity) => {
           this._service_of_activity_protocol.handleTunnel(error, service_of_activity, tunnel);

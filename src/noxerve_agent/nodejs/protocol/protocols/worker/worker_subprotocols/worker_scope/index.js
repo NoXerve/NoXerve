@@ -189,10 +189,10 @@ WorkerScopeProtocol.prototype.start = function(callback) {
  * @return {buffer} synchronize_acknowledgment_message_bytes
  * @description Synchronize handshake from remote emitter.
  */
-WorkerScopeProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, on_synchronize_acknowledgment_error, on_acknowledge) {
+WorkerScopeProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, handle_synchronize_acknowledgment_error, handle_acknowledge) {
   const protocol_code_int = synchronize_message_bytes[0];
   if(protocol_code_int === this._ProtocolCodes.integrity_check[0]) {
-    on_synchronize_acknowledgment_error((error) => {
+    handle_synchronize_acknowledgment_error((error) => {
 
     });
     const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_message_bytes.slice(1, 5));
