@@ -254,7 +254,7 @@ WorkerGroup.prototype.start = function(callback) {
       channel.on('request-response', (group_peer_id, data_bytes, response) => {
         console.log('request');
         console.log(data_bytes);
-        response(Buf.from([group_peer_id+1]));
+        response(Buf.from([group_peer_id + 1]));
       });
       channel.broadcast(Buf.from([0x00, 0x01, 0x02, 0x04]), (error, finished_group_peer_id_list) => {
         console.log(error, finished_group_peer_id_list);

@@ -196,18 +196,18 @@ ActivityProtocol.prototype.close = function(callback) {
 }
 
 /**
- * @callback module:ActivityProtocol~callback_of_synchronize_acknowledgment
+ * @callback module:ActivityProtocol~synchronize_acknowledgment
  * @param {buffer} synchronize_returned_data
+ * @param {function} synchronize_acknowledgment_error_handler
+ * @param {function} acknowledge_handler
  */
 /**
  * @memberof module:ActivityProtocol
  * @param {buffer} synchronize_message_bytes
- * @param {function} handle_synchronize_acknowledgment_error
- * @param {function} handle_acknowledge
- * @param {module:ActivityProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
+ * @param {module:ActivityProtocol~synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-ActivityProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, handle_synchronize_acknowledgment_error, handle_acknowledge) {
+ActivityProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment) {
   // Activity doesn't support SYN.
   synchronize_acknowledgment(false);
 }

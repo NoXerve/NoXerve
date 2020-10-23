@@ -107,15 +107,18 @@ function Channel(settings) {
    * @type {object}
    * @private
    */
-  this._acknowledgment_listener_dict_of_handshake = {};
+  this._acknowledge_handler_dict_of_handshake = {};
 }
 
 Channel.prototype._ProtocolCodes = {
   onetime_data: Buf.from([0x00]),
   request_response_request: Buf.from([0x01]),
   request_response_response: Buf.from([0x02]),
-  request_response_close: Buf.from([0x03]),
-  handshake: Buf.from([0x04])
+  request_response_error: Buf.from([0x03]),
+  handshake_synchronize: Buf.from([0x04]),
+  handshake_synchronize_acknowledgment: Buf.from([0x05]),
+  handshake_acknowledge: Buf.from([0x06]),
+  handshake_error: Buf.from([0x03]),
 };
 
 
@@ -145,7 +148,7 @@ Channel.prototype.start = function(callback) {
           // Is not buffer inform remote.
           this._send_by_group_peer_id(group_peer_id,
             Buf.concat([
-            this._ProtocolCodes.request_response_close,
+            this._ProtocolCodes.request_response_error,
             session_id_4bytes
           ]), (error) => {
             if(inner_callback) inner_callback(error);
@@ -159,13 +162,31 @@ Channel.prototype.start = function(callback) {
       this._response_listener_dict_of_request_response[session_id_int](false, data_bytes.slice(4));
       delete this._response_listener_dict_of_request_response[session_id_int];
     }
-    else if (protocol_code_int === this._ProtocolCodes.request_response_close[0]) {
+    else if (protocol_code_int === this._ProtocolCodes.request_response_error[0]) {
       const session_id_4bytes = data_bytes.slice(0, 4);
       const session_id_int = Buf.decodeUInt32BE(session_id_4bytes);
       this._response_listener_dict_of_request_response[session_id_int](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker group remote closed before responsed.'), null);
       delete this._response_listener_dict_of_request_response[session_id_int];
     }
-    else if (protocol_code_int === this._ProtocolCodes.handshake[0]) {
+    else if (protocol_code_int === this._ProtocolCodes.handshake_synchronize[0]) {
+      const session_id_4bytes = data_bytes.slice(0, 4);
+      const session_id_int = Buf.decodeUInt32BE(session_id_4bytes);
+      const handle_acknowledge = (acknowledge_handler) => {
+        this._acknowledge_handler_dict_of_handshake[session_id_int] = acknowledge_handler;
+      };
+      // const handle_synchronize_acknowledgment_error = () => {};
+      // const synchronize_acknowledgment = () => {
+      //
+      // };
+      this._event_listener_dict[handshake](group_peer_id, data_bytes.slice(4), );
+    }
+    else if (protocol_code_int === this._ProtocolCodes.handshake_synchronize_acknowledgment[0]) {
+
+    }
+    else if (protocol_code_int === this._ProtocolCodes.handshake_acknowledge[0]) {
+
+    }
+    else if (protocol_code_int === this._ProtocolCodes.handshake_error[0]) {
 
     }
   });
@@ -308,16 +329,21 @@ Channel.prototype._returnNewHandshakeSessionId = function() {
 }
 
 // [Flag]
-Channel.prototype.handshake = function(group_peer_id, synchronize_data_bytes, synchronize_acknowledgment_handler, handshake_finished_listener) {
+Channel.prototype.handshake = function(group_peer_id, synchronize_data_bytes, synchronize_error_handler, synchronize_acknowledgment_handler) {
   const session_id_int = this._returnNewHandshakeSessionId();
 
   this._send_by_group_peer_id(group_peer_id,
     Buf.concat([
-    this._ProtocolCodes.request_response_request,
+    this._ProtocolCodes.handshake_synchronize,
     Buf.encodeUInt32BE(session_id_int),
-    request_data_bytes
+    synchronize_data_bytes
   ]), (error)=> {
-
+    if(error) {
+      synchronize_error_handler(error);
+    }
+    else {
+      this._synchronize_acknowledgment_handler_dict_of_handshake[session_id_int] = synchronize_acknowledgment_handler;
+    }
   });
 }
 

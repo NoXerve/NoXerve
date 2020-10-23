@@ -14,7 +14,7 @@
 const Errors = require('../../../errors');
 const Buf = require('../../../buffer');
 const Utils = require('../../../utils');
-const ServiceOfActivityProtocol = require('./service_of_activity');
+const ServiceOfServiceProtocol = require('./service_of_activity');
 
 
 /**
@@ -64,16 +64,16 @@ function ServiceProtocol(settings) {
    * @memberof module:ServiceProtocol
    * @type {object}
    * @private
-   * @description ServiceOfActivityProtocol submodule.
+   * @description ServiceOfServiceProtocol submodule.
    */
-  this._service_of_activity_protocol = new ServiceOfActivityProtocol({
+  this._service_of_activity_protocol = new ServiceOfServiceProtocol({
     hash_manager: settings.hash_manager,
     nsdt_embedded_protocol: settings.embedded_protocols['nsdt_embedded']
   });
 }
 
 /**
- * @memberof module:ActivityProtocol
+ * @memberof module:ServiceProtocol
  * @type {object}
  * @private
  */
@@ -116,18 +116,18 @@ ServiceProtocol.prototype.close = function(callback) {
 }
 
 /**
- * @callback module:ServiceProtocol~callback_of_synchronize_acknowledgment
+ * @callback module:ServiceProtocol~synchronize_acknowledgment
  * @param {buffer} synchronize_returned_data
+ * @param {function} synchronize_acknowledgment_error_handler
+ * @param {function} acknowledge_handler
  */
 /**
  * @memberof module:ServiceProtocol
  * @param {buffer} synchronize_message_bytes
- * @param {function} handle_synchronize_acknowledgment_error
- * @param {function} handle_acknowledge
- * @param {module:ServiceProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
+ * @param {module:ServiceProtocol~synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-ServiceProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, handle_synchronize_acknowledgment_error, handle_acknowledge) {
+ServiceProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment) {
   // Synchronize information for handshake
   // Format:
   // service-activity byte
@@ -139,11 +139,11 @@ ServiceProtocol.prototype.SynchronizeListener = function(synchronize_message_byt
     const activity_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_message_bytes.slice(1, 5));
     const activity_purpose_parameter = this._nsdt_embedded_protocol.decode(synchronize_message_bytes.slice(5));
 
-    handle_synchronize_acknowledgment_error((error) => {
+    const synchronize_acknowledgment_error_handler = (error) => {
       console.log('Serivce protocol verbose.', error);
-    });
+    };
 
-    handle_acknowledge((acknowledge_message_bytes, tunnel) => {
+    const acknowledge_handler = (acknowledge_message_bytes, tunnel) => {
       if (acknowledge_message_bytes[0] === this._ProtocolCodes.service_and_activity[0]) {
         this._service_module.emitEventListener('service-of-activity-request', (error, service_of_activity) => {
           this._service_of_activity_protocol.handleTunnel(error, service_of_activity, tunnel);
@@ -157,7 +157,7 @@ ServiceProtocol.prototype.SynchronizeListener = function(synchronize_message_byt
       } else {
         tunnel.close();
       }
-    });
+    };
 
     if(this._service_module.emitEventListener('service-of-activity-purpose-exist', activity_purpose_name)) {
       // Send 8 bytes id;
@@ -165,7 +165,7 @@ ServiceProtocol.prototype.SynchronizeListener = function(synchronize_message_byt
         this._ProtocolCodes.service_and_activity,
         this._ProtocolCodes.accept,
         // generated_activity_id
-      ]));
+      ]), synchronize_acknowledgment_error_handler, acknowledge_handler);
     }
     else {
       // Send 8 bytes id;
@@ -173,7 +173,7 @@ ServiceProtocol.prototype.SynchronizeListener = function(synchronize_message_byt
         this._ProtocolCodes.service_and_activity,
         this._ProtocolCodes.not_exist_reason_reject_2_bytes,
         // generated_activity_id
-      ]));
+      ]), synchronize_acknowledgment_error_handler, acknowledge_handler);
     }
 
 

@@ -184,17 +184,23 @@ WorkerScopeProtocol.prototype.start = function(callback) {
 }
 
 /**
+ * @callback module:WorkerScopeProtocol~synchronize_acknowledgment
+ * @param {buffer} synchronize_returned_data
+ * @param {function} synchronize_acknowledgment_error_handler
+ * @param {function} acknowledge_handler
+ */
+/**
  * @memberof module:WorkerScopeProtocol
  * @param {buffer} synchronize_message_bytes
- * @return {buffer} synchronize_acknowledgment_message_bytes
+ * @param {module:WorkerScopeProtocol~synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerScopeProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, handle_synchronize_acknowledgment_error, handle_acknowledge) {
+WorkerScopeProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment) {
   const protocol_code_int = synchronize_message_bytes[0];
   if(protocol_code_int === this._ProtocolCodes.integrity_check[0]) {
-    handle_synchronize_acknowledgment_error((error) => {
+    const synchronize_acknowledgment_error_handler = (error) => {
 
-    });
+    }
     const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_message_bytes.slice(1, 5));
     this._worker_protocol_actions.validateAuthenticityBytes(synchronize_message_bytes.slice(5, 5 + remote_worker_peer_authenticity_bytes_length), (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
 
@@ -205,19 +211,19 @@ WorkerScopeProtocol.prototype.SynchronizeListener = function(synchronize_message
             this._ProtocolCodes.integrity_check,
             this._worker_global_protocol_codes.accept,
             this._worker_protocol_actions.encodeAuthenticityBytes()
-          ])); // Reject. Authenticication error. (integrity failed)
+          ]), synchronize_acknowledgment_error_handler); // Reject. Authenticication error. (integrity failed)
         }
         else {
           synchronize_acknowledgment(Buf.concat([
             this._ProtocolCodes.integrity_check,
             this._worker_global_protocol_codes.authentication_reason_reject_2_bytes
-          ])); // Reject. Authenticication error. (integrity failed)
+          ]), synchronize_acknowledgment_error_handler); // Reject. Authenticication error. (integrity failed)
         }
       } else {
         synchronize_acknowledgment(Buf.concat([
           this._ProtocolCodes.integrity_check,
           this._worker_global_protocol_codes.authentication_reason_reject_2_bytes
-        ])); // Reject. Authenticication error.
+        ]), synchronize_acknowledgment_error_handler); // Reject. Authenticication error.
       }
     });
   }

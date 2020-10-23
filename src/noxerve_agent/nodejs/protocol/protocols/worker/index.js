@@ -156,7 +156,7 @@ function WorkerProtocol(settings) {
 }
 
 /**
- * @memberof module:ActivityProtocol
+ * @memberof module:WorkerProtocol
  * @type {object}
  * @private
  */
@@ -1052,26 +1052,26 @@ WorkerProtocol.prototype.close = function(callback) {
 }
 
 /**
- * @callback module:WorkerProtocol~callback_of_synchronize_acknowledgment
+ * @callback module:WorkerProtocol~synchronize_acknowledgment
  * @param {buffer} synchronize_returned_data
+ * @param {function} synchronize_acknowledgment_error_handler
+ * @param {function} acknowledge_handler
  */
 /**
  * @memberof module:WorkerProtocol
  * @param {buffer} synchronize_message_bytes
- * @param {function} handle_synchronize_acknowledgment_error
- * @param {function} handle_acknowledge
- * @param {module:WorkerProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
+ * @param {module:WorkerProtocol~synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, handle_synchronize_acknowledgment_error, handle_acknowledge) {
+WorkerProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment) {
   // Synchronize information for handshake
   // Worker Affairs Protocol
   const protocol_code_int = synchronize_message_bytes[0];
   if (protocol_code_int === this._ProtocolCodes.worker_affairs[0]) {
-    handle_synchronize_acknowledgment_error((error) => {
+    const synchronize_acknowledgment_error_handler = (error) => {
       // Server side error.
       // console.log(error);
-    });
+    };
 
     if (synchronize_message_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond[0]) {
       // Corrupted settings.
@@ -1080,7 +1080,7 @@ WorkerProtocol.prototype.SynchronizeListener = function(synchronize_message_byte
           this._ProtocolCodes.worker_affairs,
           this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
           this._ProtocolCodes.unknown_reason_reject_2_bytes
-        ]));
+        ]), synchronize_acknowledgment_error_handler);
         this._worker_module.emitEventListener('error', new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected worker join due to static_global_random_seed_4096bytes settings wrongly set.'));
         return;
       }
@@ -1121,7 +1121,7 @@ WorkerProtocol.prototype.SynchronizeListener = function(synchronize_message_byte
                   this._ProtocolCodes.worker_affairs,
                   this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
                   Buf.from([0x00, 0x02]) // Reject Broadcast error.
-                ]));
+                ]), synchronize_acknowledgment_error_handler);
               } else {
                 let worker_peer_settings_dict = {};
                 // Generate clean new interfaces settings for new worker.
@@ -1144,7 +1144,7 @@ WorkerProtocol.prototype.SynchronizeListener = function(synchronize_message_byte
                   Buf.encodeUInt32BE(new_worker_id),
                   this._static_global_random_seed_4096bytes,
                   this._nsdt_embedded_protocol.encode(worker_peer_settings_dict)
-                ]));
+                ]), synchronize_acknowledgment_error_handler);
               }
             });
           } else {
@@ -1152,7 +1152,7 @@ WorkerProtocol.prototype.SynchronizeListener = function(synchronize_message_byte
               this._ProtocolCodes.worker_affairs,
               this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
               this._ProtocolCodes.authentication_reason_reject_2_bytes // Reject Authenticication error.
-            ]));
+            ]), synchronize_acknowledgment_error_handler);
           }
         });
       } catch (error) {
@@ -1161,7 +1161,7 @@ WorkerProtocol.prototype.SynchronizeListener = function(synchronize_message_byte
           this._ProtocolCodes.worker_affairs,
           this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
           this._ProtocolCodes.unknown_reason_reject_2_bytes
-        ]));
+        ]), synchronize_acknowledgment_error_handler);
       }
     } else if (synchronize_message_bytes[1] === this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast[0]) {
       this._handleWorkerAffairsWorkerPeerOperationBroadcast('join', synchronize_message_bytes, synchronize_acknowledgment);
@@ -1246,41 +1246,34 @@ WorkerProtocol.prototype.SynchronizeListener = function(synchronize_message_byte
 
     let error_listener;
 
-    const decorated_handle_acknowledge = (callback) => {
-      handle_acknowledge((acknowledge_message_bytes, tunnel) => {
-        if (
-          acknowledge_message_bytes[0] === this._ProtocolCodes.worker_object[0] &&
-          acknowledge_message_bytes[1] === worker_object_protocol_code_1byte[0] &&
-          acknowledge_message_bytes[2] === worker_subprotocol_protocol_code_1byte[0]
-        ) {
-          callback(acknowledge_message_bytes.slice(3), tunnel);
-        } else {
-          error_listener(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), tunnel);
-          tunnel.close();
-        }
-      });
-    };
+    const decorated_synchronize_acknowledgment = (synchronize_acknowledgment_message_bytes, synchronize_acknowledgment_error_handler, acknowledge_handler) => {
+      if(Buf.isBuffer(synchronize_acknowledgment_message_bytes)) {
+        const decorated_acknowledge_handler = (acknowledge_message_bytes, tunnel) => {
+          if (
+            acknowledge_message_bytes[0] === this._ProtocolCodes.worker_object[0] &&
+            acknowledge_message_bytes[1] === worker_object_protocol_code_1byte[0] &&
+            acknowledge_message_bytes[2] === worker_subprotocol_protocol_code_1byte[0]
+          ) {
+            acknowledge_handler(acknowledge_message_bytes.slice(3), tunnel);
+          } else {
+            synchronize_acknowledgment_error_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'));
+            tunnel.close();
+          }
+        };
 
-    const decorated_synchronize_acknowledgment = (data_bytes) => {
-      if(Buf.isBuffer(data_bytes)) {
         synchronize_acknowledgment(Buf.concat([
           this._ProtocolCodes.worker_object,
           worker_object_protocol_code_1byte,
           worker_subprotocol_protocol_code_1byte,
-          data_bytes
-        ]));
+          synchronize_acknowledgment_message_bytes
+        ]), synchronize_acknowledgment_error_handler, decorated_acknowledge_handler);
       }
       else {
         synchronize_acknowledgment(false);
       }
     };
 
-    const decorated_on_error = (listener) => {
-      error_listener = listener;
-      handle_synchronize_acknowledgment_error(error_listener);
-    };
-
-    worker_subprotocol_module.SynchronizeListener(sliced_synchronize_message_bytes, decorated_synchronize_acknowledgment, handle_synchronize_acknowledgment_error, decorated_handle_acknowledge);
+    worker_subprotocol_module.SynchronizeListener(sliced_synchronize_message_bytes, decorated_synchronize_acknowledgment);
   } else {
     synchronize_acknowledgment(false);
   };

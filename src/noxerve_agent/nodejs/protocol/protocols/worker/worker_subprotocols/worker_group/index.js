@@ -170,30 +170,28 @@ WorkerGroupProtocol.prototype.start = function(callback) {
       };
 
       // Register this worker group synchronization action.
-      this._worker_group_synchronization_dict[worker_group_purpose_name] = (synchronize_message_bytes, handle_synchronize_acknowledgment_error, handle_acknowledge, next) => {
+      this._worker_group_synchronization_dict[worker_group_purpose_name] = (synchronize_message_bytes, synchronize_acknowledgment) => {
         const remote_worker_peer_authenticity_bytes = synchronize_message_bytes.slice(4);
 
         this._worker_protocol_actions.validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
           if (is_authenticity_valid && !error && group_peer_id_list.indexOf(remote_worker_peer_worker_id) !== -1) {
-            handle_acknowledge((acknowledge_message_bytes, tunnel) => {
+            const acknowledge_handler = (acknowledge_message_bytes, tunnel) => {
               if (acknowledge_message_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
                 // Transfer worker id into group id.
                 _tunnel_create_listener(group_peer_id_list.indexOf(remote_worker_peer_worker_id) + 1, tunnel);
               } else {
                 tunnel.close();
               }
-            });
+            };
 
-            next(Buf.concat([
+            const synchronize_acknowledgment_error_handler = () => {};
+
+            synchronize_acknowledgment(Buf.concat([
               this._worker_global_protocol_codes.accept, // Accept.
               this._worker_protocol_actions.encodeAuthenticityBytes()
-            ]));
+            ]), synchronize_acknowledgment_error_handler, acknowledge_handler);
           } else {
-            handle_acknowledge((acknowledge_message_bytes, tunnel) => {
-              // Reject.
-              tunnel.close();
-            });
-            next(this._worker_global_protocol_codes.authentication_reason_reject_2_bytes); // Reject. Authenticication error.
+            synchronize_acknowledgment(this._worker_global_protocol_codes.authentication_reason_reject_2_bytes, () => {}, (a, tunnel) => {tunnel.close();}); // Reject. Authenticication error.
           }
         });
       };
@@ -219,24 +217,24 @@ WorkerGroupProtocol.prototype.start = function(callback) {
 }
 
 /**
- * @callback module:WorkerGroupProtocol~callback_of_synchronize_acknowledgment
+ * @callback module:WorkerGroupProtocol~synchronize_acknowledgment
  * @param {buffer} synchronize_returned_data
+ * @param {function} synchronize_acknowledgment_error_handler
+ * @param {function} acknowledge_handler
  */
 /**
  * @memberof module:WorkerGroupProtocol
  * @param {buffer} synchronize_message_bytes
- * @param {function} handle_synchronize_acknowledgment_error
- * @param {function} handle_acknowledge
- * @param {module:WorkerGroupProtocol~callback_of_synchronize_acknowledgment} synchronize_acknowledgment
+ * @param {module:WorkerGroupProtocol~synchronize_acknowledgment} synchronize_acknowledgment
  * @description Synchronize handshake from remote emitter.
  */
-WorkerGroupProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment, handle_synchronize_acknowledgment_error, handle_acknowledge) {
+WorkerGroupProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment) {
   const worker_group_purpose_name_4bytes = synchronize_message_bytes.slice(0, 4);
   const worker_group_purpose_name = this._hash_manager.stringify4BytesHash(worker_group_purpose_name_4bytes);
   if (this._worker_group_synchronization_dict[worker_group_purpose_name]) {
-    this._worker_group_synchronization_dict[worker_group_purpose_name](synchronize_message_bytes, handle_synchronize_acknowledgment_error, handle_acknowledge, synchronize_acknowledgment);
+    this._worker_group_synchronization_dict[worker_group_purpose_name](synchronize_message_bytes, synchronize_acknowledgment);
   } else {
-    synchronize_acknowledgment(this._worker_global_protocol_codes.unknown_reason_reject_2_bytes);
+    synchronize_acknowledgment(this._worker_global_protocol_codes.unknown_reason_reject_2_bytes, ()=> {}, (a, tunnel)=> {tunnel.close();});
   }
 }
 
