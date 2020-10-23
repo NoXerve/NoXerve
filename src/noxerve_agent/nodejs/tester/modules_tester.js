@@ -298,12 +298,12 @@ Node2.createInterface('WebSocket', {
           console.log('workers in scope: ' + list);
           finish('worker_scope_get_peer_list');
           worker_scope.broadcastRequest(Buffer.from([6,6,6,6,6]),
-            (worker_id, open_handshanke_error, synchronize_acknowledgment_message_bytes, callback) => {
+            (worker_id, synchronize_error, synchronize_acknowledgment_message_bytes, callback) => {
               console.log('[worker_scope]'+ worker_id +'respond !');
               console.log('sync_ack info: ' + synchronize_acknowledgment_message_bytes);
-              if(open_handshanke_error) {
-                console.log('with error: '+ open_handshanke_error);
-                callback(open_handshanke_error, false);
+              if(synchronize_error) {
+                console.log('with error: '+ synchronize_error);
+                callback(synchronize_error, false);
               }
               else callback(false, true);
             },

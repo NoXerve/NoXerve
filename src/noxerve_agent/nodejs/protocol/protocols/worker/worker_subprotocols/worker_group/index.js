@@ -122,9 +122,9 @@ WorkerGroupProtocol.prototype.close = function(callback) {
  * @description Start running WorkerGroupProtocol.
  */
 WorkerGroupProtocol.prototype.start = function(callback) {
-  this._worker_group_manager.on('worker-group-create-request', (worker_group_purpose_name, group_peer_id_list, inner_callback) => {
+  this._worker_group_manager.on('worker-group-create-request', (worker_group_purpose_name, group_peer_id_list, worker_group_create_request_callback) => {
     if(!group_peer_id_list.includes(this._return_my_worker_id())) {
-      inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('GroupPeersList\'s must include yourself (with worker id: ' + this._return_my_worker_id() + ').'));
+      worker_group_create_request_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('GroupPeersList\'s must include yourself (with worker id: ' + this._return_my_worker_id() + ').'));
     }
     else if (group_peer_id_list.length <= MaxGroupPeersCount) {
       let _tunnel_create_listener;
@@ -133,7 +133,6 @@ WorkerGroupProtocol.prototype.start = function(callback) {
         const worker_group_purpose_name_4bytes = this._hash_manager.hashString4Bytes(worker_group_purpose_name);
         const my_worker_authenticity_bytes = this._worker_protocol_actions.encodeAuthenticityBytes();
         const worker_peer_worker_id = group_peer_id_list[group_peer_id - 1];
-        let _is_authenticity_valid = false;
 
         const synchronize_message_bytes = Buf.concat([
           // Buf.encodeUInt32BE(my_worker_authenticity_bytes.length),
@@ -141,39 +140,29 @@ WorkerGroupProtocol.prototype.start = function(callback) {
           my_worker_authenticity_bytes,
         ]);
 
-        const synchronize_acknowledgment_handler = (open_handshanke_error, synchronize_acknowledgment_message_bytes, next) => {
-          if(open_handshanke_error) {
-            inner_callback(open_handshanke_error);
-            return;
-          }
+        const synchronize_error_handler = (synchronize_error) => {
+          create_tunnel_callback(synchronize_error);
+        };
+
+        const synchronize_acknowledgment_handler = (synchronize_acknowledgment_message_bytes, acknowledge) => {
           if(synchronize_acknowledgment_message_bytes[0] !== this._worker_global_protocol_codes.accept[0]) {
-            inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('WorkerGroupProtocol create tunnel error. '));
-            next(false);
+            worker_group_create_request_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('WorkerGroupProtocol create tunnel error. '));
+            acknowledge(false);
             return;
           }
           const remote_worker_peer_authenticity_bytes = synchronize_acknowledgment_message_bytes.slice(1);
           this._worker_protocol_actions.validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
-            _is_authenticity_valid = is_authenticity_valid;
             if (is_authenticity_valid && !error && remote_worker_peer_worker_id === worker_peer_worker_id) {
-              next(this._worker_global_protocol_codes.accept); // Accept.
+              acknowledge(this._worker_global_protocol_codes.accept, create_tunnel_callback); // Accept.
             } else {
-              next(this._worker_global_protocol_codes.authentication_reason_reject_2_bytes); // Reject. Authenticication error.
+              create_tunnel_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Remote worker authentication failed.'));
+              acknowledge(this._worker_global_protocol_codes.authentication_reason_reject_2_bytes, (error, tunnel) => {
+                tunnel.close();
+              }); // Reject. Authenticication error.
             }
           });
         };
-
-        const handshake_finished_listener = (error, tunnel) => {
-          if (error) {
-            create_tunnel_callback(error);
-          } else {
-            if (_is_authenticity_valid) {
-              create_tunnel_callback(error, tunnel);
-            } else {
-              create_tunnel_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Remote worker authentication failed.'));
-            }
-          }
-        };
-        this._worker_protocol_actions.synchronizeWorkerPeerByWorkerId(worker_peer_worker_id, synchronize_message_bytes, synchronize_acknowledgment_handler, handshake_finished_listener);
+        this._worker_protocol_actions.synchronizeWorkerPeerByWorkerId(worker_peer_worker_id, synchronize_message_bytes, synchronize_error_handler, synchronize_acknowledgment_handler);
       };
 
       const on_tunnel_create = (tunnel_create_listener) => {
@@ -219,10 +208,10 @@ WorkerGroupProtocol.prototype.start = function(callback) {
       });
 
       worker_group.start((error)=> {
-        inner_callback(error, worker_group);
+        worker_group_create_request_callback(error, worker_group);
       });
     } else {
-      inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('GroupPeersList\'s length exceeds MaxGroupPeersCount ' + MaxGroupPeersCount + '.'));
+      worker_group_create_request_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('GroupPeersList\'s length exceeds MaxGroupPeersCount ' + MaxGroupPeersCount + '.'));
     }
   });
 

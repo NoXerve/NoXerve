@@ -128,8 +128,8 @@ WorkerSocketProtocol.prototype.start = function(callback) {
       worker_socket_purpose_parameter_bytes
     ]);
 
-    const synchronize_error_handler = (open_handshanke_error) => {
-      inner_callback(open_handshanke_error);
+    const synchronize_error_handler = (synchronize_error) => {
+      inner_callback(synchronize_error);
     };
 
     const synchronize_acknowledgment_handler = (synchronize_acknowledgment_message_bytes, acknowledge) => {

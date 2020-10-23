@@ -474,9 +474,6 @@ WorkerProtocol.prototype._synchronizeWorkerPeerByWorkerId = function(
       // Unable to open handshake. Next loop.
       synchronize_error_list.push(synchronize_error);
       loop_next();
-
-      // Return acknowledge_message_bytes(not acknowledge).
-      next(false);
     };
 
     // "_" is for distincting the one from parameters.
