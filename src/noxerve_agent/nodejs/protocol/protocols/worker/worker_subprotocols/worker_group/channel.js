@@ -100,14 +100,14 @@ function Channel(settings) {
    * @type {object}
    * @private
    */
-  this._synchronize_error_handler_and_synchronize_acknowledgment_handler_dict_of_handshake = {};
+  this._synchronize_acknowledgment_handler_dict_of_handshake = {};
 
   /**
    * @memberof module:Channel
    * @type {object}
    * @private
    */
-  this._synchronize_acknowledgment_error_handler_and_acknowledge_handler_dict_of_handshake = {};
+  this._acknowledge_handler_dict_of_handshake = {};
 }
 
 Channel.prototype._ProtocolCodes = {
@@ -125,7 +125,7 @@ Channel.prototype._ProtocolCodes = {
 // [Flag]
 Channel.prototype.start = function(callback) {
   this._register_on_data((group_peer_id, data)=> {
-    console.log(group_peer_id, data);
+    // console.log(group_peer_id, data);
     const protocol_code_int = data[0];
     const data_bytes = data.slice(1);
     if(protocol_code_int === this._ProtocolCodes.onetime_data[0]) {
@@ -172,7 +172,7 @@ Channel.prototype.start = function(callback) {
       const session_id_4bytes = data_bytes.slice(0, 4);
       const session_id_int = Buf.decodeUInt32BE(session_id_4bytes);
 
-      const synchronize_acknowledgment = (synchronize_acknowledgment_message_bytes, synchronize_acknowledgment_error_handler, acknowledge_handler) => {
+      const synchronize_acknowledgment = (synchronize_acknowledgment_message_bytes, acknowledge_handler) => {
         // Is not buffer inform remote.
         this._send_by_group_peer_id(group_peer_id,
           Buf.concat([
@@ -180,9 +180,9 @@ Channel.prototype.start = function(callback) {
           session_id_4bytes,
           synchronize_acknowledgment_message_bytes
         ]), (error) => {
-          if(error && synchronize_acknowledgment_error_handler) synchronize_acknowledgment_error_handler(error);
+          if(error && acknowledge_handler) acknowledge_handler(error);
           if(!error) {
-            this._synchronize_acknowledgment_error_handler_and_acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int] = [synchronize_acknowledgment_error_handler, acknowledge_handler];
+            this._acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int] = acknowledge_handler;
           }
         });
       };
@@ -192,8 +192,8 @@ Channel.prototype.start = function(callback) {
     else if (protocol_code_int === this._ProtocolCodes.handshake_synchronize_acknowledgment[0]) {
       const session_id_4bytes = data_bytes.slice(0, 4);
       const session_id_int = Buf.decodeUInt32BE(session_id_4bytes);
-      const synchronize_error_handler_and_synchronize_acknowledgment_handler = this._synchronize_error_handler_and_synchronize_acknowledgment_handler_dict_of_handshake[session_id_int];
-      if(synchronize_error_handler_and_synchronize_acknowledgment_handler[1]) {
+      const synchronize_acknowledgment_handler = this._synchronize_acknowledgment_handler_dict_of_handshake[session_id_int];
+      if(synchronize_acknowledgment_handler) {
         const acknowledge = (acknowledge_message_bytes, acknowledge_callback) => {
           // Is not buffer inform remote.
           this._send_by_group_peer_id(group_peer_id,
@@ -203,18 +203,18 @@ Channel.prototype.start = function(callback) {
             acknowledge_message_bytes
           ]), acknowledge_callback);
         };
-        synchronize_error_handler_and_synchronize_acknowledgment_handler[1](data_bytes.slice(4), acknowledge);
-        delete this._synchronize_error_handler_and_synchronize_acknowledgment_handler_dict_of_handshake[session_id_int];
+        synchronize_acknowledgment_handler(false, data_bytes.slice(4), acknowledge);
       }
+      delete this._synchronize_acknowledgment_handler_dict_of_handshake[session_id_int];
     }
     else if (protocol_code_int === this._ProtocolCodes.handshake_acknowledge[0]) {
       const session_id_4bytes = data_bytes.slice(0, 4);
       const session_id_int = Buf.decodeUInt32BE(session_id_4bytes);
-      const synchronize_acknowledgment_error_handler_and_acknowledge_handler = this._synchronize_acknowledgment_error_handler_and_acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int];
-      if(synchronize_acknowledgment_error_handler_and_acknowledge_handler) {
-        synchronize_acknowledgment_error_handler_and_acknowledge_handler[1](data_bytes.slice(4));
-        delete this._synchronize_acknowledgment_error_handler_and_acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int];
+      const acknowledge_handler = this._acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int];
+      if(acknowledge_handler) {
+        acknowledge_handler(false, data_bytes.slice(4));
       }
+      delete this._acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int];
     }
     else if (protocol_code_int === this._ProtocolCodes.handshake_error[0]) {
       const type_protocal_code_int = data_bytes[0];
@@ -336,9 +336,10 @@ Channel.prototype.multicastRequest = function(group_peer_id_list, request_data_b
   for(let index in group_peer_id_list) {
     const group_peer_id = group_peer_id_list[index];
     this.request(group_peer_id, request_data_bytes, (error, response_data_bytes) => {
-      a_group_peer_response_listener(group_peer_id, error, response_data_bytes, (error, is_finished) => {
+      const comfirm_error_finish_status = (error, is_finished) => {
         demultiplexing_callback(group_peer_id, error, is_finished);
-      });
+      }
+      a_group_peer_response_listener(group_peer_id, error, response_data_bytes, comfirm_error_finish_status);
     });
   }
 }
@@ -359,7 +360,7 @@ Channel.prototype._returnNewHandshakeSessionId = function() {
 }
 
 // [Flag]
-Channel.prototype.handshake = function(group_peer_id, synchronize_data_bytes, synchronize_error_handler, synchronize_acknowledgment_handler) {
+Channel.prototype.synchronize = function(group_peer_id, synchronize_data_bytes, synchronize_acknowledgment_handler) {
   const session_id_int = this._returnNewHandshakeSessionId();
 
   this._send_by_group_peer_id(group_peer_id,
@@ -369,21 +370,21 @@ Channel.prototype.handshake = function(group_peer_id, synchronize_data_bytes, sy
     synchronize_data_bytes
   ]), (error)=> {
     if(error) {
-      synchronize_error_handler(error);
+      synchronize_acknowledgment_handler(error);
     }
     else {
-      this._synchronize_error_handler_and_synchronize_acknowledgment_handler_dict_of_handshake[session_id_int] = [synchronize_error_handler, synchronize_acknowledgment_handler];
+      this._synchronize_acknowledgment_handler_dict_of_handshake[session_id_int] = synchronize_acknowledgment_handler;
     }
   });
 }
 
 // [Flag]
-Channel.prototype.multicastHandShake = function(callback) {
+Channel.prototype.multicastSynchronize = function(group_peer_id_list, synchronize_data_bytes, a_synchronize_error_handler, a_synchronize_acknowledgment_handler, finished_listener) {
 
 }
 
 // [Flag]
-Channel.prototype.broadcastHandShake = function(callback) {
+Channel.prototype.broadcastSynchronize = function(callback) {
 
 }
 

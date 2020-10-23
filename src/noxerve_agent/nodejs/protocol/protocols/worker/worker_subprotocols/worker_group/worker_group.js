@@ -260,11 +260,9 @@ WorkerGroup.prototype.start = function(callback) {
       channel.on('handshake', (group_peer_id, synchronize_message_bytes, synchronize_acknowledgment) => {
         console.log('synchronize');
         console.log(synchronize_message_bytes);
-        synchronize_acknowledgment(Buf.from([1]), (error) => {
-          console.log('synchronize_acknowledgment error', error);
-        }, (acknowledge_message_bytes) => {
+        synchronize_acknowledgment(Buf.from([1]), (synchronize_acknowledgment_error, acknowledge_message_bytes) => {
           console.log('acknowledge');
-          console.log(acknowledge_message_bytes);
+          console.log(synchronize_acknowledgment_error, acknowledge_message_bytes);
         });
       });
 
@@ -276,24 +274,33 @@ WorkerGroup.prototype.start = function(callback) {
         console.log(error, response_data_bytes);
       });
 
-      channel.broadcastRequest(Buf.from([0x53]), (group_peer_id, error, response_data_bytes, next) => {
+      channel.broadcastRequest(Buf.from([0x53]), (group_peer_id, error, response_data_bytes, comfirm_error_finish_status) => {
         console.log('response(broadcast)');
         console.log(group_peer_id, error, response_data_bytes);
-        next(false, true);
+        comfirm_error_finish_status(false, true);
       }, (error, finished_group_peer_id_list) => {
         console.log('broadcastRequest onfinish');
         console.log(error, finished_group_peer_id_list);
       });
 
-      channel.handshake(1, Buf.from([0x00]), (error) => {
-        console.log('synchronize error', error);
-      }, (synchronize_acknowledgment_message_bytes, acknowledge) => {
+      channel.synchronize(1, Buf.from([0x00]), (synchronize_error, synchronize_acknowledgment_message_bytes, acknowledge) => {
         console.log('synchronize_acknowledgment');
-        console.log(synchronize_acknowledgment_message_bytes);
+        console.log(synchronize_error, synchronize_acknowledgment_message_bytes);
         acknowledge(Buf.from([0x02]), (error) => {
           console.log('acknowledge error', error);
         });
       });
+
+
+      // channel.broadcastSynchronize(Buf.from([0x00]), (group_peer_id, error, comfirm_error_finish_status) => {
+      //
+      // }, (group_peer_id, synchronize_acknowledgment_message_bytes, acknowledge) => {
+      //   acknowledge(Buf.from([0x02]), (error, comfirm_error_finish_status) => {
+      //
+      //   });
+      // }, (error) => {
+      //
+      // });
     });
   });
 

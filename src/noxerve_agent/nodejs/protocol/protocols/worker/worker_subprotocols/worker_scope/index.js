@@ -141,27 +141,27 @@ WorkerScopeProtocol.prototype.start = function(callback) {
           my_worker_authenticity_bytes,
           worker_scope_purpose_name_4bytes,
         ]);
-        const a_worker_response_listener = (worker_id, error, response_data_bytes, next) => {
+        const a_worker_response_listener = (worker_id, error, response_data_bytes, comfirm_error_finish_status) => {
           if(error) {
-            next(error, false);
+            comfirm_error_finish_status(error, false);
           }
           else if(response_data_bytes[0] === this._ProtocolCodes.integrity_check[0]) {
             if(response_data_bytes[1] !== this._worker_global_protocol_codes.accept[0]) {
               // error, is_finished
-              next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker(id: ' + worker_id + ') rejected or failed integrity check.'), false);
+              comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker(id: ' + worker_id + ') rejected or failed integrity check.'), false);
             }
             else {
               this._worker_protocol_actions.validateAuthenticityBytes(response_data_bytes.slice(2), (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
                 if (is_authenticity_valid && !error) {
-                  next(false, true);
+                  comfirm_error_finish_status(false, true);
                 } else {
-                  next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker(id: ' + worker_id + ') failed "validateAuthenticityBytes" check.'), false);
+                  comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker(id: ' + worker_id + ') failed "validateAuthenticityBytes" check.'), false);
                 }
               });
             }
           }
           else {
-            next(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker(id: ' + worker_id + ') did not return integrity_check code.'), false);
+            comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker(id: ' + worker_id + ') did not return integrity_check code.'), false);
           }
         };
         const finished_listener = (error) => {
