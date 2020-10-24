@@ -13,6 +13,7 @@
  */
 
 const Errors = require('../../../errors');
+const Buf = require('../../../buffer');
 const hash = require("crypto").createHash;
 const ACORN = new(require('./acorn'));
 
@@ -38,19 +39,6 @@ function GlobalDeterministicRandomManager(settings) {
   this._static_global_random_seed_4096bytes = settings.static_global_random_seed_4096bytes;
 }
 
-// This is awuful
-GlobalDeterministicRandomManager.prototype._base10 = function (base64_result, UseBigInt) {
-  // It's a multi to one function
-  let result = 0;
-  for(let i=0; i<base64_result.length; i++){
-    result *= 10;
-    result += base64_result.charCodeAt(i);
-    if(!UseBigInt) result = result%Number.MAX_SAFE_INTEGER;
-  }
-
-  return result;
-}
-
 GlobalDeterministicRandomManager.prototype._isInputValid = function(begin_int, end_int, list_length) {
   if (begin_int > end_int) {
     return false;
@@ -65,7 +53,7 @@ GlobalDeterministicRandomManager.prototype._isInputValid = function(begin_int, e
 // [Flag]
 /**
  * Generate random number with given initialization vector bytes, IVT for short. Expected to have same result with same given IVT due to its the determinism.
- * @param  {string}   initialization_vector_bytes  seed
+ * @param  {buffer}   initialization_vector_bytes  seed
  * @param  {integer}   begin_int                   result >= begin int
  * @param  {integer}   end_int                     result <= end int
  * @param  {Function} callback                     pass the result by callback(result)
@@ -78,7 +66,7 @@ GlobalDeterministicRandomManager.prototype.generateIntegerInRange = function(ini
 // [Flag] retuen many random integerers
 /**
  * [description]
- * @param  {string}   initialization_vector_bytes  seed
+ * @param  {buffer}   initialization_vector_bytes  seed
  * @param  {integer}   begin_int                   result >= begin int
  * @param  {integer}   end_int                     result <= end int
  * @param  {unsigned int}   list_length            length of result list
@@ -90,8 +78,8 @@ GlobalDeterministicRandomManager.prototype.generateIntegerListInRange = function
     callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Input of "generateIntegerListInRange" is invalid.'));
     return;
   }
-
-  let seed = this._base10(hash('sha1').update(String(initialization_vector_bytes)).digest('base64'), false);
+  // [flag] what if overflow?
+  let seed = Buf.decodeUInt32BE(initialization_vector_bytes);
   // console.log('seed = ' + seed);
   let result = ACORN.random(seed, list_length);
   // console.log('seed in ACORN = ' + ACORN.seed);
@@ -125,7 +113,11 @@ GlobalDeterministicRandomManager.prototype.generateUniqueIntegerListInRange = fu
   callback(false, result);
 }
 
-//let g = new GlobalDeterministicRandomManager({});
-//console.log(g.generateIntegerListInRange('hello', 5, 30, 20, ()=>{}));
+/** Tests Cases
+let g = new GlobalDeterministicRandomManager({});
+g.generateIntegerListInRange(Buf.from([1,2,3,4,5]), 5, 30, 20, (error, result)=>{
+  console.log(result);
+});
+**/
 
 module.exports = GlobalDeterministicRandomManager;
