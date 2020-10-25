@@ -287,6 +287,7 @@ Node2.createInterface('WebSocket', {
         // WorkerScope tests
         Worker.createWorkerScope('test_scope', [1], (error, worker_scope) => {
           if (error) console.log('[Worker module] "test_scope" error.', error);
+          console.log('worker list: ', worker_scope._worker_list);
           worker_scope.on('integrity-pass', () => {
 
           });
@@ -295,10 +296,11 @@ Node2.createInterface('WebSocket', {
             finish('worker_scope_check_integrity');
           });
           let list = worker_scope.returnScopePeerList();
-          console.log('workers in scope: ' + list);
+          console.log('workers in scope: ', list);
           finish('worker_scope_get_peer_list');
           worker_scope.broadcastRequest(Buffer.from([0x02,6,6,6,6]),
             (worker_id, synchronize_error, synchronize_acknowledgment_message_bytes, callback) => {
+              // maybe need more check for security
               console.log('[worker_scope] worker '+ worker_id +' respond !');
               console.log('sync_ack info: ' + synchronize_acknowledgment_message_bytes.toString('utf8'));
               if(synchronize_error) {

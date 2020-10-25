@@ -59,18 +59,20 @@ function WorkerScope(settings) {
   };
 
   /**
+   * Dictionary of workers re-labeled from 0
 	 * @memberof module:WorkerScopeProtocol
 	 * @type {object}
 	 * @private
 	 */
 	this._worker_list = {};
+  this._createWorkerList(this._scope_peer_list);
 }
 
 /**
  * Transfer the given workers to a labeled list starting from 0
  * @param  {Array} workers
  */
-WorkerScope.prototype._CreateWorkerList = function(workers) {  // TODO: create list after creast worker scope
+WorkerScope.prototype._createWorkerList = function(workers) {
 	for (let i = 0; i < workers.length; i++) {
 		this._worker_list[i] = workers[i];
 	}
