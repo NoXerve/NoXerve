@@ -118,7 +118,8 @@ Channel.prototype._ProtocolCodes = {
   handshake_synchronize: Buf.from([0x04]),
   handshake_synchronize_acknowledgment: Buf.from([0x05]),
   handshake_acknowledge: Buf.from([0x06]),
-  handshake_error: Buf.from([0x03]),
+  handshake_synchronize_error: Buf.from([0x07]),
+  handshake_synchronize_acknowledgment_error: Buf.from([0x08]),
 };
 
 
@@ -195,13 +196,29 @@ Channel.prototype.start = function(callback) {
       const synchronize_acknowledgment_handler = this._synchronize_acknowledgment_handler_dict_of_handshake[session_id_int];
       if(synchronize_acknowledgment_handler) {
         const acknowledge = (acknowledge_message_bytes, acknowledge_callback) => {
-          // Is not buffer inform remote.
-          this._send_by_group_peer_id(group_peer_id,
-            Buf.concat([
-            this._ProtocolCodes.handshake_acknowledge,
-            session_id_4bytes,
-            acknowledge_message_bytes
-          ]), acknowledge_callback);
+          if(Buf.isBuffer(acknowledge_message_bytes)) {
+            this._send_by_group_peer_id(group_peer_id,
+              Buf.concat([
+              this._ProtocolCodes.handshake_acknowledge,
+              session_id_4bytes,
+              acknowledge_message_bytes
+            ]), acknowledge_callback);
+          } else if(acknowledge_callback) {
+            if(acknowledge_message_bytes === false) acknowledge_callback(false);
+            else acknowledge_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Channel acknowledge error: acknowledge_message_bytes is invalid.'));
+            // Is not buffer inform remote.
+            this._send_by_group_peer_id(group_peer_id,
+              Buf.concat([
+              this._ProtocolCodes.handshake_synchronize_acknowledgment_error,
+              session_id_4bytes,
+            ]));
+          } else {
+            this._send_by_group_peer_id(group_peer_id,
+              Buf.concat([
+              this._ProtocolCodes.handshake_synchronize_acknowledgment_error,
+              session_id_4bytes,
+            ]));
+          }
         };
         synchronize_acknowledgment_handler(false, data_bytes.slice(4), acknowledge);
       }
@@ -213,6 +230,15 @@ Channel.prototype.start = function(callback) {
       const acknowledge_handler = this._acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int];
       if(acknowledge_handler) {
         acknowledge_handler(false, data_bytes.slice(4));
+      }
+      delete this._acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int];
+    }
+    else if (protocol_code_int === this._ProtocolCodes.handshake_synchronize_acknowledgment_error[0]) {
+      const session_id_4bytes = data_bytes.slice(0, 4);
+      const session_id_int = Buf.decodeUInt32BE(session_id_4bytes);
+      const acknowledge_handler = this._acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int];
+      if(acknowledge_handler) {
+        acknowledge_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Channel synchronize acknowledgment error called by remote.'));
       }
       delete this._acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int];
     }
@@ -233,6 +259,7 @@ Channel.prototype.close = function(callback) {
 
 // [Flag]
 Channel.prototype.unicast = function(group_peer_id, data_bytes, callback) {
+  if(!Buf.isBuffer(data_bytes)) {synchronize_acknowledgment_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('data_bytes must be buffer.')); return;};
   this._send_by_group_peer_id(group_peer_id,
     Buf.concat([
     this._ProtocolCodes.onetime_data,
@@ -291,6 +318,7 @@ Channel.prototype._returnNewRequestSessionId = function() {
 
 // [Flag]
 Channel.prototype.request = function(group_peer_id, request_data_bytes, on_group_peer_response) {
+  if(!Buf.isBuffer(request_data_bytes)) {synchronize_acknowledgment_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('request_data_bytes must be buffer.')); return;};
   const session_id_int = this._returnNewRequestSessionId();
 
   this._send_by_group_peer_id(group_peer_id,
@@ -355,12 +383,13 @@ Channel.prototype.broadcastRequest = function(request_data_bytes, a_group_peer_r
 // [Flag]
 Channel.prototype._returnNewHandshakeSessionId = function() {
   const session_id = this._enumerated_handshake_session_id;
-  this._enumerated_session_id += 1;
+  this._enumerated_handshake_session_id += 1;
   return session_id;
 }
 
 // [Flag]
 Channel.prototype.synchronize = function(group_peer_id, synchronize_data_bytes, synchronize_acknowledgment_handler) {
+  if(!Buf.isBuffer(synchronize_data_bytes)) {synchronize_acknowledgment_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('synchronize_data_bytes must be buffer.')); return;};
   const session_id_int = this._returnNewHandshakeSessionId();
 
   this._send_by_group_peer_id(group_peer_id,
@@ -379,13 +408,112 @@ Channel.prototype.synchronize = function(group_peer_id, synchronize_data_bytes, 
 }
 
 // [Flag]
-Channel.prototype.multicastSynchronize = function(group_peer_id_list, synchronize_data_bytes, a_synchronize_error_handler, a_synchronize_acknowledgment_handler, finished_listener) {
+Channel.prototype.multicastSynchronize = function(group_peer_id_list, synchronize_data_bytes, a_synchronize_acknowledgment_handler, finished_listener) {
+  let finished_synchronize_group_peer_id_list = [];
+  let finished_acknowledge_group_peer_id_list = [];
+  let error_dict = {};
 
+  let demultiplexing_callback_called_count = 0;
+
+  const demultiplexing_callback = (group_peer_id)=> {
+    demultiplexing_callback_called_count ++;
+
+    // Check if should call the original callback or not.
+    if(demultiplexing_callback_called_count === group_peer_id_list.length) {
+      if(Object.keys(error_dict).length === 0) {
+        error_dict = false;
+      }
+      finished_listener(error_dict, finished_synchronize_group_peer_id_list, finished_acknowledge_group_peer_id_list);
+    }
+  };
+
+  for(let index in group_peer_id_list) {
+    const group_peer_id = group_peer_id_list[index];
+    this.synchronize(group_peer_id, synchronize_data_bytes, (synchronize_error, synchronize_acknowledgment_message_bytes, acknowledge)=> {
+      let synchronize_error_finish_status_confirmed = false;
+      const comfirm_synchronize_error_finish_status = (error, synchronize_finish_status) => {
+        if(synchronize_error_finish_status_confirmed) {throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('comfirm_synchronize_error_finish_status has been called already.');}
+        synchronize_error_finish_status_confirmed = true;
+        if(error) {
+          error_dict[group_peer_id] = [error, null];
+        }
+        if(synchronize_finish_status) {
+          finished_synchronize_group_peer_id_list.push(group_peer_id);
+        }
+      };
+
+      const decorated_acknowledge = (acknowledge_message_bytes, acknowledge_callback) => {
+        const decoreated_acknowledge_callback = (acknowledge_error) => {
+          let acknowledge_error_finish_status_comfirmed = false;
+          const comfirm_acknowledge_error_finish_status = (error, acknowledge_finish_status) => {
+            if(acknowledge_error_finish_status_comfirmed) {throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('acknowledge_error_finish_status_comfirmed has been called already.');}
+            acknowledge_error_finish_status_comfirmed = true;
+            if(error) {
+              if(error_dict[group_peer_id]) {
+                error_dict[group_peer_id][1] = error;
+              }
+              else {
+                error_dict[group_peer_id] = [null, error];
+              }
+            }
+            if(acknowledge_finish_status) {
+              finished_acknowledge_group_peer_id_list.push(group_peer_id);
+            }
+            // Finished a handshake call demultiplexing_callback
+            demultiplexing_callback(group_peer_id);
+          };
+          if(acknowledge_callback) {
+            acknowledge_callback(acknowledge_error, comfirm_acknowledge_error_finish_status);
+            // Default confrim.
+            if(!acknowledge_error_finish_status_comfirmed && acknowledge_error) {
+              comfirm_acknowledge_error_finish_status(acknowledge_error, false);
+            }
+            else if(!acknowledge_error_finish_status_comfirmed) {
+              comfirm_acknowledge_error_finish_status(acknowledge_error, true);
+            }
+          }
+          // Default "error", "finish status" of "comfirm_acknowledge_error_finish_status" for not properly called or acknowledge_message_bytes is false.
+          else {
+            if(acknowledge_message_bytes === false) {
+              comfirm_acknowledge_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Channel doen\'t acknowledge with any acknowledge message bytes.'), false);
+            }
+            else if(acknowledge_error) {
+              comfirm_acknowledge_error_finish_status(acknowledge_error, false);
+            }
+            else {
+              comfirm_acknowledge_error_finish_status(false, true);
+            }
+          }
+        };
+
+        acknowledge(acknowledge_message_bytes, decoreated_acknowledge_callback);
+      };
+
+      if(synchronize_error) {
+        a_synchronize_acknowledgment_handler(group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, (error, synchronize_finish_status) => {
+          comfirm_synchronize_error_finish_status(error, synchronize_finish_status);
+          demultiplexing_callback(group_peer_id);
+        }, () => {});
+        // Default value.
+        if(!synchronize_error_finish_status_confirmed) {
+          comfirm_synchronize_error_finish_status(synchronize_error, false);
+          demultiplexing_callback(group_peer_id);
+        }
+      }
+      else {
+        a_synchronize_acknowledgment_handler(group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, comfirm_synchronize_error_finish_status, decorated_acknowledge);
+        // Default value.
+        if(!synchronize_error_finish_status_confirmed) {
+          comfirm_synchronize_error_finish_status(synchronize_error, true);
+        }
+      }
+    });
+  }
 }
 
 // [Flag]
-Channel.prototype.broadcastSynchronize = function(callback) {
-
+Channel.prototype.broadcastSynchronize = function(synchronize_data_bytes, a_synchronize_acknowledgment_handler, finished_listener) {
+  this.multicastSynchronize(this._return_group_peer_id_list(), synchronize_data_bytes, a_synchronize_acknowledgment_handler, finished_listener);
 }
 
 /**

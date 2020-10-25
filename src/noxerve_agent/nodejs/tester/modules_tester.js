@@ -27,7 +27,12 @@ let Tests = [
   'worker_scope_get_peer_list',
   'worker_scope_broad_request_reponse',
   'nsdt_test',
-  'worker_group',
+  'worker_group_creation',
+  'worker_group_channel_braodcast',
+  'worker_group_channel_request',
+  'worker_group_channel_braodcast_request',
+  'worker_group_channel_synchronize',
+  'worker_group_channel_braodcast_synchronize',
   'other_test'
 ];
 
@@ -287,7 +292,7 @@ Node2.createInterface('WebSocket', {
         // WorkerScope tests
         Worker.createWorkerScope('test_scope', [1], (error, worker_scope) => {
           if (error) console.log('[Worker module] "test_scope" error.', error);
-          console.log('worker list: ', worker_scope._worker_list);
+          // console.log('worker list: ', worker_scope._worker_list);
           worker_scope.on('integrity-pass', () => {
 
           });
@@ -296,27 +301,27 @@ Node2.createInterface('WebSocket', {
             finish('worker_scope_check_integrity');
           });
           let list = worker_scope.returnScopePeerList();
-          console.log('workers in scope: ', list);
+          // console.log('workers in scope: ', list);
           finish('worker_scope_get_peer_list');
           worker_scope.broadcastRequest(Buffer.from([0x02,6,6,6,6]),
             (worker_id, synchronize_error, synchronize_acknowledgment_message_bytes, callback) => {
               // maybe need more check for security
-              console.log('[worker_scope] worker '+ worker_id +' respond !');
-              console.log('sync_ack info: ' + synchronize_acknowledgment_message_bytes.toString('utf8'));
+              // console.log('[worker_scope] worker '+ worker_id +' respond !');
+              // console.log('sync_ack info: ' + synchronize_acknowledgment_message_bytes.toString('utf8'));
               if(synchronize_error) {
-                console.log('with error: '+ synchronize_error);
+                // console.log('with error: '+ synchronize_error);
                 callback(synchronize_error, false);
               }
               else callback(false, true);
             },
             (error, finished_worker_list) => {
               if(error) {
-                console.log('[worker_scope] finish broadcastRequest with error:' + error);
-                console.log('only ' + finished_worker_list + ' finished');
+                // console.log('[worker_scope] finish broadcastRequest with error:' + error);
+                // console.log('only ' + finished_worker_list + ' finished');
               }
               else{
-                console.log('[worker_scope] finish broadcastRequest');
-                console.log('all finished. ( ' + finished_worker_list + ' )');
+                // console.log('[worker_scope] finish broadcastRequest');
+                // console.log('all finished. ( ' + finished_worker_list + ' )');
               }
             }
           );
@@ -326,7 +331,73 @@ Node2.createInterface('WebSocket', {
         // WorkerGroup tests
         Worker.createWorkerGroup('test_group', [1], (error, worker_group) => {
           if (error) console.log('[Worker module] "test_group" error.', error);
-          finish('worker_group');
+          else {
+            finish('worker_group_creation');
+          }
+          worker_group.createChannel(Buffer.from([0x00, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x02]), (error, channel) => {
+            if (error) console.log('[Worker module] "createChannel" error.', error);
+            channel.on('data', (group_peer_id, data_bytes) => {
+              console.log('[Worker module: Channel] data: ', group_peer_id, data_bytes);
+            });
+            channel.on('request-response', (group_peer_id, data_bytes, response) => {
+              console.log('[Worker module: Channel] request: ', group_peer_id, data_bytes);
+              response(Buffer.from([group_peer_id + 1]));
+            });
+
+            channel.on('handshake', (group_peer_id, synchronize_message_bytes, synchronize_acknowledgment) => {
+              console.log('[Worker module: Channel] synchronize: ', group_peer_id, synchronize_message_bytes);
+              synchronize_acknowledgment(Buffer.from([1]), (synchronize_acknowledgment_error, acknowledge_message_bytes) => {
+                console.log('[Worker module: Channel] acknowledge: ', synchronize_acknowledgment_error, acknowledge_message_bytes);
+              });
+            });
+
+            // APIs.
+
+            channel.broadcast(Buffer.from([0x00, 0x01, 0x02, 0x04]), (error, finished_group_peer_id_list) => {
+              console.log('[Worker module: Channel] broadcast results: ', error, finished_group_peer_id_list);
+              finish('worker_group_channel_braodcast');
+            });
+
+            channel.request(1, Buffer.from([0x55]), (error, response_data_bytes) => {
+              console.log('[Worker module: Channel] response: ', error, response_data_bytes);
+              finish('worker_group_channel_request');
+            });
+
+            channel.broadcastRequest(Buffer.from([0x53]), (group_peer_id, error, response_data_bytes, comfirm_error_finish_status) => {
+              console.log('[Worker module: Channel] response(broadcast): ', group_peer_id, error, response_data_bytes);
+              comfirm_error_finish_status(false, true);
+            }, (error, finished_group_peer_id_list) => {
+              console.log('[Worker module: Channel] broadcastRequest onfinish results: ', error, finished_group_peer_id_list);
+              finish('worker_group_channel_braodcast_request');
+            });
+
+            channel.synchronize(1, Buffer.from([0x00]), (synchronize_error, synchronize_acknowledgment_message_bytes, acknowledge) => {
+              console.log('[Worker module: Channel] synchronize_acknowledgment: ', synchronize_error, synchronize_acknowledgment_message_bytes);
+              acknowledge(Buffer.from([0x02]), (error) => {
+                if(error) console.log('[Worker module: Channel] acknowledge error', error);
+                finish('worker_group_channel_synchronize');
+              });
+            });
+
+            channel.broadcastSynchronize(Buffer.from([0x00]), (group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, comfirm_synchronize_error_finish_status, acknowledge) => {
+              console.log('[Worker module: Channel] synchronize_acknowledgment(broadcast): ', group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes);
+              // comfirm_synchronize_error_finish_status(false, true);
+              if(synchronize_error) {
+                comfirm_synchronize_error_finish_status(synchronize_error, false);
+                acknowledge(false);
+              }
+              else {
+                // acknowledge(false);
+                acknowledge(Buffer.from([group_peer_id]), (error, comfirm_acknowledge_error_finish_status) => {
+                  if(error) console.log('[Worker module: Channel] acknowledge error(broadcast)', error);
+                  comfirm_acknowledge_error_finish_status(error, error?false:true);
+                });
+              }
+            }, (error, finished_synchronize_group_peer_id_list, finished_acknowledge_group_peer_id_list) => {
+              console.log('[Worker module: Channel] broadcastSynchronize finished. results: ', error, finished_synchronize_group_peer_id_list, finished_acknowledge_group_peer_id_list);
+              finish('worker_group_channel_braodcast_synchronize');
+            });
+          });
         });
       });
     });

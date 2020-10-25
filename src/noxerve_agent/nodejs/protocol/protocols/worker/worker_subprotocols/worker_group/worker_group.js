@@ -244,71 +244,22 @@ WorkerGroup.prototype.start = function(callback) {
     this._setupTunnel(group_peer_id, tunnel);
   });
 
-  // Test
-  this._createChannel(1, Buf.from([0x00, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x02]), (error, channel) => {
-    channel.start(() => {
-      channel.on('data', (group_peer_id, data_bytes) => {
-        console.log('data');
-        console.log(group_peer_id, data_bytes);
-      });
-      channel.on('request-response', (group_peer_id, data_bytes, response) => {
-        console.log('request');
-        console.log(data_bytes);
-        response(Buf.from([group_peer_id + 1]));
-      });
-
-      channel.on('handshake', (group_peer_id, synchronize_message_bytes, synchronize_acknowledgment) => {
-        console.log('synchronize');
-        console.log(synchronize_message_bytes);
-        synchronize_acknowledgment(Buf.from([1]), (synchronize_acknowledgment_error, acknowledge_message_bytes) => {
-          console.log('acknowledge');
-          console.log(synchronize_acknowledgment_error, acknowledge_message_bytes);
-        });
-      });
-
-      channel.broadcast(Buf.from([0x00, 0x01, 0x02, 0x04]), (error, finished_group_peer_id_list) => {
-        console.log(error, finished_group_peer_id_list);
-      });
-      channel.request(1, Buf.from([0x55]), (error, response_data_bytes) => {
-        console.log('response');
-        console.log(error, response_data_bytes);
-      });
-
-      channel.broadcastRequest(Buf.from([0x53]), (group_peer_id, error, response_data_bytes, comfirm_error_finish_status) => {
-        console.log('response(broadcast)');
-        console.log(group_peer_id, error, response_data_bytes);
-        comfirm_error_finish_status(false, true);
-      }, (error, finished_group_peer_id_list) => {
-        console.log('broadcastRequest onfinish');
-        console.log(error, finished_group_peer_id_list);
-      });
-
-      channel.synchronize(1, Buf.from([0x00]), (synchronize_error, synchronize_acknowledgment_message_bytes, acknowledge) => {
-        console.log('synchronize_acknowledgment');
-        console.log(synchronize_error, synchronize_acknowledgment_message_bytes);
-        acknowledge(Buf.from([0x02]), (error) => {
-          console.log('acknowledge error', error);
-        });
-      });
-
-
-      // channel.broadcastSynchronize(Buf.from([0x00]), (group_peer_id, error, comfirm_error_finish_status) => {
-      //
-      // }, (group_peer_id, synchronize_acknowledgment_message_bytes, acknowledge) => {
-      //   acknowledge(Buf.from([0x02]), (error, comfirm_error_finish_status) => {
-      //
-      //   });
-      // }, (error) => {
-      //
-      // });
-    });
-  });
-
-  // callback(false);
+  callback(false);
 }
 
-// pause, destroy
-// managed by AyncQueue object itself.
+// [Flag]
+WorkerGroup.prototype.createChannel = function(channel_id_8bytes, callback) {
+  this._createChannel(0, channel_id_8bytes, (error, channel) => {
+    if(error) callback(error);
+    else {
+      channel.start((error) => {
+        callback(error, channel);
+      });
+    }
+  })
+}
+
+
 // [Flag]
 WorkerGroup.prototype.destroy = function(callback) {
 
