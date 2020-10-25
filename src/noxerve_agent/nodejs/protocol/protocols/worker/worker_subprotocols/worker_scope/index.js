@@ -197,10 +197,11 @@ WorkerScopeProtocol.prototype.start = function(callback) {
  */
 WorkerScopeProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment) {
   const protocol_code_int = synchronize_message_bytes[0];
-  if(protocol_code_int === this._ProtocolCodes.integrity_check[0]) {
-    const synchronize_acknowledgment_error_handler = (error) => {
+  const synchronize_acknowledgment_error_handler = (error) => {
+    console.log('sync_ack error: ' + error);
+  }
 
-    }
+  if(protocol_code_int === this._ProtocolCodes.integrity_check[0]) {
     const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(synchronize_message_bytes.slice(1, 5));
     this._worker_protocol_actions.validateAuthenticityBytes(synchronize_message_bytes.slice(5, 5 + remote_worker_peer_authenticity_bytes_length), (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
 
@@ -228,7 +229,8 @@ WorkerScopeProtocol.prototype.SynchronizeListener = function(synchronize_message
     });
   }
   else if(protocol_code_int === this._ProtocolCodes.request_response[0]) {
-
+    // [flag] not sure if the sync_ack message is proper or not
+    synchronize_acknowledgment(Buf.concat([this._ProtocolCodes.request_response, this._worker_global_protocol_codes.worker_object]), synchronize_acknowledgment_error_handler);
   }
   else {
     synchronize_acknowledgment(false);

@@ -70,7 +70,7 @@ function WorkerScope(settings) {
  * Transfer the given workers to a labeled list starting from 0
  * @param  {Array} workers
  */
-WorkerScope.prototype._CreateWorkerList = function(workers) {
+WorkerScope.prototype._CreateWorkerList = function(workers) {  // TODO: create list after creast worker scope
 	for (let i = 0; i < workers.length; i++) {
 		this._worker_list[i] = workers[i];
 	}
@@ -100,6 +100,14 @@ WorkerScope.prototype.checkIntegrity = function(callback) {
  */
 WorkerScope.prototype.returnScopePeerList = function() {
   return this._scope_peer_list;
+}
+
+WorkerScope.prototype.addWorker = function(worker_peer_worker_ID_list) {
+
+}
+
+WorkerScope.prototype.removeWorker = function(worker_inner_ID_List) {
+
 }
 
 /**
