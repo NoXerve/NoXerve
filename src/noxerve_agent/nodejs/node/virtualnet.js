@@ -19,7 +19,7 @@ function SocketPair() {
         if(callback) callback(new Errors.ERR_NOXERVEAGENT_NODE_VIRTUALNET('Socket closed already.'));
       }
       else {
-        setTimeout(() => {
+        process.nextTick(() => {
           this.SocketBeta.event_listeners.message(data_bytes);
         }, 0);
 
@@ -50,7 +50,7 @@ function SocketPair() {
         if(callback) callback(new Errors.ERR_NOXERVEAGENT_NODE_VIRTUALNET('Socket closed already.'));
       }
       else {
-        setTimeout(() => {
+        process.nextTick(() => {
           this.SocketAlpha.event_listeners.message(data_bytes);
         }, 0);
 
