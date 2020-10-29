@@ -26,6 +26,7 @@ let Tests = [
   'worker_scope_check_integrity',
   'worker_scope_get_peer_list',
   'worker_scope_broad_request_reponse',
+  'worker_scope_add_worker',
   'nsdt_test',
   'worker_group_creation',
   'worker_group_channel_braodcast',
@@ -323,9 +324,32 @@ Node2.createInterface('WebSocket', {
                 // console.log('[worker_scope] finish broadcastRequest');
                 // console.log('all finished. ( ' + finished_worker_list + ' )');
               }
+              finish('worker_scope_broad_request_reponse');
             }
           );
-          finish('worker_scope_broad_request_reponse');
+          // plese don't add worker itself. It will break the other worker scope tests.
+          worker_scope.add_worker(1,
+            (worker_id, synchronize_error, request_message_bytes, _callback) => {
+            // maybe need more check for security
+            console.log('[worker_scope] add_worker: worker '+ worker_id +' respond.');
+            if(synchronize_error) {
+              console.log('[worker_scope] sync with error: '+ synchronize_error);
+              _callback(synchronize_error, false);
+            }
+            else _callback(false, true);
+            },
+            (error, finished_worker_list) => {
+              if(error) {
+                console.log('[worker_scope] finish adding worker with error:' + error);
+                console.log('[worker_scope] only ' + finished_worker_list + ' finished');
+              }
+              else{
+                console.log('[worker_scope] finish adding worker');
+                console.log('[worker_scope] all finished. ( ' + finished_worker_list + ' )');
+              }
+              finish('worker_scope_add_worker');
+            }
+          );
         });
 
         // WorkerGroup tests

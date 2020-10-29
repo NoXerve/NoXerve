@@ -91,6 +91,8 @@ WorkerScopeProtocol.prototype._ProtocolCodes = {
   integrity_check: Buf.from([0x00]),
   integrity_pass: Buf.from([0x01]),
   request_response: Buf.from([0x02]),
+  add_worker: Buf.from([0x03]),
+  remove_worker: Buf.from([0x04])
 };
 
 /**
@@ -104,6 +106,13 @@ WorkerScopeProtocol.prototype._ProtocolCodes = {
  */
 WorkerScopeProtocol.prototype.close = function(callback) {
   if (callback) callback(false);
+}
+
+WorkerScopeProtocol.prototype._add_worker = function(worker_scope_purpose_name_4bytes, worker_peer_worker_ID) {
+  let scope = this._worker_scopes_dict[worker_scope_purpose_name_4bytes];
+  scope._scope_peer_list.push(worker_peer_worker_ID);
+  scope._worker_list[Object.keys(scope._worker_list).length] = worker_peer_worker_ID;
+  scope._event_listener_dict['worker_added'](worker_peer_worker_ID);
 }
 
 /**
@@ -129,7 +138,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
           worker_scope_purpose_name_4bytes,
           data_bytes
         ]);
-        this._worker_protocol_actions.multicastRequest(scope_peer_list, data_bytes, a_worker_response_listener, finished_listener);
+        this._worker_protocol_actions.multicastRequest(scope_peer_list, decorated_data_bytes, a_worker_response_listener, finished_listener);
       },
       multicast_request: (worker_id_list, data_bytes, a_worker_response_listener, finished_listener) => {
         this._worker_protocol_actions.multicastRequest(worker_id_list, data_bytes, a_worker_response_listener, finished_listener);
@@ -174,6 +183,15 @@ WorkerScopeProtocol.prototype.start = function(callback) {
           }
         };
         this._worker_protocol_actions.multicastRequest(scope_peer_list, data_bytes, a_worker_response_listener, finished_listener);
+      },
+      add_worker: (worker_peer_worker_ID, a_worker_response_listener, finished_listener) => {
+        const decorated_data_bytes = Buf.concat([
+          this._ProtocolCodes.add_worker,
+          worker_scope_purpose_name_4bytes,
+          Buf.encodeUInt32BE(worker_peer_worker_ID)
+        ]);
+        this._worker_protocol_actions.multicastRequest(scope_peer_list, decorated_data_bytes,
+          a_worker_response_listener, finished_listener);
       }
     });
 
@@ -198,7 +216,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
 WorkerScopeProtocol.prototype.SynchronizeListener = function(synchronize_message_bytes, synchronize_acknowledgment) {
   const protocol_code_int = synchronize_message_bytes[0];
   const synchronize_acknowledgment_error_handler = (error) => {
-    console.log('sync_ack error: ' + error);
+    //console.log('sync_ack error: ' + error);
   }
 
   if(protocol_code_int === this._ProtocolCodes.integrity_check[0]) {
@@ -231,6 +249,25 @@ WorkerScopeProtocol.prototype.SynchronizeListener = function(synchronize_message
   else if(protocol_code_int === this._ProtocolCodes.request_response[0]) {
     // [flag] not sure if the sync_ack message is proper or not
     synchronize_acknowledgment(Buf.concat([this._ProtocolCodes.request_response, this._worker_global_protocol_codes.worker_object]), synchronize_acknowledgment_error_handler);
+  }
+  else if(protocol_code_int === this._ProtocolCodes.add_worker[0]){
+    // const remote_worker_peer_worker_id = synchronize_message_bytes.slice(2,2);
+    const worker_scope_purpose_name = this._hash_manager.stringify4BytesHash(synchronize_message_bytes.slice(1,5));
+    if(!this._worker_scopes_dict[worker_scope_purpose_name])
+      synchronize_acknowledgment(Buf.concat([
+        this._ProtocolCodes.add_worker,
+        this._worker_global_protocol_codes.reject
+      ]), synchronize_acknowledgment_error_handler);
+      // reject. Request does not come from the worker inside the scope.
+    else {
+      synchronize_acknowledgment(Buf.concat([
+        this._ProtocolCodes.add_worker,
+        this._worker_global_protocol_codes.accept
+      ]), synchronize_acknowledgment_error_handler);
+      // accept.
+
+      this._add_worker(worker_scope_purpose_name, Buf.decodeUInt32BE( synchronize_message_bytes.slice(5) ));
+    }
   }
   else {
     synchronize_acknowledgment(false);

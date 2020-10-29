@@ -33,7 +33,7 @@ function WorkerScope(settings) {
    * @type {object}
    * @private
    */
-  this._scope_peer_list = settings.scope_peer_list;
+        this._scope_peer_list = settings.scope_peer_list;
 
   /**
    * @memberof module:WorkerScope
@@ -55,7 +55,9 @@ function WorkerScope(settings) {
    * @private
    */
   this._event_listener_dict = {
-    request: () => {}
+    request: () => {},
+    worker_added: () => {},
+    worker_rmoved: () => {}
   };
 
   /**
@@ -104,11 +106,13 @@ WorkerScope.prototype.returnScopePeerList = function() {
   return this._scope_peer_list;
 }
 
-WorkerScope.prototype.addWorker = function(worker_peer_worker_ID_list) {
 
+WorkerScope.prototype.add_worker = function(worker_peer_worker_ID, a_worker_response_listener, finished_listener) {
+  // user(or Service System) should be responsible to handle if there's any worker didn't finished.
+  this._settings.add_worker(worker_peer_worker_ID, a_worker_response_listener, finished_listener);
 }
 
-WorkerScope.prototype.removeWorker = function(worker_inner_ID_List) {
+WorkerScope.prototype.remove_worker = function(worker_inner_ID_List) {
 
 }
 
