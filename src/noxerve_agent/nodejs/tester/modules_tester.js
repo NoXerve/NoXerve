@@ -29,11 +29,11 @@ let Tests = [
   // 'worker_scope_broad_request_reponse',
   // 'worker_scope_add_worker',
   // 'worker_group_creation',
-  // 'worker_group_channel_braodcast',
-  // 'worker_group_channel_request',
-  // 'worker_group_channel_braodcast_request',
-  // 'worker_group_channel_synchronize',
-  // 'worker_group_channel_braodcast_synchronize',
+  'worker_group_channel_braodcast',
+  'worker_group_channel_request',
+  'worker_group_channel_braodcast_request',
+  'worker_group_channel_synchronize',
+  'worker_group_channel_braodcast_synchronize',
   'other_test'
 ];
 

@@ -109,7 +109,7 @@ function WorkerGroup(settings) {
    * @private
    */
   this._worker_group_private_affair_channel_on_data_listener = null;
-  // 
+  //
   // /**
   //  * @memberof module:WorkerGroup
   //  * @type {object}
@@ -320,7 +320,7 @@ WorkerGroup.prototype.start = function(callback) {
     locker.lock();
   });
 
-  // callback(false);
+  callback(false);
 }
 
 // [Flag]
