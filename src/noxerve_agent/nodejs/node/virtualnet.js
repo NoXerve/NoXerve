@@ -15,12 +15,14 @@ function SocketPair() {
     closed: false,
     event_listeners: {},
     send: (data_bytes, callback) => {
-      console.log(data_bytes);
       if (this.SocketAlpha.closed) {
         if(callback) callback(new Errors.ERR_NOXERVEAGENT_NODE_VIRTUALNET('Socket closed already.'));
       }
       else {
-        this.SocketBeta.event_listeners.message(data_bytes);
+        setTimeout(() => {
+          this.SocketBeta.event_listeners.message(data_bytes);
+        }, 0);
+
         if(callback) callback(false);
       }
     },
@@ -44,12 +46,14 @@ function SocketPair() {
     closed: false,
     event_listeners: {},
     send: (data_bytes, callback) => {
-      console.log(data_bytes);
       if (this.SocketBeta.closed) {
         if(callback) callback(new Errors.ERR_NOXERVEAGENT_NODE_VIRTUALNET('Socket closed already.'));
       }
       else {
-        this.SocketAlpha.event_listeners.message(data_bytes);
+        setTimeout(() => {
+          this.SocketAlpha.event_listeners.message(data_bytes);
+        }, 0);
+
         if(callback) callback(false);
       }
     },

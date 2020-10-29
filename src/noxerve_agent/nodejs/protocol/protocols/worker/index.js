@@ -454,10 +454,10 @@ WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_wo
  */
 WorkerProtocol.prototype._synchronizeWorkerPeerByWorkerId = function(
   target_worker_peer_worker_id, synchronize_message_bytes, synchronize_error_handler, synchronize_acknowledgment_handler) {
-  // if(target_worker_peer_worker_id === this._my_worker_id) {
-  //   this._synchronize_function('myself', null, synchronize_message_bytes, synchronize_error_handler, synchronize_acknowledgment_handler);
-  //   return;
-  // }
+  if(target_worker_peer_worker_id === this._my_worker_id) {
+    this._synchronize_function('myself', null, synchronize_message_bytes, synchronize_error_handler, synchronize_acknowledgment_handler);
+    return;
+  }
 
   if (!this._worker_peer_settings_dict[target_worker_peer_worker_id]) {
     synchronize_error_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker(id: ' + target_worker_peer_worker_id + ').'));
