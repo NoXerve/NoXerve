@@ -749,7 +749,7 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
                 acknowledge(false);
               }
             }
-            console.log(123, synchronize_acknowledgment_message_bytes);
+
             if(
               synchronize_acknowledgment_message_bytes[0] === this._ProtocolCodes.worker_object[0] &&
               synchronize_acknowledgment_message_bytes[1] === worker_object_protocol_code_1byte[0] &&

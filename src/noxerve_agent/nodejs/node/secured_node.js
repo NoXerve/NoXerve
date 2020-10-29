@@ -165,7 +165,7 @@ SecuredNode.prototype._decryptAESCBC256 = (aes_cbc_256_shared_key, encrypted_byt
  * @return {boolean} is_interface_secured
  */
 SecuredNode.prototype.isInterfaceSecured = function(interface_name) {
-  return this._node_module.isInterfaceSecured();
+  return this._node_module.isInterfaceSecured(interface_name);
 }
 
 /**

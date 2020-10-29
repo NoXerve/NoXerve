@@ -56,13 +56,13 @@ let finish = (test_name) => {
 
 const NSDT = new(require('../nsdt'))({});
 let NoXerveAgent = new(require('../index'))({});
-let Node = new(require('../node/secured_node'))({
+let Node2 = new(require('../node/secured_node'))({
   rsa_2048_key_pair: {
     public: fs.readFileSync('./public.pem', 'utf8'),
     private: fs.readFileSync('./private.pem', 'utf8'),
   }
 });
-let Node2 = new(require('../node'))();
+let Node = new(require('../node'))();
 let Activity = new(require('../service/activity'))();
 let Service = new(require('../service/service'))();
 let Worker = new(require('../worker'))();
