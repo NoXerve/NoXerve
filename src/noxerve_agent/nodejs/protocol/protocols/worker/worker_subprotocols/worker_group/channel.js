@@ -108,21 +108,42 @@ function Channel(settings) {
    * @private
    */
   this._acknowledge_handler_dict_of_handshake = {};
+
+  /**
+   * @memberof module:Channel
+   * @type {object}
+   * @private
+   */
+  this._ready_list = [];
 }
 
 Channel.prototype._ProtocolCodes = {
-  onetime_data: Buf.from([0x00]),
-  request_response_request: Buf.from([0x01]),
-  request_response_response: Buf.from([0x02]),
-  request_response_error: Buf.from([0x03]),
-  handshake_synchronize: Buf.from([0x04]),
-  handshake_synchronize_acknowledgment: Buf.from([0x05]),
-  handshake_acknowledge: Buf.from([0x06]),
-  handshake_synchronize_error: Buf.from([0x07]),
-  handshake_synchronize_acknowledgment_error: Buf.from([0x08]),
+  get_ready_request:  Buf.from([0x00]),
+  get_ready_response:  Buf.from([0x01]),
+  onetime_data: Buf.from([0x02]),
+  request_response_request: Buf.from([0x03]),
+  request_response_response: Buf.from([0x04]),
+  request_response_error: Buf.from([0x05]),
+  handshake_synchronize: Buf.from([0x06]),
+  handshake_synchronize_acknowledgment: Buf.from([0x07]),
+  handshake_acknowledge: Buf.from([0x08]),
+  handshake_synchronize_error: Buf.from([0x09]),
+  handshake_synchronize_acknowledgment_error: Buf.from([0x0a]),
 };
 
-
+Channel.prototype.getReady = (callback) => {
+  const group_peer_id_list = this._return_group_peer_id_list();
+    // Sending messages.
+  for(let index in group_peer_id_list) {
+    const group_peer_id = group_peer_id_list[index];
+    this._send_by_group_peer_id(group_peer_id,
+      Buf.concat([
+      this._ProtocolCodes.get_ready_request
+    ]), () => {
+      // Do nothing.
+    });
+  }
+}
 // [Flag]
 Channel.prototype.start = function(callback) {
   this._register_on_data((group_peer_id, data)=> {
@@ -246,6 +267,11 @@ Channel.prototype.start = function(callback) {
       const type_protocal_code_int = data_bytes[0];
     }
   });
+
+  // Initialize ready list
+  for(let index in this._return_group_peer_id_list()) {
+    this._ready_list.push(false);
+  }
   callback(false);
 }
 

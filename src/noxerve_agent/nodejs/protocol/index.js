@@ -116,10 +116,20 @@ function Protocol(settings) {
         related_module: this._imported_modules[Protocol.related_module_name],
         synchronize: this._synchronize.bind(this),
         hash_manager: this._hash_manager,
-        embedded_protocols: this._embedded_protocol_modules
+        embedded_protocols: this._embedded_protocol_modules,
+        return_node_interface_preferance_level: this._returnNodeInterfacePreferanceLevel.bind(this)
       });
     }
   }
+}
+
+/**
+ * @memberof module:Protocol
+ * @type {object}
+ * @private
+ */
+Protocol.prototype._returnNodeInterfacePreferanceLevel = function(interface_name) {
+  return this._node_module.returnInterfacePreferanceLevel(interface_name);
 }
 
 /**

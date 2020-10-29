@@ -176,6 +176,15 @@ Node.prototype.isInterfaceSecured = function(interface_name) {
 }
 
 /**
+ * @memberof module:Node
+ * @param {string} interface_name
+ * @return {boolean} is_interface_secured
+ */
+Node.prototype.returnInterfacePreferanceLevel = function(interface_name) {
+  return AvaliableInterfaces[interface_name].interface_preference_level;
+}
+
+/**
  * @callback module:Node~callback_of_create_interface
  * @param {integer} interface_id
  * @param {error} error

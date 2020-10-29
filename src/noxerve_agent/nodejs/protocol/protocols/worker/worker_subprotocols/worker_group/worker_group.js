@@ -14,6 +14,7 @@
 const Errors = require('../../../../../errors');
 const Buf = require('../../../../../buffer');
 const Channel = require('./channel');
+const Locker = require('./objects/locker');
 
 /**
  * @constructor module:WorkerGroup
@@ -67,6 +68,13 @@ function WorkerGroup(settings) {
 
   /**
    * @memberof module:WorkerGroup
+   * @type {function}
+   * @private
+   */
+  this._hash_manager = settings.hash_manager;
+
+  /**
+   * @memberof module:WorkerGroup
    * @type {object}
    * @private
    */
@@ -87,6 +95,34 @@ function WorkerGroup(settings) {
    * @private
    */
   this._on_data_channel_type_and_id_dict = {};
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._worker_group_private_affair_channel = null;
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {function}
+   * @private
+   */
+  this._worker_group_private_affair_channel_on_data_listener = null;
+  // 
+  // /**
+  //  * @memberof module:WorkerGroup
+  //  * @type {object}
+  //  * @private
+  //  */
+  // this._worker_group_public_affair_channel = null;
+  //
+  // /**
+  //  * @memberof module:WorkerGroup
+  //  * @type {function}
+  //  * @private
+  //  */
+  // this._worker_group_public_affair_channel_on_data_listener = null;
 }
 
 /**
@@ -230,6 +266,41 @@ WorkerGroup.prototype._createChannel = function(channel_type_code_int, channel_i
 
 // [Flag]
 WorkerGroup.prototype.start = function(callback) {
+
+  this._worker_group_private_affair_channel = new Channel({
+    send_by_group_peer_id: (group_peer_id, data_bytes, callback) => {
+    },
+    register_on_data: (on_data_listener) => {
+      this._worker_group_private_affair_channel_on_data_listener = on_data_listener;
+    },
+    unregister_on_data: ()=> {
+      this._worker_group_private_affair_channel_on_data_listener = null;
+    },
+    return_group_peer_id_list: () => {
+      return this._group_peer_id_list;
+    },
+    return_my_group_peer_id: () => {
+      return this._my_group_peer_id;
+    }
+  });
+
+  this._worker_group_public_affair_channel = new Channel({
+    send_by_group_peer_id: (group_peer_id, data_bytes, callback) => {
+    },
+    register_on_data: (on_data_listener) => {
+      this._worker_group_public_affair_channel_on_data_listener = on_data_listener;
+    },
+    unregister_on_data: ()=> {
+      this._worker_group_public_affair_channel_on_data_listener = null;
+    },
+    return_group_peer_id_list: () => {
+      return this._group_peer_id_list;
+    },
+    return_my_group_peer_id: () => {
+      return this._my_group_peer_id;
+    }
+  });
+
   // Initiallize this._group_peer_tunnel_dict.
   for(let i = 0; i < this._group_peers_count; i++) {
     this._group_peer_tunnel_dict[i + 1] = {
@@ -244,7 +315,12 @@ WorkerGroup.prototype.start = function(callback) {
     this._setupTunnel(group_peer_id, tunnel);
   });
 
-  callback(false);
+  // Test
+  this.createLocker('locker 1', (error, locker) => {
+    locker.lock();
+  });
+
+  // callback(false);
 }
 
 // [Flag]
@@ -254,6 +330,21 @@ WorkerGroup.prototype.createChannel = function(channel_id_8bytes, callback) {
     else {
       channel.start((error) => {
         callback(error, channel);
+      });
+    }
+  })
+}
+
+// [Flag]
+WorkerGroup.prototype.createLocker = function(locker_purpose_name, callback) {
+  this._createChannel(Locker.register_code, this._hash_manager.hashString8Bytes(locker_purpose_name), (error, channel) => {
+    if(error) callback(error);
+    else {
+      const locker = new (Locker.module)({
+        channel: channel
+      });
+      locker.start((error) => {
+        callback(error, locker);
       });
     }
   })

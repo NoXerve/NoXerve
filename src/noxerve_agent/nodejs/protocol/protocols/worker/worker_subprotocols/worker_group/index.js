@@ -202,7 +202,8 @@ WorkerGroupProtocol.prototype.start = function(callback) {
         group_peers_count: group_peer_id_list.length,
         purpose_name: worker_group_purpose_name,
         create_tunnel: create_tunnel,
-        on_tunnel_create: on_tunnel_create
+        on_tunnel_create: on_tunnel_create,
+        hash_manager: this._hash_manager
       });
 
       worker_group.start((error)=> {

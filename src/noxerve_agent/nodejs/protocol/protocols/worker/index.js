@@ -63,6 +63,14 @@ function WorkerProtocol(settings) {
 
   /**
    * @memberof module:WorkerProtocol
+   * @type {object}
+   * @private
+   * @description Get node interface preference level.
+   */
+  this._return_node_interface_preferance_level = settings.return_node_interface_preferance_level;
+
+  /**
+   * @memberof module:WorkerProtocol
    * @type {integer}
    * @private
    * @description WorkerId.
@@ -451,6 +459,34 @@ WorkerProtocol.prototype._synchronizeWorkerPeerByWorkerId = function(
     return;
   }
   const connectors_settings = this._worker_peer_settings_dict[target_worker_peer_worker_id].connectors_settings;
+  let connectors_settings_index_sorted_by_preference_list = this._worker_peer_settings_dict[target_worker_peer_worker_id].connectors_settings_index_sorted_by_preference_list;
+  // Finish index_sorted_by_preference_list
+  const max_preference_level = 5; // Lower more preference.
+
+  // Check connectors_settings_index_sorted_by_preference_list.
+  if(connectors_settings_index_sorted_by_preference_list === null || typeof(connectors_settings_index_sorted_by_preference_list) === 'undefined') {
+    connectors_settings_index_sorted_by_preference_list = [];
+    for(let i = 0; i <= max_preference_level; i++) {
+      for(let j in connectors_settings) {
+        let interface_preference_level = connectors_settings[j].interface_preference_level;
+        if(interface_preference_level === null  || typeof(interface_preference_level) === 'undefined') {
+          const interface_name = connectors_settings[j].interface_name;
+          // Get default from node module via protocl api.
+          interface_preference_level = this._return_node_interface_preferance_level(interface_name);
+          // Cache it.
+          this._worker_peer_settings_dict[target_worker_peer_worker_id].connectors_settings[j].interface_preference_level = interface_preference_level;
+        }
+        if (parseInt(interface_preference_level) === parseInt(i)) {
+          connectors_settings_index_sorted_by_preference_list.push(j);
+        }
+      }
+    }
+
+    // Cache it.
+    this._worker_peer_settings_dict[target_worker_peer_worker_id].connectors_settings_index_sorted_by_preference_list = connectors_settings_index_sorted_by_preference_list;
+    // console.log(this._worker_peer_settings_dict[target_worker_peer_worker_id].connectors_settings);
+    // console.log(this._worker_peer_settings_dict[target_worker_peer_worker_id].connectors_settings_index_sorted_by_preference_list);
+  }
 
   let index = 0;
   const synchronize_error_list = [];
@@ -466,8 +502,8 @@ WorkerProtocol.prototype._synchronizeWorkerPeerByWorkerId = function(
   };
 
   const loop = () => {
-    const interface_name = connectors_settings[index].interface_name;
-    const connector_settings = connectors_settings[index].connector_settings;
+    const interface_name = connectors_settings[connectors_settings_index_sorted_by_preference_list[index]].interface_name;
+    const connector_settings = connectors_settings[connectors_settings_index_sorted_by_preference_list[index]].connector_settings;
 
     // "_" is for distincting the one from parameters.
     const _synchronize_error_handler = (synchronize_error) => {

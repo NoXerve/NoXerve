@@ -293,6 +293,12 @@ module.exports = {
 
   /**
    * @memberof module:WebsocketInterface
+   * @type {integer}
+   */
+  interface_preference_level: 1,
+
+  /**
+   * @memberof module:WebsocketInterface
    * @type {object}
    */
   interface_required_settings: {

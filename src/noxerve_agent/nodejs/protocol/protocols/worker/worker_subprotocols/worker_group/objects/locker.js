@@ -32,24 +32,42 @@ function Locker(settings) {
    * @type {object}
    * @private
    */
+  this._channel = settings.channel;
+
+  /**
+   * @memberof module:Locker
+   * @type {object}
+   * @private
+   */
   this._event_listener_dict = {
     pause: null
   };
 }
 
+// [Flag]
 Locker.prototype.lock = function(lock_value, callback) {
 }
 
+// [Flag]
 Locker.prototype.unlock = function(callback) {
 }
 
+// [Flag]
 Locker.prototype.toggle = function(lock_value, callback) {
 }
 
-Locker.prototype.pause = function(lock_value, callback) {
+// [Flag]
+Locker.prototype.destroy = function(lock_value, callback) {
 }
 
-Locker.prototype.destroy = function(lock_value, callback) {
+// [Flag]
+Locker.prototype.start = function(callback) {
+  this._channel.start((error) => {
+    if(error) callback(error);
+    else {
+      callback(false);
+    }
+  });
 }
 
 /**
@@ -76,6 +94,6 @@ Locker.prototype.emitEventListener = function(event_name, ...params) {
 }
 
 module.exports = {
-  register_code: 0,
+  register_code: 1,
   module: Locker
 };
