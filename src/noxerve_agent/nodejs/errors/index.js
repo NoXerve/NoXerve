@@ -69,6 +69,20 @@ module.exports = {
       this.message = message;
     }
   },
+  'ERR_NOXERVEAGENT_NODE_VIRTUALNET': class ERR_NOXERVEAGENT_NODE_VIRTUALNET extends Error {
+    constructor(message, ...params) {
+      // Pass remaining parameters (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_NODE_VIRTUALNET);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_NODE_VIRTUALNET';
+      this.message = message;
+    }
+  },
   'ERR_NOXERVEAGENT_NODE_TUNNEL_GET_EMITTER': class ERR_NOXERVEAGENT_NODE_TUNNEL_GET_EMITTER extends Error {
     constructor(message, ...params) {
       // Pass remaining parameters (including vendor specific ones) to parent constructor

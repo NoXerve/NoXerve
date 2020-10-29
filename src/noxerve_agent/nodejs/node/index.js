@@ -178,7 +178,7 @@ Node.prototype.isInterfaceSecured = function(interface_name) {
 /**
  * @memberof module:Node
  * @param {string} interface_name
- * @return {boolean} is_interface_secured
+ * @return {int} interface preferance level.
  */
 Node.prototype.returnInterfacePreferanceLevel = function(interface_name) {
   return AvaliableInterfaces[interface_name].interface_preference_level;
@@ -200,9 +200,13 @@ Node.prototype.createInterface = function(interface_name, interface_settings, ca
   let called_callback = false;
   // Catch error.
   try {
+    if(!AvaliableInterfaces[interface_name]) {
+      callback(new Errors.ERR_NOXERVEAGENT_NODE_INTERFACE_CREATE('Interface "'+interface_name+'" does not exist.'));
+      return;
+    }
     // Check interface settings match the requirement of interface module.
     let pass = true;
-    let interface_settings_keys = Object.keys(interface_settings);
+    let interface_settings_keys = Object.keys(interface_settings?interface_settings:{});
     let interface_required_settings = AvaliableInterfaces[interface_name].interface_required_settings;
     Object.keys(interface_required_settings).forEach((setting_name) => {
       if (!interface_settings_keys.includes(setting_name)) {
@@ -309,7 +313,7 @@ Node.prototype.createTunnel = function(interface_name, connector_settings, callb
     this._checkConnectorAvaliable(interface_name, (error) => {
       // Check connector settings match the requirement of interface module.
       let pass = true;
-      let connector_settings_keys = Object.keys(connector_settings);
+      let connector_settings_keys = Object.keys(connector_settings?connector_settings:{});
       let interface_connector_required_settings = AvaliableInterfaces[interface_name].connector_required_settings;
       Object.keys(interface_connector_required_settings).forEach((setting_name) => {
         if (!connector_settings_keys.includes(setting_name)) {
@@ -367,7 +371,7 @@ Node.prototype.on = function(event_name, callback) {
  * @description Start running node.
  */
 Node.prototype.start = function(callback) {
-  if (callback) callback(false);
+  this.createInterface('myself', null, callback);
 }
 
 /**

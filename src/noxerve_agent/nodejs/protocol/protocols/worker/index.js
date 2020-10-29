@@ -454,6 +454,11 @@ WorkerProtocol.prototype._updateWorkerPeersIdsChecksum4Bytes = function(peers_wo
  */
 WorkerProtocol.prototype._synchronizeWorkerPeerByWorkerId = function(
   target_worker_peer_worker_id, synchronize_message_bytes, synchronize_error_handler, synchronize_acknowledgment_handler) {
+  // if(target_worker_peer_worker_id === this._my_worker_id) {
+  //   this._synchronize_function('myself', null, synchronize_message_bytes, synchronize_error_handler, synchronize_acknowledgment_handler);
+  //   return;
+  // }
+
   if (!this._worker_peer_settings_dict[target_worker_peer_worker_id]) {
     synchronize_error_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker(id: ' + target_worker_peer_worker_id + ').'));
     return;
@@ -473,8 +478,6 @@ WorkerProtocol.prototype._synchronizeWorkerPeerByWorkerId = function(
           const interface_name = connectors_settings[j].interface_name;
           // Get default from node module via protocl api.
           interface_preference_level = this._return_node_interface_preferance_level(interface_name);
-          // Cache it.
-          this._worker_peer_settings_dict[target_worker_peer_worker_id].connectors_settings[j].interface_preference_level = interface_preference_level;
         }
         if (parseInt(interface_preference_level) === parseInt(i)) {
           connectors_settings_index_sorted_by_preference_list.push(j);
@@ -522,6 +525,7 @@ WorkerProtocol.prototype._synchronizeWorkerPeerByWorkerId = function(
     this._synchronize_function(interface_name, connector_settings, synchronize_message_bytes, _synchronize_error_handler, _synchronize_acknowledgment_handler);
   };
 
+  // If it is worker itself. Make it easier.
   loop();
 }
 
@@ -745,6 +749,7 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
                 acknowledge(false);
               }
             }
+            console.log(123, synchronize_acknowledgment_message_bytes);
             if(
               synchronize_acknowledgment_message_bytes[0] === this._ProtocolCodes.worker_object[0] &&
               synchronize_acknowledgment_message_bytes[1] === worker_object_protocol_code_1byte[0] &&

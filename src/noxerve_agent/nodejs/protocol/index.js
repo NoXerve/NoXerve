@@ -157,16 +157,15 @@ Protocol.prototype._synchronize = function (interface_name, connector_settings, 
 
       tunnel.on('ready', () => {
         // Send synchronize_message_bytes as tunnel is ready.
+        synchronize_message_bytes_sent = true;
         tunnel.send(synchronize_message_bytes, (error) => {
           if(error) {
             synchronize_error_handler(error);
             synchronize_error_handler = () => {};
             tunnel.close();
           }
-          else {
-            synchronize_message_bytes_sent = true;
-          }
         });
+
       });
 
       tunnel.on('data', (data) => {

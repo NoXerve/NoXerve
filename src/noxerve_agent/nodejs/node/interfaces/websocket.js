@@ -229,8 +229,6 @@ Connector.prototype.connect = function(connect_settings, new_tunnel_callback) {
     (error, tunnel_emitter) => {
       if (error) {
         console.log('Websocket error. ', error);
-        // Emitter error event.
-        this._event_listener_dict['error'](error);
       }
       else {
         ws.on('open', () => {

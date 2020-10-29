@@ -159,6 +159,23 @@ SecuredNode.prototype._decryptAESCBC256 = (aes_cbc_256_shared_key, encrypted_byt
   return decrypted_data;
 }
 
+/**
+ * @memberof module:SecuredNode
+ * @param {string} interface_name
+ * @return {boolean} is_interface_secured
+ */
+SecuredNode.prototype.isInterfaceSecured = function(interface_name) {
+  return this._node_module.isInterfaceSecured();
+}
+
+/**
+ * @memberof module:SecuredNode
+ * @param {string} interface_name
+ * @return {int} interface preferance level.
+ */
+SecuredNode.prototype.returnInterfacePreferanceLevel = function(interface_name) {
+  return this._node_module.returnInterfacePreferanceLevel(interface_name);
+}
 
 /**
  * @callback module:SecuredNode~callback_of_create_interface
