@@ -115,6 +115,20 @@ function Channel(settings) {
    * @private
    */
   this._ready_list = [];
+
+  /**
+   * @memberof module:Channel
+   * @type {object}
+   * @private
+   */
+  this._is_ready = false;
+
+  /**
+   * @memberof module:Channel
+   * @type {object}
+   * @private
+   */
+  this._get_ready_callback = null;
 }
 
 Channel.prototype._ProtocolCodes = {
@@ -131,9 +145,32 @@ Channel.prototype._ProtocolCodes = {
   handshake_synchronize_acknowledgment_error: Buf.from([0x0a]),
 };
 
-Channel.prototype.getReady = (callback) => {
+Channel.prototype._setAGroupPeerReady = function(group_peer_id) {
+  if(!this._is_ready) {
+    this._ready_list[group_peer_id-1] = true;
+    let is_ready = true;
+    for(let index in this._ready_list) {
+      if(!this._ready_list[index]) {
+        is_ready = false;
+        break;
+      }
+    }
+    if(is_ready) {
+      this._is_ready = true;
+      this._get_ready_callback(false);
+    }
+  }
+  // else {
+  //   console.log('ready');
+  // }
+}
+
+Channel.prototype._getReady = function(callback) {
+  this._get_ready_callback = callback;
+
   const group_peer_id_list = this._return_group_peer_id_list();
     // Sending messages.
+
   for(let index in group_peer_id_list) {
     const group_peer_id = group_peer_id_list[index];
     this._send_by_group_peer_id(group_peer_id,
@@ -263,16 +300,27 @@ Channel.prototype.start = function(callback) {
       }
       delete this._acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int];
     }
-    else if (protocol_code_int === this._ProtocolCodes.handshake_error[0]) {
-      const type_protocal_code_int = data_bytes[0];
+    else if (protocol_code_int === this._ProtocolCodes.get_ready_request[0]) {
+      this._setAGroupPeerReady(group_peer_id);
+      this._send_by_group_peer_id(group_peer_id,
+        Buf.concat([
+        this._ProtocolCodes.get_ready_response
+      ]), () => {
+        // Do nothing.
+      });
+    }
+    else if (protocol_code_int === this._ProtocolCodes.get_ready_response[0]) {
+      this._setAGroupPeerReady(group_peer_id);
     }
   });
 
-  // Initialize ready list
-  for(let index in this._return_group_peer_id_list()) {
+  const group_peer_id_list = this._return_group_peer_id_list();
+  // Initialize ready list.
+  for(let index in group_peer_id_list) {
     this._ready_list.push(false);
   }
-  callback(false);
+
+  this._getReady(callback);
 }
 
 
