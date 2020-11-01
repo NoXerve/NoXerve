@@ -51,6 +51,13 @@ function WorkerGroupProtocol(settings) {
    * @type {object}
    * @private
    */
+  this._global_deterministic_random_manager = settings.global_deterministic_random_manager;
+
+  /**
+   * @memberof module:WorkerGroupProtocol
+   * @type {object}
+   * @private
+   */
   this._nsdt_embedded_protocol = settings.nsdt_embedded_protocol;
 
   /**
@@ -203,7 +210,9 @@ WorkerGroupProtocol.prototype.start = function(callback) {
         purpose_name: worker_group_purpose_name,
         create_tunnel: create_tunnel,
         on_tunnel_create: on_tunnel_create,
-        hash_manager: this._hash_manager
+        hash_manager: this._hash_manager,
+        nsdt_embedded_protocol: this._nsdt_embedded_protocol,
+        global_deterministic_random_manager: this._global_deterministic_random_manager
       });
 
       worker_group.start((error)=> {

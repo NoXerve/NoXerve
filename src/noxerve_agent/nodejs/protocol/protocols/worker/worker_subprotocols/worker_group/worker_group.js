@@ -36,6 +36,20 @@ function WorkerGroup(settings) {
    * @type {object}
    * @private
    */
+  this._global_deterministic_random_manager = settings.global_deterministic_random_manager;
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._nsdt_embedded_protocol = settings.nsdt_embedded_protocol;
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
   this._group_peers_count = settings.group_peers_count;
 
   /**
@@ -341,7 +355,10 @@ WorkerGroup.prototype.createLocker = function(locker_purpose_name, callback) {
     if(error) callback(error);
     else {
       const locker = new (Locker.module)({
-        channel: channel
+        channel: channel,
+        nsdt_embedded_protocol: this._nsdt_embedded_protocol,
+        random_seed_8_bytes: this._hash_manager.hashString8Bytes(locker_purpose_name),
+        global_deterministic_random_manager: this._global_deterministic_random_manager
       });
       locker.start((error) => {
         callback(error, locker);

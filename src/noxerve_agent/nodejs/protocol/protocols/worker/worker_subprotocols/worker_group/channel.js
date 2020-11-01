@@ -181,6 +181,7 @@ Channel.prototype._getReady = function(callback) {
     });
   }
 }
+
 // [Flag]
 Channel.prototype.start = function(callback) {
   this._register_on_data((group_peer_id, data)=> {

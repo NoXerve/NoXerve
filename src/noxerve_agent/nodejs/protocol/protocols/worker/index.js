@@ -807,14 +807,7 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
       nsdt_embedded_protocol: this._nsdt_embedded_protocol,
       worker_global_protocol_codes: this._ProtocolCodes,
       static_global_random_seed_4096bytes: this._static_global_random_seed_4096bytes, // Critical for solving conflicts or without-communication consensus.
-      global_deterministic_random_manager: {
-        generateIntegerInRange: (initialization_vector_bytes, begin_int, end_int, callback) => {
-          this._global_deterministic_random_manager.generateIntegerInRange(initialization_vector_bytes, begin_int, end_int, callback);
-        },
-        generateIntegerListInRange: (initialization_vector_bytes, begin_int, end_int, list_length, callback) => {
-          this._global_deterministic_random_manager.generateIntegerListInRange(initialization_vector_bytes, begin_int, end_int, list_length, callback);
-        }
-      }
+      global_deterministic_random_manager: this._global_deterministic_random_manager
     });
 
     // Collect managers for callback. Asynchronizely.
