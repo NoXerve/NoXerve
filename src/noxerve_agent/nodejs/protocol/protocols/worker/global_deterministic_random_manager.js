@@ -60,7 +60,18 @@ GlobalDeterministicRandomManager.prototype._isInputValid = function(begin_int, e
  * @return {integer}                               result
  */
 GlobalDeterministicRandomManager.prototype.generateIntegerInRange = function(initialization_vector_bytes, begin_int, end_int, callback) {
+  if (!this._isInputValid(begin_int, end_int, list_length)) {
+    callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Input of "generateIntegerListInRange" is invalid.'));
+    return;
+  }
+  // [flag] what if overflow?
+  let seed = Buf.decodeUInt32BE(initialization_vector_bytes);
+  let result = ACORN.random(seed, 1);
+  result.forEach(function(element, index) {
+    this[index] = Math.round(begin_int + this[index] * (end_int - begin_int));
+  }, result);
 
+  callback(false, result);
 };
 
 // [Flag] retuen many random integerers
@@ -105,19 +116,23 @@ GlobalDeterministicRandomManager.prototype.generateUniqueIntegerListInRange = fu
     callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Input of "generateUniqueIntegerListInRange" is invalid.'));
     return;
   }
-  // begin + (seed*i) mod length
+  this.generateIntegerInRange()
 
-  let seed = this._base10(hash('sha1').update(String(initialization_vector_bytes)).digest('base64'), false);
-  // console.log('seed = ' + seed);
-
-  callback(false, result);
+  callback(false, []);
 }
-
-/** Tests Cases
+/*
+// Tests Cases
 let g = new GlobalDeterministicRandomManager({});
 g.generateIntegerListInRange(Buf.from([1,2,3,4,5]), 5, 30, 20, (error, result)=>{
   console.log(result);
 });
-**/
+g.generateIntegerInRange(Buf.from([1,2,3,4,5]), 1, 100, (err, result) => {
+  console.log(result);
+});
+g.generateUniqueIntegerListInRange(Buf.from([1,2,3,4,5]), 5, 40, 13, (error, result)=>{
+  console.log(result);
+});
+*/
+
 
 module.exports = GlobalDeterministicRandomManager;
