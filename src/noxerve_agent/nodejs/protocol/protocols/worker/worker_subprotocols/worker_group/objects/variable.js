@@ -126,7 +126,21 @@ Variable.prototype._ProtocolCodes = {
 
 // [Flag]
 Variable.prototype.update = function(variable_value_nsdt, callback) {
+  this._channel.request(this._on_duty_group_peer_id, Buf.concat([
 
+  ]), (error, response_data_bytes) => {
+    if(error) {
+      callback(error);
+    }
+    else {
+
+    }
+  });
+}
+
+// [Flag]
+Variable.prototype.getValue = function(callback) {
+  callback(false, this._variable_value_nsdt);
 }
 
 
@@ -138,16 +152,17 @@ Variable.prototype.update = function(variable_value_nsdt, callback) {
 
 // [Flag]
 Variable.prototype.start = function(callback) {
-  this._channel.start((error) => {
-    if(error) callback(error);
+  this._global_deterministic_random_manager.generateIntegerListInRange(this._random_seed_8_bytes, 1, this._group_peers_count, 1, (error, int_list) => {
+    if(error) { callback(error); return;}
     else {
+      this._on_duty_group_peer_id = int_list[0];
+      console.log(this._on_duty_group_peer_id);
       this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy) => {
         if(error) { callback(error); return;}
         else {
-          this._global_deterministic_random_manager.generateIntegerListInRange(this._random_seed_8_bytes, 1, this._group_peers_count, 1, (error, int_list) => {
-            if(error) { callback(error); return;}
+          this._channel.start((error) => {
+            if(error) callback(error);
             else {
-              this._on_duty_group_peer_id = int_list[0];
               // nsdt embedded runtime protocol setup.
               nsdt_on_data((data_bytes) => {
                 this._channel.broadcast(Buf.concat([
@@ -167,12 +182,20 @@ Variable.prototype.start = function(callback) {
               });
 
               this._channel.on('request-response', (group_peer_id, data_bytes, response) => {
-                response(null);
+                const protocol_code_int = data_bytes[0];
+                if(protocol_code_int === this._ProtocolCodes.update_request_response[0]) {
+                  response(null);
+                }
+
               });
 
               this._channel.on('handshake', (group_peer_id, synchronize_message_bytes, synchronize_acknowledgment) => {
-                synchronize_acknowledgment(null, (synchronize_acknowledgment_error, acknowledge_message_bytes) => {
-                });
+                const protocol_code_int = data_bytes[0];
+                if(protocol_code_int === this._ProtocolCodes.update_handshake[0]) {
+                  synchronize_acknowledgment(null, (synchronize_acknowledgment_error, acknowledge_message_bytes) => {
+                  });
+                }
+
               });
 
               callback(false);
