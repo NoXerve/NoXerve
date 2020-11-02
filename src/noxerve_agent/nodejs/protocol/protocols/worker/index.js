@@ -53,6 +53,76 @@ function WorkerProtocol(settings) {
    */
   this._worker_module = settings.related_module;
 
+
+  // Register imports.
+  this._worker_module.on('static-global-random-seed-import', (static_global_random_seed_4096bytes, callback) => {
+    if (static_global_random_seed_4096bytes && Buf.isBuffer(static_global_random_seed_4096bytes) && static_global_random_seed_4096bytes.length === 4096) {
+      this._static_global_random_seed_4096bytes = static_global_random_seed_4096bytes;
+      this._global_deterministic_random_manager = new GlobalDeterministicRandomManager({
+        static_global_random_seed_4096bytes: static_global_random_seed_4096bytes
+      });
+      this._static_global_random_seed_checksum_4bytes = Utils.hash4BytesMd5(static_global_random_seed_4096bytes);
+      callback(false);
+    } else callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported static global random seed buffer must have exactly 4096 bytes.'));
+  });
+
+  this._worker_module.on('my-worker-authenticity-data-import', (worker_id, worker_authenticity_information, callback) => {
+    if (worker_id) {
+      this._my_worker_id = worker_id;
+      this._my_worker_id_4bytes = Buf.encodeUInt32BE(worker_id);
+      this._my_worker_authenticity_data_bytes = this._nsdt_embedded_protocol.encode(worker_authenticity_information);
+      callback(false);
+    } else callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker authenticity data without worker id.'));
+  });
+
+  this._worker_module.on('worker-peers-settings-import', (worker_peer_settings_dict, callback) => {
+    if (this._my_worker_id === 0) {
+      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('You have to import authenticity data first.'));
+      return;
+    }
+
+    // Check the validability of imported worker_peer_settings_dict.
+    const required_fields = ['connectors_settings', 'detail'];
+    let worker_peers_worker_ids_checksum = 0;
+    let include_myself = false;
+    // Loop over all workers.
+    for (const index in worker_peer_settings_dict) {
+
+      // Obtain keys from specified worker.
+      const keys = Object.keys(worker_peer_settings_dict[index]);
+      const worker_id = parseInt(index);
+      worker_peers_worker_ids_checksum += worker_id;
+      if (worker_id === this._my_worker_id) include_myself = true;
+
+      // Check worker id is integer.
+      if (worker_id === NaN) {
+        callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker peers settings without worker id.'));
+        return;
+      } else {
+        // Check required field is included.
+        for (const index2 in required_fields) {
+          if (!keys.includes(required_fields[index2])) {
+            callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker peers settings missing field "' + required_fields[index2] + '".'));
+            return;
+          }
+        }
+
+        // For worker-peer-join worker-peer-update worker-peer-leave.
+        worker_peer_settings_dict[index]['worker_affairs_locked'] = false;
+      }
+    }
+
+    if (!include_myself) {
+      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker peers settings must include myself.'));
+      return;
+    }
+    this._worker_peer_settings_dict = worker_peer_settings_dict;
+
+    this._worker_peers_worker_ids_checksum_4bytes = Buf.encodeUInt32BE(worker_peers_worker_ids_checksum);
+    // Peacefully finish the job.
+    callback(false);
+  });
+
   /**
    * @memberof module:WorkerProtocol
    * @type {object}
@@ -846,75 +916,13 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
  */
 WorkerProtocol.prototype.start = function(callback) {
   this._worker_module.on('worker-subprotocol-managers-request', (worker_object_protocol_code_int, callback) => {
-    this._createWorkerObjectProtocolWithWorkerSubprotocolManagers(worker_object_protocol_code_int, callback);
-  });
-
-  this._worker_module.on('static-global-random-seed-import', (static_global_random_seed_4096bytes, callback) => {
-    if (static_global_random_seed_4096bytes && Buf.isBuffer(static_global_random_seed_4096bytes) && static_global_random_seed_4096bytes.length === 4096) {
-      this._static_global_random_seed_4096bytes = static_global_random_seed_4096bytes;
-      this._global_deterministic_random_manager = new GlobalDeterministicRandomManager({
-        static_global_random_seed_4096bytes: static_global_random_seed_4096bytes
-      });
-      this._static_global_random_seed_checksum_4bytes = Utils.hash4BytesMd5(static_global_random_seed_4096bytes);
-      callback(false);
-    } else callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported static global random seed buffer must have exactly 4096 bytes.'));
-  });
-
-  this._worker_module.on('my-worker-authenticity-data-import', (worker_id, worker_authenticity_information, callback) => {
-    if (worker_id) {
-      this._my_worker_id = worker_id;
-      this._my_worker_id_4bytes = Buf.encodeUInt32BE(worker_id);
-      this._my_worker_authenticity_data_bytes = this._nsdt_embedded_protocol.encode(worker_authenticity_information);
-      callback(false);
-    } else callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker authenticity data without worker id.'));
-  });
-
-  this._worker_module.on('worker-peers-settings-import', (worker_peer_settings_dict, callback) => {
-    if (this._my_worker_id === 0) {
-      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('You have to import authenticity data first.'));
-      return;
+    if(this._global_deterministic_random_manager) {
+      this._createWorkerObjectProtocolWithWorkerSubprotocolManagers(worker_object_protocol_code_int, callback);
+    }
+    else {
+      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Please import static global random seed first.'));
     }
 
-    // Check the validability of imported worker_peer_settings_dict.
-    const required_fields = ['connectors_settings', 'detail'];
-    let worker_peers_worker_ids_checksum = 0;
-    let include_myself = false;
-    // Loop over all workers.
-    for (const index in worker_peer_settings_dict) {
-
-      // Obtain keys from specified worker.
-      const keys = Object.keys(worker_peer_settings_dict[index]);
-      const worker_id = parseInt(index);
-      worker_peers_worker_ids_checksum += worker_id;
-      if (worker_id === this._my_worker_id) include_myself = true;
-
-      // Check worker id is integer.
-      if (worker_id === NaN) {
-        callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker peers settings without worker id.'));
-        return;
-      } else {
-        // Check required field is included.
-        for (const index2 in required_fields) {
-          if (!keys.includes(required_fields[index2])) {
-            callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker peers settings missing field "' + required_fields[index2] + '".'));
-            return;
-          }
-        }
-
-        // For worker-peer-join worker-peer-update worker-peer-leave.
-        worker_peer_settings_dict[index]['worker_affairs_locked'] = false;
-      }
-    }
-
-    if (!include_myself) {
-      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported worker peers settings must include myself.'));
-      return;
-    }
-    this._worker_peer_settings_dict = worker_peer_settings_dict;
-
-    this._worker_peers_worker_ids_checksum_4bytes = Buf.encodeUInt32BE(worker_peers_worker_ids_checksum);
-    // Peacefully finish the job.
-    callback(false);
   });
 
   this._worker_module.on('me-join', (remote_worker_connectors_settings, my_worker_connectors_settings, my_worker_detail, my_worker_authentication_data, me_join_callback) => {

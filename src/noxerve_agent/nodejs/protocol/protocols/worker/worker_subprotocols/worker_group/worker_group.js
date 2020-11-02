@@ -14,7 +14,7 @@
 const Errors = require('../../../../../errors');
 const Buf = require('../../../../../buffer');
 const Channel = require('./channel');
-const Locker = require('./objects/locker');
+const Variable = require('./objects/variable');
 
 /**
  * @constructor module:WorkerGroup
@@ -330,8 +330,8 @@ WorkerGroup.prototype.start = function(callback) {
   });
 
   // Test
-  this.createLocker('locker 1', (error, locker) => {
-    locker.lock();
+  this.createVariable('var 1', (error, variable) => {
+    variable.update();
   });
 
   callback(false);
@@ -350,15 +350,16 @@ WorkerGroup.prototype.createChannel = function(channel_id_8bytes, callback) {
 }
 
 // [Flag]
-WorkerGroup.prototype.createLocker = function(locker_purpose_name, callback) {
-  this._createChannel(Locker.register_code, this._hash_manager.hashString8Bytes(locker_purpose_name), (error, channel) => {
+WorkerGroup.prototype.createVariable = function(locker_purpose_name, callback) {
+  this._createChannel(Variable.register_code, this._hash_manager.hashString8Bytes(locker_purpose_name), (error, channel) => {
     if(error) callback(error);
     else {
-      const locker = new (Locker.module)({
+      const locker = new (Variable.module)({
         channel: channel,
         nsdt_embedded_protocol: this._nsdt_embedded_protocol,
         random_seed_8_bytes: this._hash_manager.hashString8Bytes(locker_purpose_name),
-        global_deterministic_random_manager: this._global_deterministic_random_manager
+        global_deterministic_random_manager: this._global_deterministic_random_manager,
+        group_peers_count: this._group_peers_count
       });
       locker.start((error) => {
         callback(error, locker);
