@@ -9,30 +9,30 @@
 let Crypto = require('crypto');
 
 // Crypto level random bytes.
-module.exports.hash4BytesMd5 = function(string) {
+module.exports.hash4BytesMd5 = function(bytes) {
   const hash_of_the_string = Crypto.createHash('md5');
-  hash_of_the_string.update(string);
+  hash_of_the_string.update(bytes);
   return hash_of_the_string.digest().slice(0, 4);
 }
 
 // Crypto level random bytes.
-module.exports.hash8BytesMd5 = function(string) {
+module.exports.hash8BytesMd5 = function(bytes) {
   const hash_of_the_string = Crypto.createHash('md5');
-  hash_of_the_string.update(string);
+  hash_of_the_string.update(bytes);
   return hash_of_the_string.digest().slice(0, 8);
 }
 
 // Crypto level random bytes.
-module.exports.hash16BytesMd5 = function(string) {
+module.exports.hash16BytesMd5 = function(bytes) {
   const hash_of_the_string = Crypto.createHash('md5');
-  hash_of_the_string.update(string);
+  hash_of_the_string.update(bytes);
   return hash_of_the_string.digest().slice(0, 16);
 }
 
 // Crypto level random bytes.
-module.exports.hash32BytesMd5 = function(string) {
+module.exports.hash32BytesMd5 = function(bytes) {
   const hash_of_the_string = Crypto.createHash('md5');
-  hash_of_the_string.update(string);
+  hash_of_the_string.update(bytes);
   return hash_of_the_string.digest().slice(0, 32);
 }
 
