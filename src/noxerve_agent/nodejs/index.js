@@ -131,6 +131,18 @@ function NoXerveAgent(settings) {
     onWorkerSocketCreate: (worker_socket_purpose_name, listener) => {
       this._worker_module.onWorkerSocketCreate(worker_socket_purpose_name, listener);
     },
+    createWorkerScope: (worker_scope_purpose_name, worker_peers_worker_id_list, callback) => {
+      this._worker_module.createWorkerScope(worker_scope_purpose_name, worker_peers_worker_id_list, callback);
+    },
+    getWorkerPeerDetail: (worker_id, callback) => {
+      this._worker_module.getWorkerPeerDetail(worker_id, callback);
+    },
+    getGlobalDeterministicRandomManager: (callback) => {
+      this._worker_module.getGlobalDeterministicRandomManager(callback);
+    },
+    createWorkerGroup: (worker_group_purpose_name, worker_peers_worker_id_list, callback) => {
+      this._worker_module.createWorkerGroup(worker_group_purpose_name, worker_peers_worker_id_list, callback);
+    },
     on: (event_name, listener) => {
       this._worker_module.on(event_name, listener);
     },
@@ -146,6 +158,9 @@ function NoXerveAgent(settings) {
     leaveWorkerPeer: (worker_id, callback) => {
       this._worker_module.leaveWorkerPeer(worker_id, callback);
     },
+    abandonWorkerPeers: (worker_id_list, callback) => {
+      this._worker_module.abandonWorkerPeers(worker_id_list, callback);
+    }
   };
 
   /**

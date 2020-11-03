@@ -1076,6 +1076,14 @@ WorkerProtocol.prototype.start = function(callback) {
     }
   });
 
+  this._worker_module.on('global-deterministic-random-manager-get', (callback) => {
+    if (this._global_deterministic_random_manager) {
+      callback(false, this._global_deterministic_random_manager);
+    } else {
+      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('GlobalDeterministicRandomManager hasn\'t created yet.'));
+    }
+  });
+
   // this._worker_module.on('', () => {});
   if (callback) callback(false);
 }

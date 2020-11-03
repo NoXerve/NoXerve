@@ -307,6 +307,19 @@ Worker.prototype.getWorkerPeerDetail = function(worker_id, callback) {
 }
 
 /**
+ * @callback module:Worker~callback_of_worker_peer_detail_get
+ * @param {error} error
+ * @param {object} global_deterministic_random_manager
+ */
+/**
+ * @memberof module:Worker
+ * @param {module:Worker~callback_of_worker_peer_detail_get} callback
+ */
+Worker.prototype.getGlobalDeterministicRandomManager = function(callback) {
+  this._event_listener_dict['global-deterministic-random-manager-get'](callback);
+}
+
+/**
  * @callback module:Worker~callback_of_on
  * @param {error} error
  * @description Parameters depends.

@@ -33,6 +33,9 @@ let Tests = [
   // 'worker_scope_broad_request_reponse',
   // 'worker_scope_add_worker',
   // 'worker_group_creation',
+  'global_deterministic_random_manager_1',
+  'global_deterministic_random_manager_2',
+  // 'global_deterministic_random_manager_3',
   'worker_group_channel_braodcast',
   'worker_group_channel_request',
   'worker_group_channel_braodcast_request',
@@ -204,6 +207,21 @@ Node2.start(() => {
           });
           Worker.start((error) => {
             if (error) log('[Worker module] start error.', error);
+
+            Worker.getGlobalDeterministicRandomManager((error, global_deterministic_random_manager) => {
+              global_deterministic_random_manager.generateIntegerInRange(Utils.random8Bytes(), 0, 128, (error, result) => {
+                log('[Worker module: GDRMger]', result);
+                finish('global_deterministic_random_manager_1');
+              });
+              global_deterministic_random_manager.generateIntegerListInRange(Utils.random8Bytes(), 0, 128, 20, (error, result) => {
+                log('[Worker module: GDRMger]', result);
+                finish('global_deterministic_random_manager_2');
+              });
+              // global_deterministic_random_manager.generateUniqueIntegerListInRange(Utils.random8Bytes(), 0, 128, 20, (error, result) => {
+              //
+              // });
+            });
+
             Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {
               log('[Worker module] onWorkerSocketCreate OK.', parameters, remote_worker_id, worker_socket);
               worker_socket.on('close', () => {
