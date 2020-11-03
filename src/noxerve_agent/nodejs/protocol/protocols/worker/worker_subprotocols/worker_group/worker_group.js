@@ -367,7 +367,8 @@ WorkerGroup.prototype.createVariable = function(locker_purpose_name, callback) {
         random_seed_8_bytes: this._hash_manager.hashString8Bytes(locker_purpose_name),
         global_deterministic_random_manager: this._global_deterministic_random_manager,
         group_peers_count: this._group_peers_count,
-        worker_global_protocol_codes: this._worker_global_protocol_codes
+        worker_global_protocol_codes: this._worker_global_protocol_codes,
+        my_group_peer_id: this._my_group_peer_id
       });
       locker.start((error) => {
         callback(error, locker);

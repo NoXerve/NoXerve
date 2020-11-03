@@ -142,7 +142,7 @@ NSDTEmbeddedProtocol.prototype.decode = function(noxerve_supported_data_type_blo
  * @return {object} noxerve_supported_data_type_object
  * @description blob => NSDT
  */
-NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
+NSDTEmbeddedProtocol.prototype.createBidirectionalRuntimeProtocol = function(callback) {
   let on_data_external_listener = () => {};
 
   // Register.
@@ -306,6 +306,17 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
 
   callback(false, encode_runtime, decode_runtime, on_data_external, emit_data_external, destroy);
 }
+
+
+/**
+ * @memberof module:NSDTEmbeddedProtocol
+ * @param {buffer} noxerve_supported_data_type_blob
+ * @return {object} noxerve_supported_data_type_object
+ * @description blob => NSDT
+ */
+NSDTEmbeddedProtocol.prototype.createMultidirectionalRuntimeProtocol = function() {
+
+};
 
 module.exports = {
   protocol_name: 'nsdt_embedded',

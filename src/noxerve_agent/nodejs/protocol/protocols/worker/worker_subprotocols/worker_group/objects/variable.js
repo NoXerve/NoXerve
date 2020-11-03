@@ -31,6 +31,13 @@ function Variable(settings) {
 
   /**
    * @memberof module:Variable
+   * @type {function}
+   * @private
+   */
+  this._my_group_peer_id = settings.my_group_peer_id;
+
+  /**
+   * @memberof module:Variable
    * @type {integer}
    * @private
    */
@@ -119,7 +126,7 @@ function Variable(settings) {
    * @private
    */
   this._event_listener_dict = {
-    update: () => {
+    update: (group_peer_id, variable_value_nsdt) => {
 
     }
   };
@@ -128,17 +135,21 @@ function Variable(settings) {
 Variable.prototype._ProtocolCodes = {
   update_request_response: Buf.from([0x00]),
   update_handshake: Buf.from([0x01]),
-  get_value_check_request_response: Buf.from([0x02]),
+  operation_iterations_count_check_request_response: Buf.from([0x02]),
   nsdt_embedded: Buf.from([0x10])
 }
 
 // [Flag]
 Variable.prototype.update = function(variable_value_nsdt, callback) {
   this._channel.request(this._on_duty_group_peer_id, Buf.concat([
-
+    this._ProtocolCodes.update_request_response,
+    this._nsdt_embedded_protocol_encode(variable_value_nsdt)
   ]), (error, response_data_bytes) => {
     if(error) {
       callback(error);
+    }
+    else if (response_data_bytes[0] ===  this._worker_global_protocol_codes.accept[0]) {
+
     }
     else {
 
@@ -149,6 +160,7 @@ Variable.prototype.update = function(variable_value_nsdt, callback) {
 // [Flag]
 Variable.prototype.getValue = function(callback) {
   this._channel.request(this._on_duty_group_peer_id, Buf.concat([
+    this._ProtocolCodes.operation_iterations_count_check_request_response,
     Buf.encodeUInt32BE(this._operation_iterations_count)
   ]), (error, response_data_bytes) => {
     if(error) {
@@ -158,7 +170,7 @@ Variable.prototype.getValue = function(callback) {
       callback();
     }
     else {
-      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP());
+      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Iterations count check from on duty group peer failed.'));
     }
   });
   // callback(false, this._variable_value_nsdt);
@@ -178,9 +190,12 @@ Variable.prototype.start = function(callback) {
     else {
       this._on_duty_group_peer_id = integer;
       console.log(123, this._on_duty_group_peer_id);
-      this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy) => {
+      this._nsdt_embedded_protocol.createBidirectionalRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy) => {
         if(error) { callback(error); return;}
         else {
+          this._nsdt_embedded_protocol_encode = nsdt_embedded_protocol_encode;
+          this._nsdt_embedded_protocol_decode = nsdt_embedded_protocol_decode;
+
           this._channel.start((error) => {
             if(error) callback(error);
             else {
@@ -205,9 +220,21 @@ Variable.prototype.start = function(callback) {
               this._channel.on('request-response', (group_peer_id, data_bytes, response) => {
                 const protocol_code_int = data_bytes[0];
                 if(protocol_code_int === this._ProtocolCodes.update_request_response[0]) {
-                  response(null);
-                }
+                  if(this._on_duty_group_peer_id === this._my_group_peer_id) {
 
+                  }
+                  else {
+                    response(this._worker_global_protocol_codes.reject);
+                  }
+                }
+                else if(protocol_code_int === this._ProtocolCodes.operation_iterations_count_check_request_response[0]) {
+                  if(this._on_duty_group_peer_id === this._my_group_peer_id) {
+
+                  }
+                  else {
+                    response(this._worker_global_protocol_codes.reject);
+                  }
+                }
               });
 
               this._channel.on('handshake', (group_peer_id, synchronize_message_bytes, synchronize_acknowledgment) => {

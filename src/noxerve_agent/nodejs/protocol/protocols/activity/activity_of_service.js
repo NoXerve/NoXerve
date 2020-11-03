@@ -76,7 +76,7 @@ ActivityOfServiceProtocol.prototype._ProtocolCodes = {
 ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_service, tunnel) {
   if (error) tunnel.close();
   else {
-    this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy)=> {
+    this._nsdt_embedded_protocol.createBidirectionalRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy)=> {
       if (error) tunnel.close();
       else {
         // nsdt embedded runtime protocol setup.
