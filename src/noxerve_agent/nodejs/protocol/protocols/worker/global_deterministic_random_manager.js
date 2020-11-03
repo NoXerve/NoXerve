@@ -56,7 +56,7 @@ GlobalDeterministicRandomManager.prototype._isInputValid = function(begin_int, e
  * @param  {buffer}   initialization_vector_bytes  seed
  * @param  {integer}   begin_int                   result >= begin int
  * @param  {integer}   end_int                     result <= end int
- * @param  {Function} callback                     pass the result by callback(result)
+ * @param  {function} callback                     pass the result by callback(result)
  * @return {integer}                               result
  */
 GlobalDeterministicRandomManager.prototype.generateIntegerInRange = function(initialization_vector_bytes, begin_int, end_int, callback) {
@@ -81,7 +81,7 @@ GlobalDeterministicRandomManager.prototype.generateIntegerInRange = function(ini
  * @param  {integer}   begin_int                   result >= begin int
  * @param  {integer}   end_int                     result <= end int
  * @param  {unsigned int}   list_length            length of result list
- * @param  {Function} callback                     pass the result by callback(result)
+ * @param  {function} callback                     pass the result by callback(result)
  * @return {integer}                               result
  */
 GlobalDeterministicRandomManager.prototype.generateIntegerListInRange = function(initialization_vector_bytes, begin_int, end_int, list_length, callback) {
