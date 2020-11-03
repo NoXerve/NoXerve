@@ -60,7 +60,7 @@ GlobalDeterministicRandomManager.prototype._isInputValid = function(begin_int, e
  * @return {integer}                               result
  */
 GlobalDeterministicRandomManager.prototype.generateIntegerInRange = function(initialization_vector_bytes, begin_int, end_int, callback) {
-  if (!this._isInputValid(begin_int, end_int, list_length)) {
+  if (!this._isInputValid(begin_int, end_int)) {
     callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Input of "generateIntegerListInRange" is invalid.'));
     return;
   }

@@ -152,11 +152,11 @@ Variable.prototype.getValue = function(callback) {
 
 // [Flag]
 Variable.prototype.start = function(callback) {
-  this._global_deterministic_random_manager.generateIntegerListInRange(this._random_seed_8_bytes, 1, this._group_peers_count, 1, (error, int_list) => {
+  this._global_deterministic_random_manager.generateIntegerInRange(this._random_seed_8_bytes, 1, this._group_peers_count, (error, integer) => {
     if(error) { callback(error); return;}
     else {
-      this._on_duty_group_peer_id = int_list[0];
-      console.log(this._on_duty_group_peer_id);
+      this._on_duty_group_peer_id = integer;
+      console.log(123, this._on_duty_group_peer_id);
       this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy) => {
         if(error) { callback(error); return;}
         else {
