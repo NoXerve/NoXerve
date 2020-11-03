@@ -157,20 +157,20 @@ WorkerScopeProtocol.prototype.start = function(callback) {
           else if(response_data_bytes[0] === this._ProtocolCodes.integrity_check[0]) {
             if(response_data_bytes[1] !== this._worker_global_protocol_codes.accept[0]) {
               // error, is_finished
-              comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker(id: ' + worker_id + ') rejected or failed integrity check.'), false);
+              comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE('Worker(id: ' + worker_id + ') rejected or failed integrity check.'), false);
             }
             else {
               this._worker_protocol_actions.validateAuthenticityBytes(response_data_bytes.slice(2), (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
                 if (is_authenticity_valid && !error) {
                   comfirm_error_finish_status(false, true);
                 } else {
-                  comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker(id: ' + worker_id + ') failed "validateAuthenticityBytes" check.'), false);
+                  comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE('Worker(id: ' + worker_id + ') failed "validateAuthenticityBytes" check.'), false);
                 }
               });
             }
           }
           else {
-            comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker(id: ' + worker_id + ') did not return integrity_check code.'), false);
+            comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE('Worker(id: ' + worker_id + ') did not return integrity_check code.'), false);
           }
         };
         const finished_listener = (error) => {

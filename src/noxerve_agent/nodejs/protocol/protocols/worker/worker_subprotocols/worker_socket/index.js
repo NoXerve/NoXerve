@@ -145,7 +145,7 @@ WorkerSocketProtocol.prototype.start = function(callback) {
               inner_callback(error, worker_socket);
             }); // Accept.
           } else {
-            inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Remote worker authentication failed.'));
+            inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SOCKET('Remote worker authentication failed.'));
             acknowledge(this._worker_global_protocol_codes.authentication_reason_reject_2_bytes, (error, tunnel) => {
               tunnel.close();
             }); // Reject. Authenticication error.
@@ -153,15 +153,15 @@ WorkerSocketProtocol.prototype.start = function(callback) {
         });
       } else if (synchronize_acknowledgment_message_bytes[0] === this._worker_global_protocol_codes.reject[0]) {
         if (synchronize_acknowledgment_message_bytes[1] === this._worker_global_protocol_codes.authentication_reason_reject_2_bytes[1]) {
-          inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'));
+          inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SOCKET('Worker authentication error.'));
           acknowledge(false);
 
         } else {
-          inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'));
+          inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SOCKET('Rejected by unknown reason.'));
           acknowledge(false);
         }
       } else {
-        inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'));
+        inner_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SOCKET('Unknown protocol.'));
         acknowledge(false);
       }
     };
@@ -396,7 +396,7 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
           } else if (protocol_code === this._ProtocolCodes.yielding_start_error[0]) {
             const yielding_start_id = data.slice(0, 4);
             const yielding_start_id_base64 = yielding_start_id.toString('base64');
-            yielding_handler_dict[yielding_start_id_base64](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Yielding protocol error.'), null, true);
+            yielding_handler_dict[yielding_start_id_base64](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SOCKET('Yielding protocol error.'), null, true);
 
             // EOF, delete the callback no longer useful.
             delete yielding_handler_dict[yielding_start_id_base64];
@@ -438,7 +438,7 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
             const function_call_callback_id = data.slice(0, 4);
             const function_call_callback_id_base64 = function_call_callback_id.toString('base64');
 
-            function_call_callback_dict[function_call_callback_id_base64](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker function call error.'), null, true);
+            function_call_callback_dict[function_call_callback_id_base64](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SOCKET('Worker function call error.'), null, true);
 
             // EOF, delete the callback no longer useful.
             delete function_call_callback_dict[function_call_callback_id_base64];
@@ -521,7 +521,7 @@ WorkerSocketProtocol.prototype._setupTunnel = function(error, worker_socket, tun
             const yielding_start_id = data.slice(0, 4);
             const yielding_start_id_base64 = data.slice(0, 4).toString('base64');
 
-            yielding_start_callback_dict[yielding_start_id_base64](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Yielding request error.'));
+            yielding_start_callback_dict[yielding_start_id_base64](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SOCKET('Yielding request error.'));
             // EOF, delete the callback no longer useful.
             delete yielding_handler_dict[yielding_start_id_base64];
           }

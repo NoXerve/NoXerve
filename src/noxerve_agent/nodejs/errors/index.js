@@ -209,6 +209,62 @@ module.exports = {
       this.message = message;
     }
   },
+  'ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL': class ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL extends Error {
+    constructor(message, ...params) {
+      // Pass remaining parameters (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL';
+      this.message = message;
+    }
+  },
+  'ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SOCKET': class ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SOCKET extends Error {
+    constructor(message, ...params) {
+      // Pass remaining parameters (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SOCKET);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SOCKET';
+      this.message = message;
+    }
+  },
+  'ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE': class ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE extends Error {
+    constructor(message, ...params) {
+      // Pass remaining parameters (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE';
+      this.message = message;
+    }
+  },
+  'ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP': class ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP extends Error {
+    constructor(message, ...params) {
+      // Pass remaining parameters (including vendor specific ones) to parent constructor
+      super(...params)
+
+      // Maintains proper stack trace for where our error was thrown (only available on V8)
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP);
+      }
+
+      this.name = 'ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP';
+      this.message = message;
+    }
+  },
   'ERR_NOXERVEAGENT_WORKER': class ERR_NOXERVEAGENT_WORKER extends Error {
     constructor(message, ...params) {
       // Pass remaining parameters (including vendor specific ones) to parent constructor

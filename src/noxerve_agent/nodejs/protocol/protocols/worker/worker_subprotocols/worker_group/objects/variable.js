@@ -34,7 +34,7 @@ function Variable(settings) {
    * @type {integer}
    * @private
    */
-  this._operation_iterations = 0;
+  this._operation_iterations_count = 0;
 
   /**
    * @memberof module:Variable
@@ -63,6 +63,13 @@ function Variable(settings) {
    * @private
    */
   this._global_deterministic_random_manager = settings.global_deterministic_random_manager;
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._worker_global_protocol_codes = settings.worker_global_protocol_codes;
 
   /**
    * @memberof module:Variable
@@ -121,6 +128,7 @@ function Variable(settings) {
 Variable.prototype._ProtocolCodes = {
   update_request_response: Buf.from([0x00]),
   update_handshake: Buf.from([0x01]),
+  get_value_check_request_response: Buf.from([0x02]),
   nsdt_embedded: Buf.from([0x10])
 }
 
@@ -140,7 +148,20 @@ Variable.prototype.update = function(variable_value_nsdt, callback) {
 
 // [Flag]
 Variable.prototype.getValue = function(callback) {
-  callback(false, this._variable_value_nsdt);
+  this._channel.request(this._on_duty_group_peer_id, Buf.concat([
+    Buf.encodeUInt32BE(this._operation_iterations_count)
+  ]), (error, response_data_bytes) => {
+    if(error) {
+      callback(error);
+    }
+    else if (response_data_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
+      callback();
+    }
+    else {
+      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP());
+    }
+  });
+  // callback(false, this._variable_value_nsdt);
 }
 
 

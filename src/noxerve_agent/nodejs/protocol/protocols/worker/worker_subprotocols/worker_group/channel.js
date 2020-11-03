@@ -225,7 +225,7 @@ Channel.prototype.start = function(callback) {
     else if (protocol_code_int === this._ProtocolCodes.request_response_error[0]) {
       const session_id_4bytes = data_bytes.slice(0, 4);
       const session_id_int = Buf.decodeUInt32BE(session_id_4bytes);
-      this._response_listener_dict_of_request_response[session_id_int](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker group remote closed before responsed.'), null);
+      this._response_listener_dict_of_request_response[session_id_int](new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Worker group remote closed before responsed.'), null);
       delete this._response_listener_dict_of_request_response[session_id_int];
     }
     else if (protocol_code_int === this._ProtocolCodes.handshake_synchronize[0]) {
@@ -264,7 +264,7 @@ Channel.prototype.start = function(callback) {
             ]), acknowledge_callback);
           } else if(acknowledge_callback) {
             if(acknowledge_message_bytes === false) acknowledge_callback(false);
-            else acknowledge_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Channel acknowledge error: acknowledge_message_bytes is invalid.'));
+            else acknowledge_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Channel acknowledge error: acknowledge_message_bytes is invalid.'));
             // Is not buffer inform remote.
             this._send_by_group_peer_id(group_peer_id,
               Buf.concat([
@@ -297,7 +297,7 @@ Channel.prototype.start = function(callback) {
       const session_id_int = Buf.decodeUInt32BE(session_id_4bytes);
       const acknowledge_handler = this._acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int];
       if(acknowledge_handler) {
-        acknowledge_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Channel synchronize acknowledgment error called by remote.'));
+        acknowledge_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Channel synchronize acknowledgment error called by remote.'));
       }
       delete this._acknowledge_handler_dict_of_handshake[group_peer_id+''+session_id_int];
     }
@@ -334,7 +334,7 @@ Channel.prototype.close = function(callback) {
 
 // [Flag]
 Channel.prototype.unicast = function(group_peer_id, data_bytes, callback) {
-  if(!Buf.isBuffer(data_bytes)) {synchronize_acknowledgment_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('data_bytes must be buffer.')); return;};
+  if(!Buf.isBuffer(data_bytes)) {synchronize_acknowledgment_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('data_bytes must be buffer.')); return;};
   this._send_by_group_peer_id(group_peer_id,
     Buf.concat([
     this._ProtocolCodes.onetime_data,
@@ -393,7 +393,7 @@ Channel.prototype._returnNewRequestSessionId = function() {
 
 // [Flag]
 Channel.prototype.request = function(group_peer_id, request_data_bytes, on_group_peer_response) {
-  if(!Buf.isBuffer(request_data_bytes)) {synchronize_acknowledgment_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('request_data_bytes must be buffer.')); return;};
+  if(!Buf.isBuffer(request_data_bytes)) {synchronize_acknowledgment_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('request_data_bytes must be buffer.')); return;};
   const session_id_int = this._returnNewRequestSessionId();
 
   this._send_by_group_peer_id(group_peer_id,
@@ -464,7 +464,7 @@ Channel.prototype._returnNewHandshakeSessionId = function() {
 
 // [Flag]
 Channel.prototype.synchronize = function(group_peer_id, synchronize_data_bytes, synchronize_acknowledgment_handler) {
-  if(!Buf.isBuffer(synchronize_data_bytes)) {synchronize_acknowledgment_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('synchronize_data_bytes must be buffer.')); return;};
+  if(!Buf.isBuffer(synchronize_data_bytes)) {synchronize_acknowledgment_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('synchronize_data_bytes must be buffer.')); return;};
   const session_id_int = this._returnNewHandshakeSessionId();
 
   this._send_by_group_peer_id(group_peer_id,
@@ -507,7 +507,7 @@ Channel.prototype.multicastSynchronize = function(group_peer_id_list, synchroniz
     this.synchronize(group_peer_id, synchronize_data_bytes, (synchronize_error, synchronize_acknowledgment_message_bytes, acknowledge)=> {
       let synchronize_error_finish_status_confirmed = false;
       const comfirm_synchronize_error_finish_status = (error, synchronize_finish_status) => {
-        if(synchronize_error_finish_status_confirmed) {throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('comfirm_synchronize_error_finish_status has been called already.');}
+        if(synchronize_error_finish_status_confirmed) {throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('comfirm_synchronize_error_finish_status has been called already.');}
         synchronize_error_finish_status_confirmed = true;
         if(error) {
           error_dict[group_peer_id] = [error, null];
@@ -521,7 +521,7 @@ Channel.prototype.multicastSynchronize = function(group_peer_id_list, synchroniz
         const decoreated_acknowledge_callback = (acknowledge_error) => {
           let acknowledge_error_finish_status_comfirmed = false;
           const comfirm_acknowledge_error_finish_status = (error, acknowledge_finish_status) => {
-            if(acknowledge_error_finish_status_comfirmed) {throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('acknowledge_error_finish_status_comfirmed has been called already.');}
+            if(acknowledge_error_finish_status_comfirmed) {throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('acknowledge_error_finish_status_comfirmed has been called already.');}
             acknowledge_error_finish_status_comfirmed = true;
             if(error) {
               if(error_dict[group_peer_id]) {
@@ -550,7 +550,7 @@ Channel.prototype.multicastSynchronize = function(group_peer_id_list, synchroniz
           // Default "error", "finish status" of "comfirm_acknowledge_error_finish_status" for not properly called or acknowledge_message_bytes is false.
           else {
             if(acknowledge_message_bytes === false) {
-              comfirm_acknowledge_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Channel doen\'t acknowledge with any acknowledge message bytes.'), false);
+              comfirm_acknowledge_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Channel doen\'t acknowledge with any acknowledge message bytes.'), false);
             }
             else if(acknowledge_error) {
               comfirm_acknowledge_error_finish_status(acknowledge_error, false);
