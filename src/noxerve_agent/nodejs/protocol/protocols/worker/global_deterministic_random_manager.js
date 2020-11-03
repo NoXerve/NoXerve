@@ -66,7 +66,7 @@ GlobalDeterministicRandomManager.prototype.generateIntegerInRange = function(ini
   }
   // [flag] what if overflow?
   let seed = Buf.decodeUInt32BE(
-    hash('sha256').update(initialization_vector_bytes).digest();
+    hash('sha256').update(initialization_vector_bytes).digest()
   );
   let result = ACORN.random(seed, 1);
   result.forEach(function(element, index) {
@@ -93,7 +93,7 @@ GlobalDeterministicRandomManager.prototype.generateIntegerListInRange = function
   }
   // [flag] what if overflow?
   let seed = Buf.decodeUInt32BE(
-    hash('sha256').update(initialization_vector_bytes).digest();
+    hash('sha256').update(initialization_vector_bytes).digest()
   );
   // console.log('seed = ' + seed);
   let result = ACORN.random(seed, list_length);
