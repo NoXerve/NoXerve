@@ -65,13 +65,15 @@ GlobalDeterministicRandomManager.prototype.generateIntegerInRange = function(ini
     return;
   }
   // [flag] what if overflow?
-  let seed = Buf.decodeUInt32BE(initialization_vector_bytes);
+  let seed = Buf.decodeUInt32BE(
+    hash('sha256').update(initialization_vector_bytes).digest()
+  );
   let result = ACORN.random(seed, 1);
   result.forEach(function(element, index) {
     this[index] = Math.round(begin_int + this[index] * (end_int - begin_int));
   }, result);
 
-  callback(false, result);
+  callback(false, result[0]);
 };
 
 // [Flag] retuen many random integerers
@@ -90,7 +92,9 @@ GlobalDeterministicRandomManager.prototype.generateIntegerListInRange = function
     return;
   }
   // [flag] what if overflow?
-  let seed = Buf.decodeUInt32BE(initialization_vector_bytes);
+  let seed = Buf.decodeUInt32BE(
+    hash('sha256').update(initialization_vector_bytes).digest()
+  );
   // console.log('seed = ' + seed);
   let result = ACORN.random(seed, list_length);
   // console.log('seed in ACORN = ' + ACORN.seed);
@@ -116,7 +120,7 @@ GlobalDeterministicRandomManager.prototype.generateUniqueIntegerListInRange = fu
     callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Input of "generateUniqueIntegerListInRange" is invalid.'));
     return;
   }
-  this.generateIntegerInRange()
+  //this.generateIntegerInRange()
 
   callback(false, []);
 }

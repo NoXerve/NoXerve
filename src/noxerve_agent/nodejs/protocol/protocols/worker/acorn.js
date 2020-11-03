@@ -11,6 +11,7 @@ TODO initial values could be arbitary numbers, [0,M)
 TODO seed is [1,M)
 small k, large M could cause bad results?
 TODO uesless constructor
+TODO if seed isn't odd
  */
 
 'use strict';
@@ -21,8 +22,7 @@ function ACORN() {
 	this.precision_multiplier = 1;
 	this.K = 10000;
 	this.N = 1;
-	//this.M = Math.pow(2, 30*precision_multiplier);
-	this.M = 1073741824 * this.precision_multiplier;
+	this.M = Math.pow(2, 30*this.precision_multiplier);
 	this.seed = undefined;
 	this.auto_correct_seed = true;
 
@@ -40,6 +40,7 @@ ACORN.prototype.isInputValid = function(seed, length) {
 		return false;
 	}
 	if (seed % 2 === 0) {
+		// [flag] this may cause two seed with same result
 		if (this.auto_correct_seed) this.seed -= 1;
 		else {
 			console.log('Invalid seed. Must be odd.');
@@ -47,7 +48,7 @@ ACORN.prototype.isInputValid = function(seed, length) {
 		}
 	}
 	if (length < 1) {
-		console.log('Invalid length. Must greater than 1.');
+		console.log('Invalid length. Must >= 1.');
 		return false;
 	}
 	if (!Number.isInteger(length)) {
@@ -77,6 +78,7 @@ ACORN.prototype.setProperty = function(precision_multiplier, order, auto_correct
  */
 ACORN.prototype.random = function(seed, length) {
 	seed = seed % this.M;
+	seed === 0? seed+=1 : seed = seed;
 	this.seed = seed;
 	if (!this.isInputValid(this.seed, length)) return undefined;
 	this.N = length + 1;
@@ -102,8 +104,18 @@ ACORN.prototype.random = function(seed, length) {
 	}
 	return Y2;
 }
-
-//let ac = new ACORN();
-//console.log(ac.random(1000000, 10));
+/*
+const c = require('crypto');
+const hash = require('crypto').createHash;
+const Buf = require('../../../buffer');
+let ac = new ACORN();
+let abc = c.randomBytes(32);
+let bcd = Buf.concat([abc,Buf.from([1,2,3])]);
+//console.log(hash('sha256').update(abc).digest().length);
+//console.log(hash('sha256').update(bcd).digest().length);
+console.log(ac.random(Buf.decodeUInt32BE(hash('sha256').update(abc).digest()), 1));
+console.log(ac.random(Buf.decodeUInt32BE(hash('sha256').update(abc).digest()), 10));
+console.log(ac.random(Buf.decodeUInt32BE(hash('sha256').update(bcd).digest()), 1));
+console.log(ac.random(Buf.decodeUInt32BE(hash('sha256').update(bcd).digest()), 10));*/
 
 module.exports = ACORN;
