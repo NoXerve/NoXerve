@@ -37,6 +37,7 @@ function GlobalDeterministicRandomManager(settings) {
    * @private
    */
   this._static_global_random_seed_4096bytes = settings.static_global_random_seed_4096bytes;
+  ACORN.setInitialValue(this._static_global_random_seed_4096bytes);
 }
 
 GlobalDeterministicRandomManager.prototype._isInputValid = function(begin_int, end_int, list_length) {
