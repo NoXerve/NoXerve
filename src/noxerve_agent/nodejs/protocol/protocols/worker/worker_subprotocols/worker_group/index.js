@@ -205,7 +205,6 @@ WorkerGroupProtocol.prototype.start = function(callback) {
 
       const worker_group = new WorkerGroup({
         inactive_timeout_ms: -1,
-        group_peer_id_list: group_peer_id_list,
         group_peers_count: group_peer_id_list.length,
         purpose_name: worker_group_purpose_name,
         create_tunnel: create_tunnel,
