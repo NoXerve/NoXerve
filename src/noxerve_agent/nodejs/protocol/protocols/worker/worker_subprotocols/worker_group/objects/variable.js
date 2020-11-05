@@ -190,7 +190,7 @@ Variable.prototype.start = function(callback) {
     else {
       this._on_duty_group_peer_id = integer;
       console.log(123, this._on_duty_group_peer_id);
-      this._nsdt_embedded_protocol.createBidirectionalRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy) => {
+      this._nsdt_embedded_protocol.createRuntimeProtocol((error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy) => {
         if(error) { callback(error); return;}
         else {
           this._nsdt_embedded_protocol_encode = nsdt_embedded_protocol_encode;
