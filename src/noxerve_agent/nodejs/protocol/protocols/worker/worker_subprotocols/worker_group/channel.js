@@ -48,14 +48,14 @@ function Channel(settings) {
    * @type {object}
    * @private
    */
-  this._unregister_on_data = settings.unregister_on_data;
+  this._group_peers_count = settings.group_peers_count;
 
   /**
    * @memberof module:Channel
    * @type {object}
    * @private
    */
-  this._return_group_peer_id_list = settings.return_group_peer_id_list;
+  this._unregister_on_data = settings.unregister_on_data;
 
   /**
    * @memberof module:Channel
@@ -111,10 +111,17 @@ function Channel(settings) {
 
   /**
    * @memberof module:Channel
-   * @type {object}
+   * @type {list}
    * @private
    */
   this._ready_list = [];
+
+  /**
+   * @memberof module:Channel
+   * @type {list}
+   * @private
+   */
+  this._return_group_peer_id_list = settings.return_group_peer_id_list;
 
   /**
    * @memberof module:Channel
@@ -145,6 +152,16 @@ Channel.prototype._ProtocolCodes = {
   handshake_synchronize_acknowledgment_error: Buf.from([0x0a]),
 };
 
+Channel.prototype._return_group_peer_id_list = function() {
+  if(!this._group_peer_id_list) {
+    this._group_peer_id_list = [];
+    for(let i = 1; i <= this._group_peers_count; i++) {
+      this._group_peer_id_list.push(i);
+    }
+  }
+  return this._group_peer_id_list;
+}
+
 Channel.prototype._setAGroupPeerReady = function(group_peer_id) {
   if(!this._is_ready) {
     this._ready_list[group_peer_id-1] = true;
@@ -168,11 +185,8 @@ Channel.prototype._setAGroupPeerReady = function(group_peer_id) {
 Channel.prototype._getReady = function(callback) {
   this._get_ready_callback = callback;
 
-  const group_peer_id_list = this._return_group_peer_id_list();
-    // Sending messages.
-
-  for(let index in group_peer_id_list) {
-    const group_peer_id = group_peer_id_list[index];
+  for(let i = 1; i <= this._group_peers_count; i++) {
+    const group_peer_id = i;
     this._send_by_group_peer_id(group_peer_id,
       Buf.concat([
       this._ProtocolCodes.get_ready_request
@@ -315,9 +329,8 @@ Channel.prototype.start = function(callback) {
     }
   });
 
-  const group_peer_id_list = this._return_group_peer_id_list();
   // Initialize ready list.
-  for(let index in group_peer_id_list) {
+  for(let i = 1; i <= this._group_peers_count; i++) {
     this._ready_list.push(false);
   }
 

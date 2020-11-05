@@ -64,7 +64,7 @@ function WorkerGroup(settings) {
    * @type {object}
    * @private
    */
-  this._group_peer_id_list = settings.group_peer_id_list;
+  this._group_peer_id_list = [];
 
   /**
    * @memberof module:WorkerGroup
@@ -274,12 +274,13 @@ WorkerGroup.prototype._createChannel = function(channel_type_code_int, channel_i
     unregister_on_data: ()=> {
       this._unregisterOnDataOfChannelTypeAndChannelId(channel_type_code_int, channel_id_8bytes);
     },
+    return_my_group_peer_id: () => {
+      return this._my_group_peer_id;
+    },
     return_group_peer_id_list: () => {
       return this._group_peer_id_list;
     },
-    return_my_group_peer_id: () => {
-      return this._my_group_peer_id;
-    }
+    group_peers_count: this._group_peers_count
   });
 
   callback(false, channel);
@@ -297,12 +298,13 @@ WorkerGroup.prototype.start = function(callback) {
     unregister_on_data: ()=> {
       this._worker_group_private_affair_channel_on_data_listener = null;
     },
+    return_my_group_peer_id: () => {
+      return this._my_group_peer_id;
+    },
     return_group_peer_id_list: () => {
       return this._group_peer_id_list;
     },
-    return_my_group_peer_id: () => {
-      return this._my_group_peer_id;
-    }
+    group_peers_count: this._group_peers_count
   });
 
   this._worker_group_public_affair_channel = new Channel({
@@ -314,12 +316,13 @@ WorkerGroup.prototype.start = function(callback) {
     unregister_on_data: ()=> {
       this._worker_group_public_affair_channel_on_data_listener = null;
     },
+    return_my_group_peer_id: () => {
+      return this._my_group_peer_id;
+    },
     return_group_peer_id_list: () => {
       return this._group_peer_id_list;
     },
-    return_my_group_peer_id: () => {
-      return this._my_group_peer_id;
-    }
+    group_peers_count: this._group_peers_count
   });
 
   // Initiallize this._group_peer_tunnel_dict.
@@ -329,6 +332,7 @@ WorkerGroup.prototype.start = function(callback) {
       status: 0,
       to_be_sent_list: []
     }
+    this._group_peer_id_list.push(i + 1);
   }
 
   // Initiallize on data.
