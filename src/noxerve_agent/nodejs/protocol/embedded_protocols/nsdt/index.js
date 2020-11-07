@@ -142,7 +142,7 @@ NSDTEmbeddedProtocol.prototype.decode = function(noxerve_supported_data_type_blo
  * @return {object} noxerve_supported_data_type_object
  * @description Create bidirectional runtime protocol for a particular protocol connection.
  */
-NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
+NSDTEmbeddedProtocol.prototype.createBidirectionalRuntimeProtocol = function(callback) {
   let on_data_from_nsdt_embedded_protocol_listener = () => {};
 
   // Register.
@@ -314,13 +314,13 @@ NSDTEmbeddedProtocol.prototype.createRuntimeProtocol = function(callback) {
  * @return {object} noxerve_supported_data_type_object
  * @description Create multidirectional runtime protocol for a particular protocol connection.
  */
-NSDTEmbeddedProtocol.prototype.createMultipleRuntimeProtocol = function(max_connection_identifier_int, callback) {
+NSDTEmbeddedProtocol.prototype.createMultidirectionalProtocol = function(max_connection_identifier_int, callback) {
   let on_data_from_nsdt_embedded_protocol_listener = (connection_identifier, data) => {};
 
   let bidirectional_runtime_protocol_of_each_connection_list = [];
 
   const encode_runtime = (connection_identifier_int, noxerve_supported_data_type_object) => {
-    return bidirectional_runtime_protocol_of_each_connection_list[connection_identifier_int - 1].encode_runtime(noxerve_supported_data_type_object);
+    // return bidirectional_runtime_protocol_of_each_connection_list[connection_identifier_int - 1].encode_runtime(noxerve_supported_data_type_object);
   };
 
   const decode_runtime = (connection_identifier_int, noxerve_supported_data_type_blob) => {
@@ -345,7 +345,30 @@ NSDTEmbeddedProtocol.prototype.createMultipleRuntimeProtocol = function(max_conn
 
   let index = 0;
   const next = () => {
-    callback(false, encode_runtime, decode_runtime, on_data_from_nsdt_embedded_protocol, emit_data_to_nsdt_embedded_protocol, destroy);
+    const connection_identifier_int = index + 1;
+    if(index < max_connection_identifier_int) {
+      this.createBidirectionalRuntimeProtocol((error, encode_runtime, decode_runtime, on_data_from_nsdt_embedded_protocol, emit_data_to_nsdt_embedded_protocol, destroy) => {
+        if(error) {
+          callback(error);
+        }
+        else {
+          on_data_from_nsdt_embedded_protocol((data) => {
+            on_data_from_nsdt_embedded_protocol_listener(connection_identifier_int, data);
+          });
+          bidirectional_runtime_protocol_of_each_connection_list[connection_identifier_int] = {
+            encode_runtime: encode_runtime,
+            decode_runtime: decode_runtime,decode_runtime,
+            emit_data_to_nsdt_embedded_protocol: emit_data_to_nsdt_embedded_protocol,
+            destroy: destroy
+          };
+          index++;
+          next();
+        }
+      });
+    }
+    else {
+      callback(false, encode_runtime, decode_runtime, on_data_from_nsdt_embedded_protocol, emit_data_to_nsdt_embedded_protocol, destroy);
+    }
   };
   next();
 };

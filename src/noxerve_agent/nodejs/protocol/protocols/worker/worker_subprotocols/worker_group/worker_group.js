@@ -341,9 +341,9 @@ WorkerGroup.prototype.start = function(callback) {
   });
 
   // Test
-  this.createVariable('var 1', (error, variable) => {
-    variable.update();
-  });
+  // this.createVariable('var 1', (error, variable) => {
+  //   variable.update();
+  // });
 
   callback(false);
 }
@@ -365,7 +365,7 @@ WorkerGroup.prototype.createVariable = function(locker_purpose_name, callback) {
   this._createChannel(Variable.register_code, this._hash_manager.hashString8Bytes(locker_purpose_name), (error, channel) => {
     if(error) callback(error);
     else {
-      const locker = new (Variable.module)({
+      const variable = new (Variable.module)({
         channel: channel,
         nsdt_embedded_protocol: this._nsdt_embedded_protocol,
         random_seed_8_bytes: this._hash_manager.hashString8Bytes(locker_purpose_name),
@@ -374,8 +374,8 @@ WorkerGroup.prototype.createVariable = function(locker_purpose_name, callback) {
         worker_global_protocol_codes: this._worker_global_protocol_codes,
         my_group_peer_id: this._my_group_peer_id
       });
-      locker.start((error) => {
-        callback(error, locker);
+      variable.start((error) => {
+        callback(error, variable);
       });
     }
   })
