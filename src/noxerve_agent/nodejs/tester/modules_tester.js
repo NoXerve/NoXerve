@@ -28,6 +28,7 @@ let Tests = [
   'worker_field2_yield_test',
   'worker_field1_yield_test',
   'nsdt_test',
+  'nsdt_close',
   // 'worker_scope_check_integrity',
   // 'worker_scope_get_peer_list',
   // 'worker_scope_broad_request_reponse',
@@ -478,6 +479,7 @@ Node2.start(() => {
           log('[NSDT module] NSDT haha called.');
           const callable_struture_2 = NSDT.createCallableStructure({nah: ()=> {}});
           callback(callable_struture, callable_struture_2, 321);
+          callable_struture.close();
         }});
 
         callable_struture.on('close', ()=> {
@@ -535,11 +537,15 @@ Node2.start(() => {
           if(acknowledge) acknowledge('ack');
 
           // Twice
-          if(data.isCallableStructure) {
+          if(data.isRemoteCallableStructure) {
+            data.on('close', () => {
+              finish('nsdt_close');
+            });
             data.call('haha', (...params) => {
               log('[NSDT module] haha callback params, ', params);
               finish('nsdt_test');
             });
+
           }
 
           if(eof) activity_of_service.call('test_func', {foo: 'call from activity'}, (err, data, eof, acknowledge)=> {

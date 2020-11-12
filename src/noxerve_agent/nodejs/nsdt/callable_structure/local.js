@@ -70,6 +70,12 @@ CallableStructureLocal.prototype.isCallableStructure = true;
 
 /**
  * @memberof module:CallableStructureLocal
+ * @description For nsdt protocol detecting.
+ */
+CallableStructureLocal.prototype.isLocalCallableStructure = true;
+
+/**
+ * @memberof module:CallableStructureLocal
  */
 CallableStructureLocal.prototype.close = function() {
   this._event_listener_dict['initiative-close']();

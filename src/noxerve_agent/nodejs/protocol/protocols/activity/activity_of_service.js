@@ -265,6 +265,7 @@ ActivityOfServiceProtocol.prototype.handleTunnel = function(error, activity_of_s
         });
 
         tunnel.on('error', (error) => {
+          // console.log(error);
           activity_of_service.emitEventListener('externel-error');
         });
 

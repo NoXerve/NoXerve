@@ -41,6 +41,12 @@ function CallableStructureRemote(settings) {
  */
 CallableStructureRemote.prototype.isCallableStructure = true;
 
+/**
+ * @memberof module:CallableStructureLocal
+ * @description For nsdt protocol detecting.
+ */
+CallableStructureRemote.prototype.isRemoteCallableStructure = true;
+
 CallableStructureRemote.prototype.call = function(function_name, ...params) {
   this._event_listener_dict['call'](function_name, params);
 }
@@ -65,7 +71,7 @@ CallableStructureRemote.prototype.on = function(event_name, listener) {
  * @description CallableStructureRemote events emitter.
  */
 CallableStructureRemote.prototype.emitEventListener = function(event_name, ...params) {
-  this._event_listener_dict[event_name].apply(null, params);
+  if(this._event_listener_dict[event_name]) {this._event_listener_dict[event_name].apply(null, params)};
 }
 
 module.exports = CallableStructureRemote;
