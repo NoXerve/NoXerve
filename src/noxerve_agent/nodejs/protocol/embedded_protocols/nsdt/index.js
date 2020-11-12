@@ -348,7 +348,50 @@ NSDTEmbeddedProtocol.prototype.createMultidirectionalProtocol = function(max_pee
   // let bidirectional_runtime_protocol_of_each_connection_list = [];
 
   const encode_runtime = (noxerve_supported_data_type_object) => {
+      // volatilizing_callbacks_dict(be disappeared after call).
+      if (typeof(noxerve_supported_data_type_object) === 'function') {
+        const volatilizing_callback_id_8bytes = Utils.random8Bytes();
+        volatilizing_callbacks_dict[volatilizing_callback_id_8bytes.toString('base64')] = noxerve_supported_data_type_object;
+        return Buf.concat([
+          this._ProtocolCodes.volatilizing_callback,
+          volatilizing_callback_id_8bytes
+        ]);
+      } else if (noxerve_supported_data_type_object && noxerve_supported_data_type_object.isLocalCallableStructure) {
+        const callable_struture_id_8bytes = noxerve_supported_data_type_object.Id;
+        const callable_struture_id_8bytes_base64 = callable_struture_id_8bytes.toString('base64');
 
+        // Register callable_struture.
+        callable_strutures_dict[callable_struture_id_8bytes_base64] = noxerve_supported_data_type_object;
+        noxerve_supported_data_type_object.on('initiative-close', () => {
+          noxerve_supported_data_type_object.emitEventListener('passively-close');
+          for(let i = 0; i < max_peer_identifier_int; i++) {
+            on_data_from_nsdt_embedded_protocol_listener(i+1, Buf.concat([
+              this._ProtocolCodes.callable_struture_close,
+              callable_struture_id_8bytes
+            ]));
+          }
+          // Deregister callable_struture. In order to make gc works.
+          delete callable_strutures_dict[callable_struture_id_8bytes_base64];
+        });
+
+        // Encode function names.
+        const function_names = noxerve_supported_data_type_object.returnFunctionNameList();
+        const concat_bytes_list = [
+          this._ProtocolCodes.callable_struture_define,
+          callable_struture_id_8bytes
+        ];
+        for (const index in function_names) {
+          concat_bytes_list.push(this._hash_manager.hashString4Bytes(function_names[index]));
+        }
+
+        return Buf.concat(concat_bytes_list);
+      }
+      else if(noxerve_supported_data_type_object && noxerve_supported_data_type_object.isRemoteCallableStructure) {
+        throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_NSDT_EMBEDDED('Encode error. Should not encode remote callable structure.');
+      }
+      else {
+        return this.encode(noxerve_supported_data_type_object);
+      }
   };
 
   const decode_runtime = (peer_identifier_int, noxerve_supported_data_type_blob) => {
@@ -473,6 +516,13 @@ NSDTEmbeddedProtocol.prototype.createMultidirectionalProtocol = function(max_pee
     }
     for (const index in volatilizing_callbacks_dict) {
       delete volatilizing_callbacks_dict[index];
+    }
+    for (const index in remote_callable_strutures_list) {
+      for (const index2 in remote_callable_strutures_list[index]) {
+        remote_callable_strutures_list[index][index2].emitEventListener('close');
+        delete remote_callable_strutures_dict[index][index2];
+      }
+      delete remote_callable_strutures_list[index];
     }
   };
 
