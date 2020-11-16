@@ -165,7 +165,6 @@ Variable.prototype.updateValue = function(variable_value_nsdt, callback) {
         this._variable_value_nsdt = variable_value_nsdt;
         this._operation_iterations_count += 1;
         this._state_int = 0;
-        console.log(this._on_duty_group_peer_id, this._state_int);
         callback(false);
       }
       else {
@@ -377,10 +376,10 @@ Variable.prototype.start = function(callback) {
                           this._variable_value_nsdt = variable_value_nsdt;
                           this._on_duty_group_peer_id = target_group_peer_id;
                           this._operation_iterations_count += 1;
-                          console.log(target_group_peer_id, variable_value_nsdt);
                           // Change it to ready state.
                           this._state_int = 0;
                         }
+                        this.emitEventListener('update', target_group_peer_id, variable_value_nsdt);
                       }
                       else {
                         // Change it to ready state.
@@ -426,7 +425,7 @@ Variable.prototype.on = function(event_name, callback) {
  * @description Variable events emitter. For internal uses.
  */
 Variable.prototype.emitEventListener = function(event_name, ...params) {
-  return this._event_listener_dict[event_name].apply(null, params);
+  if(this._event_listener_dict[event_name]) return this._event_listener_dict[event_name].apply(null, params);
 }
 
 module.exports = {

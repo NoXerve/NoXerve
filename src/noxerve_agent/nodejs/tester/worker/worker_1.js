@@ -243,6 +243,9 @@ initialize_interfaces(()=> {
                     the_worker_group = worker_group;
                     worker_group.createVariable('the_var', (error, variable) => {
                       if (error) console.log('[Worker ' + my_worker_id + '] createVariable error.', error);
+                      variable.on('update', (group_peer_id, value)=> {
+                        console.log('[Worker ' + my_worker_id + '] Variable update event (group_peer_id/value):', group_peer_id, value);
+                      });
                       the_worker_group_var = variable;
                     });
                   });
@@ -254,7 +257,7 @@ initialize_interfaces(()=> {
                   });
                 }
                 else if(msg === '8') {
-                  the_worker_group_var.updateValue('[Worker ' + my_worker_id + ']', (error) => {
+                  the_worker_group_var.updateValue('<Worker ' + my_worker_id + '> '+Math.random(), (error) => {
                     if (error) console.log('[Worker ' + my_worker_id + '] update error.', error);
                   });
                 }
