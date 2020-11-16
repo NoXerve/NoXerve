@@ -122,6 +122,14 @@ function Variable(settings) {
 
   /**
    * @memberof module:Variable
+   * @type {integer}
+   * @description 0 ready 1 updating
+   * @private
+   */
+  this._state_int = 0;
+
+  /**
+   * @memberof module:Variable
    * @type {object}
    * @private
    */
@@ -141,39 +149,56 @@ Variable.prototype._ProtocolCodes = {
 
 // [Flag]
 Variable.prototype.update = function(variable_value_nsdt, callback) {
-  this._channel.request(this._on_duty_group_peer_id, Buf.concat([
-    this._ProtocolCodes.update_request_response,
-    this._nsdt_embedded_protocol_encode(variable_value_nsdt)
-  ]), (error, response_data_bytes) => {
-    if(error) {
-      callback(error);
-    }
-    else if (response_data_bytes[0] ===  this._worker_global_protocol_codes.accept[0]) {
-
-    }
-    else {
-
-    }
-  });
+  if(this._state_int === 0) {
+    this._state_int = 1;
+    this._channel.request(this._on_duty_group_peer_id, Buf.concat([
+      this._ProtocolCodes.update_request_response,
+      this._nsdt_embedded_protocol_encode(variable_value_nsdt)
+    ]), (error, response_data_bytes) => {
+      if(error) {
+        callback(error);
+      }
+      else if (response_data_bytes[0] ===  this._worker_global_protocol_codes.accept[0]) {
+        this._state_int = 0;
+        callback(false);
+      }
+      else {
+        this._state_int = 0;
+        callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Request variable update failed.'));
+      }
+    });
+  }
+  else {
+    callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Variable id updating.'));
+  }
 }
 
 // [Flag]
 Variable.prototype.getValue = function(callback) {
-  this._channel.request(this._on_duty_group_peer_id, Buf.concat([
-    this._ProtocolCodes.operation_iterations_count_check_request_response,
-    Buf.encodeUInt32BE(this._operation_iterations_count)
-  ]), (error, response_data_bytes) => {
-    if(error) {
-      callback(error);
-    }
-    else if (response_data_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
-      callback();
-    }
-    else {
-      callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Iterations count check from on duty group peer failed.'));
-    }
-  });
-  // callback(false, this._variable_value_nsdt);
+  if(this._state_int === 0) {
+    this._channel.request(this._on_duty_group_peer_id, Buf.concat([
+      this._ProtocolCodes.operation_iterations_count_check_request_response,
+      Buf.encodeUInt32BE(this._operation_iterations_count)
+    ]), (error, response_data_bytes) => {
+      if(error) {
+        callback(error);
+      }
+      else if (response_data_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
+        if(response_data_bytes.length !== 1) {
+          // Restore data.
+          this._operation_iterations_count = Buf.decodeUInt32BE(response_data_bytes.slice(1, 5));
+          this._variable_value_nsdt = this._nsdt_embedded_protocol_decode(this._on_duty_group_peer_id, response_data_bytes.slice(5));
+        }
+        callback(false, this._variable_value_nsdt);
+      }
+      else {
+        callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Iterations count check from on duty group peer failed.'));
+      }
+    });
+  }
+  else {
+    callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Variable id updating.'));
+  }
 }
 
 
@@ -190,7 +215,7 @@ Variable.prototype.start = function(callback) {
     else {
       this._on_duty_group_peer_id = integer;
       console.log(123, this._on_duty_group_peer_id);
-      this._nsdt_embedded_protocol.createMultidirectionalProtocol(this._group_peers_count, (error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy) => {
+      this._nsdt_embedded_protocol.createMultidirectionalProtocol(this._group_peers_count, this._my_group_peer_id, (error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy) => {
         if(error) { callback(error); return;}
         else {
           this._nsdt_embedded_protocol_encode = nsdt_embedded_protocol_encode;
@@ -200,8 +225,8 @@ Variable.prototype.start = function(callback) {
             if(error) callback(error);
             else {
               // nsdt embedded runtime protocol setup.
-              nsdt_on_data((data_bytes) => {
-                this._channel.broadcast(Buf.concat([
+              nsdt_on_data((group_peer_id, data_bytes) => {
+                this._channel.unicast(group_peer_id, Buf.concat([
                   this._ProtocolCodes.nsdt_embedded,
                   data_bytes
                 ]));
@@ -210,7 +235,7 @@ Variable.prototype.start = function(callback) {
               this._channel.on('data', (group_peer_id, data_bytes) => {
                 const protocol_code_int = data_bytes[0];
                 if(protocol_code_int === this._ProtocolCodes.nsdt_embedded[0]) {
-                  nsdt_emit_data(data_bytes.slice(1));
+                  nsdt_emit_data(group_peer_id, data_bytes.slice(1));
                 }
                 // else if() {
                 //
@@ -220,16 +245,45 @@ Variable.prototype.start = function(callback) {
               this._channel.on('request-response', (group_peer_id, data_bytes, response) => {
                 const protocol_code_int = data_bytes[0];
                 if(protocol_code_int === this._ProtocolCodes.update_request_response[0]) {
-                  if(this._on_duty_group_peer_id === this._my_group_peer_id) {
+                  const target_group_peer_id_4bytes = Buf.encodeUInt32BE(group_peer_id);
+                  // const variable_value_nsdt = this._nsdt_embedded_protocol_decode(data_bytes.slice(1));
+                  if(this._on_duty_group_peer_id === this._my_group_peer_id && this._state_int === 0) {
+                    
+                    const a_synchronize_acknowledgment_handler = (group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, comfirm_synchronize_error_finish_status, acknowledge) => {
 
+                    };
+                    const finished_listener = (error, finished_synchronize_group_peer_id_list, finished_acknowledge_group_peer_id_list) => {
+
+                    };
+
+                    this._channel.broadcastSynchronize(Buf.concat([
+                      this._ProtocolCodes.update_handshake,
+                      target_group_peer_id_4bytes,
+                      data_bytes.slice(1)
+                    ]), a_synchronize_acknowledgment_handler, finished_listener);
                   }
                   else {
                     response(this._worker_global_protocol_codes.reject);
                   }
                 }
                 else if(protocol_code_int === this._ProtocolCodes.operation_iterations_count_check_request_response[0]) {
-                  if(this._on_duty_group_peer_id === this._my_group_peer_id) {
-
+                  // Updating.
+                  if(this._state_int === 1) {
+                    response(this._worker_global_protocol_codes.reject);
+                  }
+                  else if(this._on_duty_group_peer_id === this._my_group_peer_id && this._state_int === 0) {
+                    const remote_operation_iterations_count = Buf.decodeUInt32BE(data_bytes.slice(1));
+                    if(remote_operation_iterations_count === this._operation_iterations_count) {
+                      response(this._worker_global_protocol_codes.accept);
+                    }
+                    else {
+                      // Help restore.
+                      response(Buf.concat([
+                        this._worker_global_protocol_codes.accept,
+                        Buf.encodeUInt32BE(this._operation_iterations_count),
+                        this._nsdt_embedded_protocol_encode(this._variable_value_nsdt)
+                      ]));
+                    }
                   }
                   else {
                     response(this._worker_global_protocol_codes.reject);
@@ -240,7 +294,21 @@ Variable.prototype.start = function(callback) {
               this._channel.on('handshake', (group_peer_id, synchronize_message_bytes, synchronize_acknowledgment) => {
                 const protocol_code_int = data_bytes[0];
                 if(protocol_code_int === this._ProtocolCodes.update_handshake[0]) {
-                  synchronize_acknowledgment(null, (synchronize_acknowledgment_error, acknowledge_message_bytes) => {
+                  const target_group_peer_id = Buf.decodeUInt32BE(data_bytes.slice(1, 5));
+                  const variable_value_nsdt = this._nsdt_embedded_protocol_decode(data_bytes.slice(5));
+                  // Change it to updating state.
+                  this._state_int = 1;
+                  synchronize_acknowledgment(this._worker_global_protocol_codes.accept, (synchronize_acknowledgment_error, acknowledge_message_bytes) => {
+                    if(synchronize_acknowledgment_error) {
+                      return;
+                    }
+                    else if (acknowledge_message_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
+                      this._variable_value_nsdt = variable_value_nsdt;
+                      this._on_duty_group_peer_id = target_group_peer_id;
+                    }
+                    else {
+                      return;
+                    }
                   });
                 }
 

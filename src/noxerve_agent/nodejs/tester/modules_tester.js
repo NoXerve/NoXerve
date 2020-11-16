@@ -421,28 +421,33 @@ Node2.start(() => {
 
                 channel.synchronize(1, Buffer.from([0x00]), (synchronize_error, synchronize_acknowledgment_message_bytes, acknowledge) => {
                   log('[Worker module: Channel] synchronize_acknowledgment: ', synchronize_error, synchronize_acknowledgment_message_bytes);
-                  acknowledge(Buffer.from([0x02]), (error) => {
+                  acknowledge(Buffer.from([0x22]), (error) => {
                     if(error) log('[Worker module: Channel] acknowledge error', error);
                     finish('worker_group_channel_synchronize');
                   });
                 });
 
-                channel.broadcastSynchronize(Buffer.from([0x00]), (group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, comfirm_synchronize_error_finish_status, acknowledge) => {
+                channel.broadcastSynchronize(Buffer.from([0x00]), (group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, register_synchronize_acknowledgment_status) => {
                   log('[Worker module: Channel] synchronize_acknowledgment(broadcast): ', group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes);
                   // comfirm_synchronize_error_finish_status(false, true);
                   if(synchronize_error) {
-                    comfirm_synchronize_error_finish_status(synchronize_error, false);
-                    acknowledge(false);
+                    register_synchronize_acknowledgment_status({
+                      synchronize_error: synchronize_error
+                    });
                   }
                   else {
                     // acknowledge(false);
-                    acknowledge(Buffer.from([group_peer_id]), (error, comfirm_acknowledge_error_finish_status) => {
-                      if(error) log('[Worker module: Channel] acknowledge error(broadcast)', error);
-                      comfirm_acknowledge_error_finish_status(error, error?false:true);
+                    register_synchronize_acknowledgment_status({
+                      synchronize_error: synchronize_error
                     });
                   }
-                }, (error, finished_synchronize_group_peer_id_list, finished_acknowledge_group_peer_id_list) => {
-                  log('[Worker module: Channel] broadcastSynchronize finished. results: ', error, finished_synchronize_group_peer_id_list, finished_acknowledge_group_peer_id_list);
+                }, (error, finished_synchronize_group_peer_acknowledge_dict, synchronize_acknowledgment_status_dict) => {
+                  for(let key in finished_synchronize_group_peer_acknowledge_dict) {
+                    finished_synchronize_group_peer_acknowledge_dict[key](Buffer.from([parseInt(key)+10]));
+                    log('[Worker module: Channel]', synchronize_acknowledgment_status_dict[key]);
+                  }
+                }, (error) => {
+                  if(error) log('[Worker module: Channel] acknowledge error(broadcast)', error);
                   finish('worker_group_channel_braodcast_synchronize');
                 });
               });

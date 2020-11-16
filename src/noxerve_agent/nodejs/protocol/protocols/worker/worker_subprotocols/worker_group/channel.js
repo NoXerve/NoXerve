@@ -496,112 +496,60 @@ Channel.prototype.synchronize = function(group_peer_id, synchronize_data_bytes, 
 }
 
 // [Flag]
-Channel.prototype.multicastSynchronize = function(group_peer_id_list, synchronize_data_bytes, a_synchronize_acknowledgment_handler, finished_listener) {
-  let finished_synchronize_group_peer_id_list = [];
-  let finished_acknowledge_group_peer_id_list = [];
-  let error_dict = {};
+Channel.prototype.multicastSynchronize = function(group_peer_id_list, synchronize_data_bytes, a_synchronize_acknowledgment_handler, synchronize_acknowledgment_finished_listener, acknowledge_finished_listener) {
 
-  let demultiplexing_callback_called_count = 0;
+  let synchronize_error_dict = {};
+  let synchronize_acknowledgment_status_dict = {};
+  let finished_synchronize_group_peer_acknowledge_dict = {};
+  let acknowledge_error_dict = {};
 
-  const demultiplexing_callback = (group_peer_id)=> {
-    demultiplexing_callback_called_count ++;
+  let synchronize_acknowledgment_status_count = 0;
 
-    // Check if should call the original callback or not.
-    if(demultiplexing_callback_called_count === group_peer_id_list.length) {
-      if(Object.keys(error_dict).length === 0) {
-        error_dict = false;
-      }
-      finished_listener(error_dict, finished_synchronize_group_peer_id_list, finished_acknowledge_group_peer_id_list);
-    }
-  };
+  let acknowledge_count = 0;
+  let finished_synchronize_group_peer_count = 0;
 
   for(let index in group_peer_id_list) {
     const group_peer_id = group_peer_id_list[index];
     this.synchronize(group_peer_id, synchronize_data_bytes, (synchronize_error, synchronize_acknowledgment_message_bytes, acknowledge)=> {
-      let synchronize_error_finish_status_confirmed = false;
-      const comfirm_synchronize_error_finish_status = (error, synchronize_finish_status) => {
-        if(synchronize_error_finish_status_confirmed) {throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('comfirm_synchronize_error_finish_status has been called already.');}
-        synchronize_error_finish_status_confirmed = true;
-        if(error) {
-          error_dict[group_peer_id] = [error, null];
-        }
-        if(synchronize_finish_status) {
-          finished_synchronize_group_peer_id_list.push(group_peer_id);
-        }
-      };
-
-      const decorated_acknowledge = (acknowledge_message_bytes, acknowledge_callback) => {
-        const decoreated_acknowledge_callback = (acknowledge_error) => {
-          let acknowledge_error_finish_status_comfirmed = false;
-          const comfirm_acknowledge_error_finish_status = (error, acknowledge_finish_status) => {
-            if(acknowledge_error_finish_status_comfirmed) {throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('acknowledge_error_finish_status_comfirmed has been called already.');}
-            acknowledge_error_finish_status_comfirmed = true;
-            if(error) {
-              if(error_dict[group_peer_id]) {
-                error_dict[group_peer_id][1] = error;
-              }
-              else {
-                error_dict[group_peer_id] = [null, error];
-              }
-            }
-            if(acknowledge_finish_status) {
-              finished_acknowledge_group_peer_id_list.push(group_peer_id);
-            }
-            // Finished a handshake call demultiplexing_callback
-            demultiplexing_callback(group_peer_id);
-          };
-          if(acknowledge_callback) {
-            acknowledge_callback(acknowledge_error, comfirm_acknowledge_error_finish_status);
-            // Default confrim.
-            if(!acknowledge_error_finish_status_comfirmed && acknowledge_error) {
-              comfirm_acknowledge_error_finish_status(acknowledge_error, false);
-            }
-            else if(!acknowledge_error_finish_status_comfirmed) {
-              comfirm_acknowledge_error_finish_status(acknowledge_error, true);
-            }
-          }
-          // Default "error", "finish status" of "comfirm_acknowledge_error_finish_status" for not properly called or acknowledge_message_bytes is false.
-          else {
-            if(acknowledge_message_bytes === false) {
-              comfirm_acknowledge_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Channel doen\'t acknowledge with any acknowledge message bytes.'), false);
-            }
-            else if(acknowledge_error) {
-              comfirm_acknowledge_error_finish_status(acknowledge_error, false);
-            }
-            else {
-              comfirm_acknowledge_error_finish_status(false, true);
-            }
-          }
-        };
-
-        acknowledge(acknowledge_message_bytes, decoreated_acknowledge_callback);
-      };
-
       if(synchronize_error) {
-        a_synchronize_acknowledgment_handler(group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, (error, synchronize_finish_status) => {
-          comfirm_synchronize_error_finish_status(error, synchronize_finish_status);
-          demultiplexing_callback(group_peer_id);
-        }, () => {});
-        // Default value.
-        if(!synchronize_error_finish_status_confirmed) {
-          comfirm_synchronize_error_finish_status(synchronize_error, false);
-          demultiplexing_callback(group_peer_id);
-        }
+        synchronize_error_dict[group_peer_id] = synchronize_error;
       }
       else {
-        a_synchronize_acknowledgment_handler(group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, comfirm_synchronize_error_finish_status, decorated_acknowledge);
-        // Default value.
-        if(!synchronize_error_finish_status_confirmed) {
-          comfirm_synchronize_error_finish_status(synchronize_error, true);
-        }
+        finished_synchronize_group_peer_acknowledge_dict[group_peer_id] = (acknowledge_message_bytes) => {
+          acknowledge(acknowledge_message_bytes, (error) => {
+            acknowledge_count++;
+            if(error) {
+              acknowledge_error_dict[group_peer_id] = error;
+            }
+            if(acknowledge_count === finished_synchronize_group_peer_count) {
+              if(Object.keys(acknowledge_error_dict).length === 0) {
+                acknowledge_error_dict = false;
+              }
+              acknowledge_finished_listener(acknowledge_error_dict);
+            }
+          });
+        };
       }
+      const register_synchronize_acknowledgment_status = (synchronize_acknowledgment_status) => {
+        synchronize_acknowledgment_status_dict[group_peer_id] = synchronize_acknowledgment_status;
+        synchronize_acknowledgment_status_count ++;
+
+        if(synchronize_acknowledgment_status_count === group_peer_id_list.length) {
+          if(Object.keys(synchronize_error_dict).length === 0) {
+            synchronize_error_dict = false;
+          }
+          finished_synchronize_group_peer_count = Object.keys(finished_synchronize_group_peer_acknowledge_dict).length;
+          synchronize_acknowledgment_finished_listener(synchronize_error_dict, finished_synchronize_group_peer_acknowledge_dict, synchronize_acknowledgment_status_dict);
+        }
+      };
+      a_synchronize_acknowledgment_handler(group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, register_synchronize_acknowledgment_status);
     });
   }
 }
 
 // [Flag]
-Channel.prototype.broadcastSynchronize = function(synchronize_data_bytes, a_synchronize_acknowledgment_handler, finished_listener) {
-  this.multicastSynchronize(this._return_group_peer_id_list(), synchronize_data_bytes, a_synchronize_acknowledgment_handler, finished_listener);
+Channel.prototype.broadcastSynchronize = function(synchronize_data_bytes, a_synchronize_acknowledgment_handler, synchronize_acknowledgment_finished_listener, acknowledge_finished_listener) {
+  this.multicastSynchronize(this._return_group_peer_id_list(), synchronize_data_bytes, a_synchronize_acknowledgment_handler, synchronize_acknowledgment_finished_listener, acknowledge_finished_listener);
 }
 
 /**
