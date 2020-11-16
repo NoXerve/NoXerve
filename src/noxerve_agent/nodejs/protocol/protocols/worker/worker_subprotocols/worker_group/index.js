@@ -212,7 +212,8 @@ WorkerGroupProtocol.prototype.start = function(callback) {
         hash_manager: this._hash_manager,
         nsdt_embedded_protocol: this._nsdt_embedded_protocol,
         global_deterministic_random_manager: this._global_deterministic_random_manager,
-        worker_global_protocol_codes: this._worker_global_protocol_codes
+        worker_global_protocol_codes: this._worker_global_protocol_codes,
+        my_group_peer_id: group_peer_worker_id_list.indexOf(this._return_my_worker_id())+1
       });
 
       worker_group.start((error)=> {

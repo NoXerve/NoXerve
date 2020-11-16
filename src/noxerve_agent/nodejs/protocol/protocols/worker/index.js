@@ -58,11 +58,8 @@ function WorkerProtocol(settings) {
   this._worker_module.on('static-global-random-seed-import', (static_global_random_seed_4096bytes, callback) => {
     if (static_global_random_seed_4096bytes && Buf.isBuffer(static_global_random_seed_4096bytes) && static_global_random_seed_4096bytes.length === 4096) {
       this._static_global_random_seed_4096bytes = static_global_random_seed_4096bytes;
-      this._global_deterministic_random_manager = new GlobalDeterministicRandomManager({
-        static_global_random_seed_4096bytes: static_global_random_seed_4096bytes
-      });
       this._static_global_random_seed_checksum_4bytes = Utils.hash4BytesMd5(static_global_random_seed_4096bytes);
-      callback(false);
+      this._global_deterministic_random_manager.importStaticGlobalRandomSeed(static_global_random_seed_4096bytes, callback);
     } else callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Imported static global random seed buffer must have exactly 4096 bytes.'));
   });
 
@@ -169,7 +166,7 @@ function WorkerProtocol(settings) {
    * @private
    * @description GlobalDeterministicRandomManager.
    */
-  this._global_deterministic_random_manager;
+   this._global_deterministic_random_manager = new GlobalDeterministicRandomManager({});
 
   /**
    * @memberof module:WorkerProtocol
@@ -981,9 +978,7 @@ WorkerProtocol.prototype.start = function(callback) {
               // Update worker peers settings
               this._worker_peer_settings_dict = worker_peer_settings_dict;
               this._static_global_random_seed_4096bytes = static_global_random_seed_4096bytes;
-              this._global_deterministic_random_manager = new GlobalDeterministicRandomManager({
-                static_global_random_seed_4096bytes: static_global_random_seed_4096bytes
-              });
+              this._global_deterministic_random_manager.importStaticGlobalRandomSeed(static_global_random_seed_4096bytes);
               this._static_global_random_seed_checksum_4bytes = Utils.hash4BytesMd5(static_global_random_seed_4096bytes);
               this._updateWorkerPeersIdsChecksum4Bytes(Object.keys(worker_peer_settings_dict));
 

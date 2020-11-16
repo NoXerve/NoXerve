@@ -340,11 +340,6 @@ WorkerGroup.prototype.start = function(callback) {
     this._setupTunnel(group_peer_id, tunnel);
   });
 
-  // Test
-  // this.createVariable('var 1', (error, variable) => {
-  //   variable.update();
-  // });
-
   callback(false);
 }
 

@@ -158,7 +158,7 @@ Connector.prototype.connect = function(connect_settings, new_tunnel_callback) {
     // Get emitter and get the rest of jobs done.
     (error, tunnel_emitter) => {
       if (error) {
-        console.log('MyselfInterface Connector error. ', error);
+        console.log('MyselfInterface Connector error. ', error.stack);
       } else {
         the_virtual_net.Client.connect((connect_error, socket) => {
           socket_outside = socket;

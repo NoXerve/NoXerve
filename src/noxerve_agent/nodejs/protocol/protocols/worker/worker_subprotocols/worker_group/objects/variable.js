@@ -123,7 +123,7 @@ function Variable(settings) {
   /**
    * @memberof module:Variable
    * @type {integer}
-   * @description 0 ready 1 updating
+   * @description 0 ready 1 updating 2 myself-updating
    * @private
    */
   this._state_int = 0;
@@ -144,13 +144,15 @@ Variable.prototype._ProtocolCodes = {
   update_request_response: Buf.from([0x00]),
   update_handshake: Buf.from([0x01]),
   operation_iterations_count_check_request_response: Buf.from([0x02]),
-  nsdt_embedded: Buf.from([0x10])
+  nsdt_embedded: Buf.from([0x10]),
+
+  updating_error: Buf.from([0x01])
 }
 
 // [Flag]
 Variable.prototype.update = function(variable_value_nsdt, callback) {
   if(this._state_int === 0) {
-    this._state_int = 1;
+    this._state_int = 2;
     this._channel.request(this._on_duty_group_peer_id, Buf.concat([
       this._ProtocolCodes.update_request_response,
       this._nsdt_embedded_protocol_encode(variable_value_nsdt)
@@ -159,6 +161,9 @@ Variable.prototype.update = function(variable_value_nsdt, callback) {
         callback(error);
       }
       else if (response_data_bytes[0] ===  this._worker_global_protocol_codes.accept[0]) {
+        this._on_duty_group_peer_id = this._my_group_peer_id;
+        this._variable_value_nsdt = variable_value_nsdt;
+        this._operation_iterations_count += 1;
         this._state_int = 0;
         callback(false);
       }
@@ -192,12 +197,24 @@ Variable.prototype.getValue = function(callback) {
         callback(false, this._variable_value_nsdt);
       }
       else {
-        callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Iterations count check from on duty group peer failed.'));
+        if(response_data_bytes[1]) {
+          if(response_data_bytes[1] === this._ProtocolCodes.updating_error[0]) {
+            callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Remote is updating variable.'));
+          }
+          else {
+            callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Unknown error.'));
+          }
+        }
+        else {
+          callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Unknown error.'));
+
+        }
+        // callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Iterations count check from on duty group peer failed.'));
       }
     });
   }
   else {
-    callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Variable id updating.'));
+    callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Variable is updating.'));
   }
 }
 
@@ -214,7 +231,6 @@ Variable.prototype.start = function(callback) {
     if(error) { callback(error); return;}
     else {
       this._on_duty_group_peer_id = integer;
-      console.log(123, this._on_duty_group_peer_id);
       this._nsdt_embedded_protocol.createMultidirectionalProtocol(this._group_peers_count, this._my_group_peer_id, (error, nsdt_embedded_protocol_encode, nsdt_embedded_protocol_decode, nsdt_on_data, nsdt_emit_data, nsdt_embedded_protocol_destroy) => {
         if(error) { callback(error); return;}
         else {
@@ -247,16 +263,61 @@ Variable.prototype.start = function(callback) {
                 if(protocol_code_int === this._ProtocolCodes.update_request_response[0]) {
                   const target_group_peer_id_4bytes = Buf.encodeUInt32BE(group_peer_id);
                   // const variable_value_nsdt = this._nsdt_embedded_protocol_decode(data_bytes.slice(1));
-                  if(this._on_duty_group_peer_id === this._my_group_peer_id && this._state_int === 0) {
+                  if((this._on_duty_group_peer_id === this._my_group_peer_id && (this._state_int === 0 || this._state_int === 2))) {
 
                     const a_synchronize_acknowledgment_handler = (group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, register_synchronize_acknowledgment_status) => {
-
+                      if(synchronize_error) {
+                        register_synchronize_acknowledgment_status({
+                          accept: false
+                        });
+                      }
+                      else if (synchronize_acknowledgment_message_bytes[0] === this._worker_global_protocol_codes.accept[0]){
+                        register_synchronize_acknowledgment_status({
+                          accept: true
+                        });
+                      }
+                      else {
+                        register_synchronize_acknowledgment_status({
+                          accept: false
+                        });
+                      }
                     };
+
                     const synchronize_acknowledgment_finished_listener = (error, finished_synchronize_group_peer_acknowledge_dict, synchronize_acknowledgment_status_dict) => {
-
+                      const cancel_synchronize = () => {
+                        response(this._worker_global_protocol_codes.reject);
+                        for(let key in finished_synchronize_group_peer_acknowledge_dict) {
+                          finished_synchronize_group_peer_acknowledge_dict[key](this._worker_global_protocol_codes.reject);
+                        }
+                      };
+                      if(error) {
+                        cancel_synchronize();
+                      }
+                      else {
+                        // Check all accept.
+                        let all_accept = true;
+                        for(let key in synchronize_acknowledgment_status_dict) {
+                          if(synchronize_acknowledgment_status_dict[key].accept === false) {
+                            all_accept = false;
+                            break;
+                          }
+                        }
+                        if(all_accept) {
+                          response(this._worker_global_protocol_codes.accept);
+                          for(let key in finished_synchronize_group_peer_acknowledge_dict) {
+                            finished_synchronize_group_peer_acknowledge_dict[key](this._worker_global_protocol_codes.accept);
+                          }
+                        }
+                        else {
+                          cancel_synchronize();
+                        }
+                      }
                     };
-                    const acknowledge_finished_listener = (error, finished_synchronize_group_peer_id_list) => {
 
+                    const acknowledge_finished_listener = (error, finished_synchronize_group_peer_id_list) => {
+                      if(error) {
+                        // Do nothing.
+                      }
                     };
 
                     this._channel.broadcastSynchronize(Buf.concat([
@@ -271,8 +332,11 @@ Variable.prototype.start = function(callback) {
                 }
                 else if(protocol_code_int === this._ProtocolCodes.operation_iterations_count_check_request_response[0]) {
                   // Updating.
-                  if(this._state_int === 1) {
-                    response(this._worker_global_protocol_codes.reject);
+                  if(this._state_int === 1 || this._state_int === 2) {
+                    response(Buf.concat([
+                      this._worker_global_protocol_codes.reject,
+                      this._ProtocolCodes.updating_error
+                    ]));
                   }
                   else if(this._on_duty_group_peer_id === this._my_group_peer_id && this._state_int === 0) {
                     const remote_operation_iterations_count = Buf.decodeUInt32BE(data_bytes.slice(1));
@@ -295,26 +359,40 @@ Variable.prototype.start = function(callback) {
               });
 
               this._channel.on('handshake', (group_peer_id, synchronize_message_bytes, synchronize_acknowledgment) => {
-                const protocol_code_int = data_bytes[0];
+                const protocol_code_int = synchronize_message_bytes[0];
                 if(protocol_code_int === this._ProtocolCodes.update_handshake[0]) {
-                  const target_group_peer_id = Buf.decodeUInt32BE(data_bytes.slice(1, 5));
-                  const variable_value_nsdt = this._nsdt_embedded_protocol_decode(data_bytes.slice(5));
-                  // Change it to updating state.
-                  this._state_int = 1;
-                  synchronize_acknowledgment(this._worker_global_protocol_codes.accept, (synchronize_acknowledgment_error, acknowledge_message_bytes) => {
-                    if(synchronize_acknowledgment_error) {
+                  if(group_peer_id === this._on_duty_group_peer_id) {
+                    const target_group_peer_id = Buf.decodeUInt32BE(synchronize_message_bytes.slice(1, 5));
+                    const variable_value_nsdt = this._nsdt_embedded_protocol_decode(target_group_peer_id, synchronize_message_bytes.slice(5));
+                    // Change it to updating state.
+                    this._state_int = 1;
+                    synchronize_acknowledgment(this._worker_global_protocol_codes.accept, (synchronize_acknowledgment_error, acknowledge_message_bytes) => {
+                      if(synchronize_acknowledgment_error) {
+                        return;
+                      }
+                      else if (acknowledge_message_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
+                        // Prevent overwrite the peer that request update.
+                        if(this._on_duty_group_peer_id !== this._my_group_peer_id) {
+                          this._variable_value_nsdt = variable_value_nsdt;
+                          this._on_duty_group_peer_id = target_group_peer_id;
+                          this._operation_iterations_count += 1;
+                          // Change it to ready state.
+                          this._state_int = 0;
+                        }
+                      }
+                      else {
+                        // Change it to ready state.
+                        this._state_int = 0;
+                        return;
+                      }
+                    });
+                  }
+                  else {
+                    synchronize_acknowledgment(this._worker_global_protocol_codes.reject, (synchronize_acknowledgment_error, acknowledge_message_bytes) => {
                       return;
-                    }
-                    else if (acknowledge_message_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
-                      this._variable_value_nsdt = variable_value_nsdt;
-                      this._on_duty_group_peer_id = target_group_peer_id;
-                    }
-                    else {
-                      return;
-                    }
-                  });
+                    });
+                  }
                 }
-
               });
 
               callback(false);

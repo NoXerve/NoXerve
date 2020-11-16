@@ -36,8 +36,7 @@ function GlobalDeterministicRandomManager(settings) {
    * @type {object}
    * @private
    */
-  this._static_global_random_seed_4096bytes = settings.static_global_random_seed_4096bytes;
-  ACORN.setInitialValue(this._static_global_random_seed_4096bytes);
+  this._static_global_random_seed_4096bytes;
 }
 
 GlobalDeterministicRandomManager.prototype._isInputValid = function(begin_int, end_int, list_length) {
@@ -51,6 +50,12 @@ GlobalDeterministicRandomManager.prototype._isInputValid = function(begin_int, e
   return true;
 }
 
+// [Flag]
+GlobalDeterministicRandomManager.prototype.importStaticGlobalRandomSeed = function(static_global_random_seed_4096bytes, callback) {
+  this._static_global_random_seed_4096bytes = static_global_random_seed_4096bytes;
+  ACORN.setInitialValue(this._static_global_random_seed_4096bytes);
+  if(callback) callback(false);
+}
 // [Flag]
 /**
  * Generate random number with given initialization vector bytes, IVT for short. Expected to have same result with same given IVT due to its the determinism.

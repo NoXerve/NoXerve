@@ -37,6 +37,7 @@ let Tests = [
   'global_deterministic_random_manager_1',
   'global_deterministic_random_manager_2',
   // 'global_deterministic_random_manager_3',
+  'worker_group_variable_update',
   'worker_group_channel_braodcast',
   'worker_group_channel_request',
   'worker_group_channel_braodcast_request',
@@ -382,6 +383,29 @@ Node2.start(() => {
               else {
                 finish('worker_group_creation');
               }
+              // Variable
+              worker_group.createVariable('var 1', (error, variable) => {
+                variable.getValue((error, value) => {
+                  log('[Worker module: Variable] getValue:', error, value);
+                  variable.update(1, (error) => {
+                    variable.getValue((error, value) => {
+                      log('[Worker module: Variable] getValue:', error, value);
+                      variable.update(3, (error) => {
+                        variable.getValue((error, value) => {
+                          log('[Worker module: Variable] getValue:', error, value);
+                          variable.update(5, (error) => {
+                            variable.getValue((error, value) => {
+                              log('[Worker module: Variable] getValue:', error, value);
+                              finish('worker_group_variable_update');
+                            });
+                          });
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+
               worker_group.createChannel(Buffer.from([0x00, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x02]), (error, channel) => {
                 if (error) log('[Worker module] "createChannel" error.', error);
                 channel.on('data', (group_peer_id, data_bytes) => {

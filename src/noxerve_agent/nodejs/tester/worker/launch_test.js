@@ -29,6 +29,7 @@ const test_indexs = {
   2: 'update worker 3',
   3: 'leave worker 3',
   4: 'worker 1 communication with worker 3',
+  5: 'create worker group on worker 1, 2',
 };
 
 let worker_ready_left = Object.keys(worker_indexs).length;
