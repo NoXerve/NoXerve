@@ -125,7 +125,9 @@ initialize_interfaces(()=> {
           if (error) console.log('[Worker ' + my_worker_id + '] importMyWorkerAuthenticityData error.', error);
           Worker.importWorkerPeersSettings(worker_peers_settings, (error) => {
             if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
-            let worker_group;
+            let the_worker_group;
+            let the_worker_group_var;
+
             Worker.start((error)=> {
               if(error) console.log('[Worker ' + my_worker_id + '] "worker start" error. ', error);
               Worker.on('worker-peer-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
@@ -208,8 +210,24 @@ initialize_interfaces(()=> {
               });
               process.on('message', (msg)=> {
                 if(msg === '5') {
-                  Worker.createWorkerGroup('test_group', [1, 2], (error, worker_group) => {
+                  Worker.createWorkerGroup('test_group', [2, 1], (error, worker_group) => {
                     if (error) console.log('[Worker ' + my_worker_id + '] createWorkerGroup error.', error);
+                    the_worker_group = worker_group;
+                    worker_group.createVariable('the_var', (error, variable) => {
+                      if (error) console.log('[Worker ' + my_worker_id + '] createVariable error.', error);
+                      the_worker_group_var = variable;
+                    });
+                  });
+                }
+                else if(msg === '6') {
+                  the_worker_group_var.updateValue('[Worker ' + my_worker_id + ']', (error) => {
+                    if (error) console.log('[Worker ' + my_worker_id + '] update error.', error);
+                  });
+                }
+                else if(msg === '9') {
+                  the_worker_group_var.getValue((error, value) => {
+                    if (error) console.log('[Worker ' + my_worker_id + '] getValue error.', error);
+                    console.log('[Worker ' + my_worker_id + '] getValue :', value);
                   });
                 }
               });

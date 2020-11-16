@@ -126,7 +126,8 @@ initialize_interfaces(()=> {
             if (error) console.log('[Worker ' + my_worker_id + '] importWorkerPeersSettings error.', error);
             Worker.start((error)=> {
               if(error) console.log('[Worker ' + my_worker_id + '] "worker start" error. ', error);
-              let worker_group;
+              let the_worker_group;
+              let the_worker_group_var;
 
               Worker.on('worker-peer-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
                 console.log('[Worker ' + my_worker_id + '] "worker-peer-authentication" event. ', worker_id, worker_authenticity_information);
@@ -237,8 +238,24 @@ initialize_interfaces(()=> {
                   });
                 }
                 else if(msg === '5') {
-                  Worker.createWorkerGroup('test_group', [1, 2], (error, worker_group) => {
+                  Worker.createWorkerGroup('test_group', [2, 1], (error, worker_group) => {
                     if (error) console.log('[Worker ' + my_worker_id + '] createWorkerGroup error.', error);
+                    the_worker_group = worker_group;
+                    worker_group.createVariable('the_var', (error, variable) => {
+                      if (error) console.log('[Worker ' + my_worker_id + '] createVariable error.', error);
+                      the_worker_group_var = variable;
+                    });
+                  });
+                }
+                else if(msg === '7') {
+                  the_worker_group_var.getValue((error, value) => {
+                    if (error) console.log('[Worker ' + my_worker_id + '] getValue error.', error);
+                    console.log('[Worker ' + my_worker_id + '] getValue :', value);
+                  });
+                }
+                else if(msg === '8') {
+                  the_worker_group_var.updateValue('[Worker ' + my_worker_id + ']', (error) => {
+                    if (error) console.log('[Worker ' + my_worker_id + '] update error.', error);
                   });
                 }
               });

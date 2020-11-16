@@ -150,7 +150,7 @@ Variable.prototype._ProtocolCodes = {
 }
 
 // [Flag]
-Variable.prototype.update = function(variable_value_nsdt, callback) {
+Variable.prototype.updateValue = function(variable_value_nsdt, callback) {
   if(this._state_int === 0) {
     this._state_int = 2;
     this._channel.request(this._on_duty_group_peer_id, Buf.concat([
@@ -165,6 +165,7 @@ Variable.prototype.update = function(variable_value_nsdt, callback) {
         this._variable_value_nsdt = variable_value_nsdt;
         this._operation_iterations_count += 1;
         this._state_int = 0;
+        console.log(this._on_duty_group_peer_id, this._state_int);
         callback(false);
       }
       else {
@@ -364,7 +365,7 @@ Variable.prototype.start = function(callback) {
                   if(group_peer_id === this._on_duty_group_peer_id) {
                     const target_group_peer_id = Buf.decodeUInt32BE(synchronize_message_bytes.slice(1, 5));
                     const variable_value_nsdt = this._nsdt_embedded_protocol_decode(target_group_peer_id, synchronize_message_bytes.slice(5));
-                    // Change it to updating state.
+                    // Change it to updating state
                     this._state_int = 1;
                     synchronize_acknowledgment(this._worker_global_protocol_codes.accept, (synchronize_acknowledgment_error, acknowledge_message_bytes) => {
                       if(synchronize_acknowledgment_error) {
@@ -372,10 +373,11 @@ Variable.prototype.start = function(callback) {
                       }
                       else if (acknowledge_message_bytes[0] === this._worker_global_protocol_codes.accept[0]) {
                         // Prevent overwrite the peer that request update.
-                        if(this._on_duty_group_peer_id !== this._my_group_peer_id) {
+                        if(target_group_peer_id !== this._my_group_peer_id) {
                           this._variable_value_nsdt = variable_value_nsdt;
                           this._on_duty_group_peer_id = target_group_peer_id;
                           this._operation_iterations_count += 1;
+                          console.log(target_group_peer_id, variable_value_nsdt);
                           // Change it to ready state.
                           this._state_int = 0;
                         }

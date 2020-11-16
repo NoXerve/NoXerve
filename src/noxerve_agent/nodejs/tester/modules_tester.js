@@ -387,13 +387,13 @@ Node2.start(() => {
               worker_group.createVariable('var 1', (error, variable) => {
                 variable.getValue((error, value) => {
                   log('[Worker module: Variable] getValue:', error, value);
-                  variable.update(1, (error) => {
+                  variable.updateValue(1, (error) => {
                     variable.getValue((error, value) => {
                       log('[Worker module: Variable] getValue:', error, value);
-                      variable.update(3, (error) => {
+                      variable.updateValue(3, (error) => {
                         variable.getValue((error, value) => {
                           log('[Worker module: Variable] getValue:', error, value);
-                          variable.update(5, (error) => {
+                          variable.updateValue(5, (error) => {
                             variable.getValue((error, value) => {
                               log('[Worker module: Variable] getValue:', error, value);
                               finish('worker_group_variable_update');

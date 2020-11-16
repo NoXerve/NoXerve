@@ -30,6 +30,10 @@ const test_indexs = {
   3: 'leave worker 3',
   4: 'worker 1 communication with worker 3',
   5: 'create worker group on worker 1, 2',
+  6: 'update variable value from worker 2',
+  7: 'get variable value from worker 1',
+  8: 'update variable value from worker 1',
+  9: 'get variable value from worker 2',
 };
 
 let worker_ready_left = Object.keys(worker_indexs).length;
