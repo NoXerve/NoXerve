@@ -210,17 +210,21 @@ initialize_interfaces(()=> {
               });
               process.on('message', (msg)=> {
                 if(msg === '5') {
-                  Worker.createWorkerGroup('test_group', [2, 1], (error, worker_group) => {
-                    if (error) console.log('[Worker ' + my_worker_id + '] createWorkerGroup error.', error);
-                    the_worker_group = worker_group;
-                    worker_group.createVariable('the_var', (error, variable) => {
-                      if (error) console.log('[Worker ' + my_worker_id + '] createVariable error.', error);
-                      variable.on('update', (group_peer_id, value)=> {
-                        console.log('[Worker ' + my_worker_id + '] Variable update event (group_peer_id/value):', group_peer_id, value);
+                  const delay = () => {
+                    Worker.createWorkerGroup('test_group', [2, 1], (error, worker_group) => {
+                      if (error) console.log('[Worker ' + my_worker_id + '] createWorkerGroup error.', error);
+                      the_worker_group = worker_group;
+                      worker_group.createVariable('the_var', (error, variable) => {
+                        if (error) console.log('[Worker ' + my_worker_id + '] createVariable error.', error);
+                        variable.on('update', (group_peer_id, value)=> {
+                          console.log('[Worker ' + my_worker_id + '] Variable update event (group_peer_id/value):', group_peer_id, value);
+                        });
+                        the_worker_group_var = variable;
                       });
-                      the_worker_group_var = variable;
                     });
-                  });
+                  };
+                  // Test delay.
+                  setTimeout(delay, 500);
                 }
                 else if(msg === '6') {
                   the_worker_group_var.updateValue('<Worker ' + my_worker_id + '> '+Math.random(), (error) => {

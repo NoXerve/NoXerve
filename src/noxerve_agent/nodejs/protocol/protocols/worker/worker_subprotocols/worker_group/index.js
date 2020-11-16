@@ -153,7 +153,7 @@ WorkerGroupProtocol.prototype.start = function(callback) {
 
         const synchronize_acknowledgment_handler = (synchronize_acknowledgment_message_bytes, acknowledge) => {
           if(synchronize_acknowledgment_message_bytes[0] !== this._worker_global_protocol_codes.accept[0]) {
-            worker_group_create_request_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('WorkerGroupProtocol create tunnel error. '));
+            create_tunnel_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('WorkerGroupProtocol create tunnel error. '));
             acknowledge(false);
             return;
           }

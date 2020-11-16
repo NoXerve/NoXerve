@@ -206,6 +206,10 @@ WorkerGroup.prototype._setupTunnel = function(group_peer_id, tunnel) {
   const to_be_sent_list = this._group_peer_tunnel_dict[group_peer_id].to_be_sent_list;
   // Clear to be sent list.
   this._group_peer_tunnel_dict[group_peer_id].to_be_sent_list = [];
+
+  // Change status.
+  this._group_peer_tunnel_dict[group_peer_id].status = 2;
+
   to_be_sent_list.forEach((to_be_sent_informations) => {
     const _group_peer_id = to_be_sent_informations[0];
     const _data_bytes = to_be_sent_informations[1];
@@ -213,12 +217,13 @@ WorkerGroup.prototype._setupTunnel = function(group_peer_id, tunnel) {
     this._sendByGroupPeerId(_group_peer_id, _data_bytes, _callback);
   });
 
-  // Change status.
-  this._group_peer_tunnel_dict[group_peer_id].status = 2;
+
 }
 
 // [Flag]
 WorkerGroup.prototype._emitTunnelCreation = function(group_peer_id) {
+  // Change status to creating.
+  this._group_peer_tunnel_dict[group_peer_id].status = 1;
   this._create_tunnel(group_peer_id, (error, tunnel)=> {
     if(error) {
       // Clear to be sent list
@@ -236,8 +241,7 @@ WorkerGroup.prototype._emitTunnelCreation = function(group_peer_id) {
       this._setupTunnel(group_peer_id, tunnel);
     }
   });
-  // Change status to creating.
-  this._group_peer_tunnel_dict[group_peer_id].status = 1;
+
 };
 
 // // [Flag]
@@ -289,41 +293,41 @@ WorkerGroup.prototype._createChannel = function(channel_type_code_int, channel_i
 // [Flag]
 WorkerGroup.prototype.start = function(callback) {
 
-  this._worker_group_private_affair_channel = new Channel({
-    send_by_group_peer_id: (group_peer_id, data_bytes, callback) => {
-    },
-    register_on_data: (on_data_listener) => {
-      this._worker_group_private_affair_channel_on_data_listener = on_data_listener;
-    },
-    unregister_on_data: ()=> {
-      this._worker_group_private_affair_channel_on_data_listener = null;
-    },
-    return_my_group_peer_id: () => {
-      return this._my_group_peer_id;
-    },
-    return_group_peer_id_list: () => {
-      return this._group_peer_id_list;
-    },
-    group_peers_count: this._group_peers_count
-  });
-
-  this._worker_group_public_affair_channel = new Channel({
-    send_by_group_peer_id: (group_peer_id, data_bytes, callback) => {
-    },
-    register_on_data: (on_data_listener) => {
-      this._worker_group_public_affair_channel_on_data_listener = on_data_listener;
-    },
-    unregister_on_data: ()=> {
-      this._worker_group_public_affair_channel_on_data_listener = null;
-    },
-    return_my_group_peer_id: () => {
-      return this._my_group_peer_id;
-    },
-    return_group_peer_id_list: () => {
-      return this._group_peer_id_list;
-    },
-    group_peers_count: this._group_peers_count
-  });
+  // this._worker_group_private_affair_channel = new Channel({
+  //   send_by_group_peer_id: (group_peer_id, data_bytes, callback) => {
+  //   },
+  //   register_on_data: (on_data_listener) => {
+  //     this._worker_group_private_affair_channel_on_data_listener = on_data_listener;
+  //   },
+  //   unregister_on_data: ()=> {
+  //     this._worker_group_private_affair_channel_on_data_listener = null;
+  //   },
+  //   return_my_group_peer_id: () => {
+  //     return this._my_group_peer_id;
+  //   },
+  //   return_group_peer_id_list: () => {
+  //     return this._group_peer_id_list;
+  //   },
+  //   group_peers_count: this._group_peers_count
+  // });
+  //
+  // this._worker_group_public_affair_channel = new Channel({
+  //   send_by_group_peer_id: (group_peer_id, data_bytes, callback) => {
+  //   },
+  //   register_on_data: (on_data_listener) => {
+  //     this._worker_group_public_affair_channel_on_data_listener = on_data_listener;
+  //   },
+  //   unregister_on_data: ()=> {
+  //     this._worker_group_public_affair_channel_on_data_listener = null;
+  //   },
+  //   return_my_group_peer_id: () => {
+  //     return this._my_group_peer_id;
+  //   },
+  //   return_group_peer_id_list: () => {
+  //     return this._group_peer_id_list;
+  //   },
+  //   group_peers_count: this._group_peers_count
+  // });
 
   // Initiallize this._group_peer_tunnel_dict.
   for(let i = 0; i < this._group_peers_count; i++) {
