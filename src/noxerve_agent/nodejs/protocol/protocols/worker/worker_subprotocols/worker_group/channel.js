@@ -497,11 +497,11 @@ Channel.prototype.synchronize = function(group_peer_id, synchronize_data_bytes, 
 
 // [Flag]
 Channel.prototype.multicastSynchronize = function(group_peer_id_list, synchronize_data_bytes, a_synchronize_acknowledgment_handler, synchronize_acknowledgment_finished_listener, acknowledge_finished_listener) {
-
   let synchronize_error_dict = {};
   let synchronize_acknowledgment_status_dict = {};
   let finished_synchronize_group_peer_acknowledge_dict = {};
   let acknowledge_error_dict = {};
+  let finished_acknowledge_group_peer_id_list = [];
 
   let synchronize_acknowledgment_status_count = 0;
 
@@ -521,11 +521,14 @@ Channel.prototype.multicastSynchronize = function(group_peer_id_list, synchroniz
             if(error) {
               acknowledge_error_dict[group_peer_id] = error;
             }
+            else {
+              finished_acknowledge_group_peer_id_list.push(group_peer_id);
+            }
             if(acknowledge_count === finished_synchronize_group_peer_count) {
               if(Object.keys(acknowledge_error_dict).length === 0) {
                 acknowledge_error_dict = false;
               }
-              acknowledge_finished_listener(acknowledge_error_dict);
+              acknowledge_finished_listener(acknowledge_error_dict, finished_acknowledge_group_peer_id_list);
             }
           });
         };

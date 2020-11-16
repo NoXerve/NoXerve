@@ -446,8 +446,9 @@ Node2.start(() => {
                     finished_synchronize_group_peer_acknowledge_dict[key](Buffer.from([parseInt(key)+10]));
                     log('[Worker module: Channel]', synchronize_acknowledgment_status_dict[key]);
                   }
-                }, (error) => {
+                }, (error, finished_acknowledge_group_peer_id_list) => {
                   if(error) log('[Worker module: Channel] acknowledge error(broadcast)', error);
+                  log('[Worker module: Channel] broadcastSynchronize results:', error, finished_acknowledge_group_peer_id_list);
                   finish('worker_group_channel_braodcast_synchronize');
                 });
               });

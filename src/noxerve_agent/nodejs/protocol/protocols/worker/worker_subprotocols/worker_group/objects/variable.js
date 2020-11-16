@@ -248,11 +248,14 @@ Variable.prototype.start = function(callback) {
                   const target_group_peer_id_4bytes = Buf.encodeUInt32BE(group_peer_id);
                   // const variable_value_nsdt = this._nsdt_embedded_protocol_decode(data_bytes.slice(1));
                   if(this._on_duty_group_peer_id === this._my_group_peer_id && this._state_int === 0) {
-                    
-                    const a_synchronize_acknowledgment_handler = (group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, comfirm_synchronize_error_finish_status, acknowledge) => {
+
+                    const a_synchronize_acknowledgment_handler = (group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, register_synchronize_acknowledgment_status) => {
 
                     };
-                    const finished_listener = (error, finished_synchronize_group_peer_id_list, finished_acknowledge_group_peer_id_list) => {
+                    const synchronize_acknowledgment_finished_listener = (error, finished_synchronize_group_peer_acknowledge_dict, synchronize_acknowledgment_status_dict) => {
+
+                    };
+                    const acknowledge_finished_listener = (error, finished_synchronize_group_peer_id_list) => {
 
                     };
 
@@ -260,7 +263,7 @@ Variable.prototype.start = function(callback) {
                       this._ProtocolCodes.update_handshake,
                       target_group_peer_id_4bytes,
                       data_bytes.slice(1)
-                    ]), a_synchronize_acknowledgment_handler, finished_listener);
+                    ]), a_synchronize_acknowledgment_handler, synchronize_acknowledgment_finished_listener, acknowledge_finished_listener);
                   }
                   else {
                     response(this._worker_global_protocol_codes.reject);
