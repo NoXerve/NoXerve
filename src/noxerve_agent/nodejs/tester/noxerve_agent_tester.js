@@ -83,11 +83,11 @@ NoXerveAgent.Worker.importStaticGlobalRandomSeed(static_global_random_seed_4096b
 
         NoXerveAgent.Worker.importWorkerPeersSettings(worker_peers_settings, (error)=> {
           if (error) console.log('[Worker module] importWorkerPeersSettings error.', error);
-          NoXerveAgent.Worker.on('worker-peer-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
+          NoXerveAgent.Worker.on('worker-peer-authenticate', (worker_id, worker_authenticity_information, is_valid)=> {
             if(worker_id === 0) {
               // Initailize new worker.
             }
-            console.log('[Worker module] "worker-peer-authentication" event. ', worker_id, worker_authenticity_information);
+            console.log('[Worker module] "worker-peer-authenticate" event. ', worker_id, worker_authenticity_information);
             is_valid(true);
           });
 

@@ -3,13 +3,15 @@
 
   "service_display_name": "NoxServiceSet",
 
-  "service_id": "org.noxerve.noxserviceset",
+  "service_id": "org.noxerve.fundamental.noxserviceset",
 
-  "service_description": "NoxServiceSet description.",
+  "service_description": "NoxServiceSet is a service package system for noxerve(noxerve_agent + noxservicesystem_service + noxerve_fundamental_services).",
 
   "service_version": "0.0.0",
 
+  "is_system_space_service": true,
+
   "supported_plarforms": {
-    "nodejs": "0.0.0"
+    "nodejs_unix": "0.0.0"
   }
 }

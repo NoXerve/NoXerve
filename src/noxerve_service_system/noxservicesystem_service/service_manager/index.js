@@ -11,10 +11,18 @@
  * @module ServiceManager
  */
 
+ const Tar = require('tar');
+ const Zlib = require('zlib');
+
 function ServiceManager(settings) {
 
   this._worker_module = settings.worker_module;
-  
+
+}
+
+ServiceManager.prototype.installService = function(service_package_tar_gz_readable_stream, callback) {
+  service_package_tar_gz_readable_stream.pipe();
+  // register_service_package_tar_gz_readable_stream();
 }
 
 ServiceManager.prototype.startService = function() {

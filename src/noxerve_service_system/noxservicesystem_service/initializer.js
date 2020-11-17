@@ -69,7 +69,7 @@ module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_param
 }
 
 module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_parameters, callback) {
-  noxerve_agent.Worker.on('worker-peer-authentication', (worker_id, worker_authenticity_information, is_valid) => {
+  noxerve_agent.Worker.on('worker-peer-authenticate', (worker_id, worker_authenticity_information, is_valid) => {
     // if(worker_id === 0) {
     //   // [Flag]
     //   is_valid(false);

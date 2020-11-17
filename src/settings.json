@@ -36,8 +36,6 @@
     }}
   ],
 
-  "worker_authentication_token": "please_change_this_text_for_security",
-
   "rsa_2048_key_pair_path": {
     "public": "./public.pem",
     "private": "./private.pem"
@@ -48,7 +46,11 @@
     "workers_files_path": "./workers_files"
   },
 
-  "noxservicesystem_system_space_settings": {
+  "available_platforms": [
+    "nodejs_unix"
+  ],
+
+  "system_space_settings": {
     "services": {
       "noxserviceset": {
 
@@ -58,7 +60,7 @@
       }
     }
   },
-  "noxservicesystem_user_space_settings": {
+  "user_space_settings": {
 
   }
 }

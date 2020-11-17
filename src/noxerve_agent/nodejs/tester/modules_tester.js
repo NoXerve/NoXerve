@@ -200,11 +200,11 @@ Node2.start(() => {
         if (error) log('[Worker module] importMyWorkerAuthenticityData error.', error);
         Worker.importWorkerPeersSettings(worker_peers_settings, (error)=> {
           if (error) log('[Worker module] importWorkerPeersSettings error.', error);
-          Worker.on('worker-peer-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
+          Worker.on('worker-peer-authenticate', (worker_id, worker_authenticity_information, is_valid)=> {
             if(worker_id === 0) {
               // Initailize new worker.
             }
-            log('[Worker module] "worker-peer-authentication" event. ', worker_id, worker_authenticity_information);
+            log('[Worker module] "worker-peer-authenticate" event. ', worker_id, worker_authenticity_information);
             is_valid(true);
           });
           Worker.start((error) => {
@@ -505,8 +505,8 @@ Node2.start(() => {
         log('[Service module] Service function called.');
         log('[Service module] Parameters value: ', service_function_parameter);
 
-        const callable_struture = NSDT.createCallableStructure({haha: (callback)=> {
-          log('[NSDT module] NSDT haha called.');
+        const callable_struture = NSDT.createCallableStructure({haha: (callback, ...params)=> {
+          log('[NSDT module] NSDT haha called.', params);
           const callable_struture_2 = NSDT.createCallableStructure({nah: ()=> {}});
           callback(callable_struture, callable_struture_2, 321);
           callable_struture.close();
@@ -574,7 +574,7 @@ Node2.start(() => {
             data.call('haha', (...params) => {
               log('[NSDT module] haha callback params, ', params);
               finish('nsdt_test');
-            });
+            }, 123);
 
           }
 

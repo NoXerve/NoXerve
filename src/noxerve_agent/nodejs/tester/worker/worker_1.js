@@ -129,8 +129,8 @@ initialize_interfaces(()=> {
               let the_worker_group;
               let the_worker_group_var;
 
-              Worker.on('worker-peer-authentication', (worker_id, worker_authenticity_information, is_valid)=> {
-                console.log('[Worker ' + my_worker_id + '] "worker-peer-authentication" event. ', worker_id, worker_authenticity_information);
+              Worker.on('worker-peer-authenticate', (worker_id, worker_authenticity_information, is_valid)=> {
+                console.log('[Worker ' + my_worker_id + '] "worker-peer-authenticate" event. ', worker_id, worker_authenticity_information);
                 if(worker_id === 0 && worker_authenticity_information === 'join_me_auth') {
                   // Initailize new worker.
                   is_valid(true);

@@ -716,7 +716,7 @@ WorkerProtocol.prototype._validateAuthenticityBytes = function(remote_authentici
     Utils.areBuffersEqual(this._static_global_random_seed_checksum_4bytes, remote_worker_peers_static_global_random_seed_checksum_4bytes)
   ) {
     // Emit worker authentication from worker module.
-    this._worker_module.emitEventListener('worker-peer-authentication', remote_worker_peer_worker_id, remote_worker_peer_authenticity_data, (is_authenticity_valid) => {
+    this._worker_module.emitEventListener('worker-peer-authenticate', remote_worker_peer_worker_id, remote_worker_peer_authenticity_data, (is_authenticity_valid) => {
       try {
         if (is_authenticity_valid) {
           callback(false, true, remote_worker_peer_worker_id);
@@ -922,21 +922,21 @@ WorkerProtocol.prototype.start = function(callback) {
 
   });
 
-  this._worker_module.on('me-join', (remote_worker_connectors_settings, my_worker_connectors_settings, my_worker_detail, my_worker_authentication_data, me_join_callback) => {
+  this._worker_module.on('me-join', (remote_worker_connectors_settings, my_worker_connectors_settings, my_worker_detail, my_worker_authenticity_data, me_join_callback) => {
     if (this._my_worker_id === 0) {
       // [Flag] Check field.
       // Shuffle for clientwise loadbalancing.
       const shuffled_connectors_settings_list = Utils.shuffleArray(remote_worker_connectors_settings);
 
-      const my_worker_authentication_data_bytes = this._nsdt_embedded_protocol.encode(my_worker_authentication_data);
+      const my_worker_authenticity_data_bytes = this._nsdt_embedded_protocol.encode(my_worker_authenticity_data);
       const my_worker_connectors_settings_bytes = this._nsdt_embedded_protocol.encode(my_worker_connectors_settings);
       const my_worker_detail_bytes = this._nsdt_embedded_protocol.encode(my_worker_detail);
 
       const synchronize_message_bytes = Buf.concat([
         this._ProtocolCodes.worker_affairs,
         this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
-        Buf.encodeUInt32BE(my_worker_authentication_data_bytes.length),
-        my_worker_authentication_data_bytes,
+        Buf.encodeUInt32BE(my_worker_authenticity_data_bytes.length),
+        my_worker_authenticity_data_bytes,
         Buf.encodeUInt32BE(my_worker_connectors_settings_bytes.length),
         my_worker_connectors_settings_bytes,
         my_worker_detail_bytes
@@ -1131,10 +1131,10 @@ WorkerProtocol.prototype.SynchronizeListener = function(synchronize_message_byte
       }
 
       const new_worker_authentication_bytes_length = Buf.decodeUInt32BE(synchronize_message_bytes.slice(2, 6));
-      const new_worker_authentication_data = this._nsdt_embedded_protocol.decode(synchronize_message_bytes.slice(6, 6 + new_worker_authentication_bytes_length));
+      const new_worker_authenticity_data = this._nsdt_embedded_protocol.decode(synchronize_message_bytes.slice(6, 6 + new_worker_authentication_bytes_length));
       try {
         // Emit worker authentication from worker module.
-        this._worker_module.emitEventListener('worker-peer-authentication', 0, new_worker_authentication_data, (is_authenticity_valid) => {
+        this._worker_module.emitEventListener('worker-peer-authenticate', 0, new_worker_authenticity_data, (is_authenticity_valid) => {
           if (is_authenticity_valid) {
             // Broadcast worker join.
             const bytes_offset_length = 6 + new_worker_authentication_bytes_length;

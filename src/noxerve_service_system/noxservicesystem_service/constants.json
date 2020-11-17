@@ -3,6 +3,9 @@
   "noxservicesystem_worker_peers_settings_path": "./worker_peers_settings.json",
   "noxservicesystem_my_worker_settings_path": "./my_worker_settings.json",
   "noxservicesystem_static_global_random_seed_4096bytes_path": "./static_global_random_seed.bin",
+  "noxservicesystem_available_platform_list": [
+    "nodejs_unix"
+  ],
   "workers_directory_path": "./workers",
   "services_directory_path": "./services"
 }
