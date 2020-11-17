@@ -112,7 +112,14 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
 
     });
     this._noxerve_agent.Service.onActivityCreate('cli', (parameter, service_of_activity)=> {
-
+      service_of_activity.define('getAddNewWorkerCode', (service_function_parameter, return_data, yield_data) => {
+        Initializer.getAddNewWorkerCode((error, add_new_worker_code) => {
+          return_data({
+            error: error,
+            add_new_worker_code: add_new_worker_code
+          });
+        });
+      });
     });
     // console.log('123');
     next(false);

@@ -10,10 +10,6 @@
 process.title = 'NoxServiceSystem Cli';
 
 const readline = require("readline");
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
 
 const cli_message_codes = {
   start: 0x01
@@ -25,6 +21,11 @@ process.on('message', (message) => {
 
   if(message_code === cli_message_codes.start) {
     try {
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+
       console.log('CLI(PID: '+process.pid+') connecting to NoxServiceSystem service...');
       let noxerve_agent_settings = {
         secured_node: data.settings.secured_node
@@ -33,13 +34,29 @@ process.on('message', (message) => {
       noxerve_agent.start((error)=> {
         if(error) throw error;
         console.log('CLI(PID: '+process.pid+') started NoXerveAgent.');
-        noxerve_agent.Activity.createActivity(data.settings.connectors_settings, 'default', null, (error, noxservicesystem_service) => {
+        noxerve_agent.Activity.createActivity(data.settings.connectors_settings, 'cli', null, (error, noxservicesystem_service) => {
           if(error) console.log(error);
           else {
+            const cli_cycle = () => {
+              rl.question('(NoxServiceSystem CLI) >>> ', (answer)=> {
+                // console.log('CLI has not completed yet.', answer);
+                if(answer === 'help') {
+                  console.log(
+                    ' help           --- This menu.\n'+
+                    ' addworker      --- Add worker for NSSystem service by "AddNewWorkerCode".\n'
+                  );
+                  cli_cycle();
+                } else if(answer === 'addworker') {
+                  noxservicesystem_service.call('getAddNewWorkerCode', null, (err, result) => {
+                    console.log('Paste below "AddNewWorkerCode" during the new worker joining setup.');
+                    console.log(result.add_new_worker_code);
+                    cli_cycle();
+                  });
+                }
+              });
+            };
             console.log('CLI(PID: '+process.pid+') connected to NoxServiceSystem service.');
-            rl.question('(NoxServiceSystem CLI) >>> ', (answer)=> {
-              console.log('CLI has not completed yet.', answer);
-            });
+            cli_cycle();
           }
         });
       });

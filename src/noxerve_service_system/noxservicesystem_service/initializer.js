@@ -14,7 +14,25 @@ const Constants = require('./constants.json');
 
 module.exports.isMyWorkerFilesInitailized = function() {
   return FS.existsSync(Constants.noxservicesystem_my_worker_initailized_locker_path);
-}
+};
+
+module.exports.getAddNewWorkerCode = function(callback) {
+  const my_worker_settings = JSON.parse(FS.readFileSync(Constants.noxservicesystem_my_worker_settings_path));
+  const worker_authentication_token_base64 = my_worker_settings.worker_authentication_token_base64;
+  const connectors_settings_json_base64 = Buffer.from(JSON.stringify(my_worker_settings.connectors_settings)).toString('base64');
+  callback(false, my_worker_settings.worker_id+'.'+connectors_settings_json_base64+'.'+worker_authentication_token_base64);
+};
+
+const decodeAddNewWorkerCode = function(add_new_worker_code) {
+  let result = [null, null, null];
+  const splited = add_new_worker_code.split('.');
+  result[0] = parseInt(splited[0]);
+  result[1] = JSON.parse(Buffer.from(splited[1], 'base64').toString('utf8'));
+  result[2] = splited[2];
+  return result;
+};
+
+module.exports.decodeAddNewWorkerCode = decodeAddNewWorkerCode;
 
 module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_parameters, callback) {
   const worker_peers_settings_initialize = (next) => {
@@ -28,9 +46,9 @@ module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_param
 
       console.log('Has not set up worker peer settings.');
       rl.question('Do you want to:\n 1. Setup as the first worker.\n 2. Join other worker peers? \nInput a number: \n', (answer) => {
-        rl.close();
-        rl.removeAllListeners();
         if (answer === '1') {
+          rl.close();
+          rl.removeAllListeners();
           FS.writeFileSync(Constants.noxservicesystem_static_global_random_seed_4096bytes_path, Crypto.randomBytes(4096));
           console.log('Created static global random seed file at "' + Constants.noxservicesystem_static_global_random_seed_4096bytes_path + '".');
 
@@ -53,7 +71,39 @@ module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_param
           console.log('Created worker peers settings file at "' + Constants.noxservicesystem_worker_peers_settings_path + '".');
           next(false);
         } else if (answer === '2') {
+          rl.question('Please enter "AddNewWorkerCode" obtain from other already joined worker: \n', (add_new_worker_code) => {
+            const decode_result = decodeAddNewWorkerCode(add_new_worker_code);
+            const remote_worker_id =  decode_result[0];
+            const remote_worker_interfaces_for_joining_me =  decode_result[1];
+            const worker_authentication_token_base64 =  decode_result[2];
+            noxerve_agent.Worker.joinMe(remote_worker_interfaces_for_joining_me, preloader_parameters.settings.connectors_settings,
+              {
+                name: 'A NoxServiceSystem service worker joined by worker with worker_id "'+remote_worker_id+'".'
+              }, {
+                worker_authentication_token: worker_authentication_token_base64
+              },
+              (error, my_worker_id, worker_peers_settings, static_global_random_seed_4096bytes) => {
+                if(error) next(error);
+                else {
+                  rl.close();
+                  rl.removeAllListeners();
+                  FS.writeFileSync(Constants.noxservicesystem_static_global_random_seed_4096bytes_path, static_global_random_seed_4096bytes);
+                  console.log('Created static global random seed file at "' + Constants.noxservicesystem_static_global_random_seed_4096bytes_path + '".');
 
+                  FS.writeFileSync(Constants.noxservicesystem_my_worker_settings_path, JSON.stringify({
+                    worker_id: my_worker_id,
+                    worker_authentication_token_base64: worker_authentication_token_base64,
+                    interfaces: preloader_parameters.settings.interfaces,
+                    connectors_settings: preloader_parameters.settings.connectors_settings,
+                  }, null, 2));
+                  console.log('Created my worker settings file at "' + Constants.noxservicesystem_my_worker_settings_path + '".');
+
+                  FS.writeFileSync(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2));
+                  console.log('Created worker peers settings file at "' + Constants.noxservicesystem_worker_peers_settings_path + '".');
+                  next(false);
+                }
+              });
+          });
         }
       });
     } else {
@@ -68,7 +118,7 @@ module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_param
       callback(false);
     }
   });
-}
+};
 
 module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_parameters, callback) {
 
@@ -85,13 +135,9 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
 
   noxerve_agent.Worker.on('worker-peer-authenticate', (worker_id, worker_authenticity_information, is_valid) => {
     // if(worker_id === 0) {
-    //   // [Flag]
-    //   is_valid(false);
+    // //   // [Flag]
+    // //   is_valid(false);
     // }
-    // else {
-    //
-    // }
-
     if (worker_authenticity_information.worker_authentication_token === worker_authentication_token_base64) {
       is_valid(true);
     } else {
@@ -201,4 +247,4 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
       });
     }
   });
-}
+};

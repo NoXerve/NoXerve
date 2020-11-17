@@ -75,9 +75,14 @@ Launcher.prototype.launch = function() {
     // Close noxservicesystem service.
     process.on('SIGTERM', () => {
       start_noxservicesystem_service_subprocess_to_be_relaunched = false;
-      subprocess.send({
-        message_code: message_codes.terminate_noxservicesystem_service
-      });
+      try{
+        subprocess.send({
+          message_code: message_codes.terminate_noxservicesystem_service
+        });
+      }
+      catch(e) {
+
+      }
       process.exit();
     });
 
