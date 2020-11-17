@@ -155,8 +155,12 @@ Launcher.prototype.launch = function() {
       start_noxservicesystem_service_subprocess_retried_counts++;
     };
 
+    const on_cli_process_exit = () => {
+
+    };
+
     subprocess.on('exit', on_process_exit);
-    cli_subprocess.on('exit', on_process_exit);
+    cli_subprocess.on('exit', on_cli_process_exit);
 
     // Start noxservicesystem service.
     subprocess.send({

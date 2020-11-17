@@ -29,12 +29,14 @@ module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_param
       console.log('Has not set up worker peer settings.');
       rl.question('Do you want to:\n 1. Setup as the first worker.\n 2. Join other worker peers? \nInput a number: \n', (answer) => {
         rl.close();
+        rl.removeAllListeners();
         if (answer === '1') {
           FS.writeFileSync(Constants.noxservicesystem_static_global_random_seed_4096bytes_path, Crypto.randomBytes(4096));
           console.log('Created static global random seed file at "' + Constants.noxservicesystem_static_global_random_seed_4096bytes_path + '".');
 
           FS.writeFileSync(Constants.noxservicesystem_my_worker_settings_path, JSON.stringify({
             worker_id: 1,
+            worker_authentication_token_base64: Crypto.randomBytes(64).toString('base64'),
             interfaces: preloader_parameters.settings.interfaces,
             connectors_settings: preloader_parameters.settings.connectors_settings,
           }, null, 2));
@@ -69,6 +71,18 @@ module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_param
 }
 
 module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_parameters, callback) {
+
+  const worker_peers_settings = JSON.parse(FS.readFileSync(Constants.noxservicesystem_worker_peers_settings_path));
+  const static_global_random_seed_4096bytes = FS.readFileSync(Constants.noxservicesystem_static_global_random_seed_4096bytes_path);
+  const preloader_parameters_settings_interfaces = preloader_parameters.settings.interfaces;
+  const preloader_parameters_settings_connectors_settings = preloader_parameters.settings.connectors_settings;
+  const my_worker_settings = JSON.parse(FS.readFileSync(Constants.noxservicesystem_my_worker_settings_path));
+  const my_worker_files_interfaces = my_worker_settings.interfaces;
+  const worker_authentication_token_base64 =  my_worker_settings.worker_authentication_token_base64;
+  const my_worker_files_connectors_settings = my_worker_settings.connectors_settings;
+  const is_interfaces_changed = !(JSON.stringify(preloader_parameters_settings_interfaces) === JSON.stringify(my_worker_files_interfaces));
+  const is_connectors_settings_changed = !(JSON.stringify(preloader_parameters_settings_connectors_settings) === JSON.stringify(my_worker_files_connectors_settings));
+
   noxerve_agent.Worker.on('worker-peer-authenticate', (worker_id, worker_authenticity_information, is_valid) => {
     // if(worker_id === 0) {
     //   // [Flag]
@@ -78,7 +92,7 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
     //
     // }
 
-    if (worker_authenticity_information.worker_authentication_token === preloader_parameters.settings.worker_authentication_token) {
+    if (worker_authenticity_information.worker_authentication_token === worker_authentication_token_base64) {
       is_valid(true);
     } else {
       is_valid(false);
@@ -153,22 +167,11 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
     });
   });
 
-  // Check any settings updated.
-  const worker_peers_settings = JSON.parse(FS.readFileSync(Constants.noxservicesystem_worker_peers_settings_path));
-  const static_global_random_seed_4096bytes = FS.readFileSync(Constants.noxservicesystem_static_global_random_seed_4096bytes_path);
-  const preloader_parameters_settings_interfaces = preloader_parameters.settings.interfaces;
-  const preloader_parameters_settings_connectors_settings = preloader_parameters.settings.connectors_settings;
-  const my_worker_settings = JSON.parse(FS.readFileSync(Constants.noxservicesystem_my_worker_settings_path));
-  const my_worker_files_interfaces = my_worker_settings.interfaces;
-  const my_worker_files_connectors_settings = my_worker_settings.connectors_settings;
-  const is_interfaces_changed = !(JSON.stringify(preloader_parameters_settings_interfaces) === JSON.stringify(my_worker_files_interfaces));
-  const is_connectors_settings_changed = !(JSON.stringify(preloader_parameters_settings_connectors_settings) === JSON.stringify(my_worker_files_connectors_settings));
-
   noxerve_agent.Worker.importStaticGlobalRandomSeed(static_global_random_seed_4096bytes, (error) => {
     if (error) callback(error);
     else {
       noxerve_agent.Worker.importMyWorkerAuthenticityData(parseInt(my_worker_settings.worker_id), {
-        worker_authentication_token: preloader_parameters.settings.worker_authentication_token
+        worker_authentication_token: worker_authentication_token_base64
       }, (error) => {
         if (error) callback(error);
         else {

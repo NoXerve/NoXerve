@@ -47,6 +47,7 @@ process.on('message', (message) => {
   const data = message.data;
 
   if (message_code === message_codes.close_noxservicesystem_service) {
+
     let close_executed_next_execute = 0;
     const close_executed_next_execute_plus_one = () => {
       close_executed_next_execute++;
@@ -56,11 +57,16 @@ process.on('message', (message) => {
         });
       }
     };
-
-    noxservicesystem_service_instance.close(() => {
+    try {
+      noxservicesystem_service_instance.close(() => {
+        close_executed_next_execute_plus_one();
+      });
       close_executed_next_execute_plus_one();
-    });
-    close_executed_next_execute_plus_one();
+    }
+    catch(e) {
+      close_executed_next_execute_plus_one();
+      close_executed_next_execute_plus_one();
+    }
   } else if (message_code === message_codes.start_noxservicesystem_service) {
     process.chdir(data.working_directory);
     console.log('NoxServiceSystem service worker working directory:', data.working_directory);
@@ -165,12 +171,13 @@ process.on('message', (message) => {
           input: process.stdin,
           output: process.stdout,
           // Nodejs bugs interface still exists after readline even closed.
-          terminal: false
+          // terminal: false
         });
 
         console.log('Secured node is on. However, RSA 2048 key pair is not generated at "' + data.working_directory + '".');
         rl.question('Help you generate? [y/n]', (answer) => {
           rl.close();
+          rl.removeAllListeners();
           if (answer === 'y' || answer === 'Y') {
             let succeed = false;
             try {
@@ -185,7 +192,13 @@ process.on('message', (message) => {
                 message_code: message_codes.request_launcher_terminate
               });
             }
-            if (succeed) start_noxservicesystem_service();
+
+            if (succeed) {
+              process.send({
+                message_code: message_codes.request_preloader_relaunch
+              });
+            };
+
           }
           else {
             process.send({

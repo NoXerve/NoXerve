@@ -106,7 +106,7 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
 
       });
 
-      service_of_activity.define('getNSSystemAuthenticityToken', (service_function_parameter, return_data, yield_data) => {
+      service_of_activity.define('getNSSystemWorkerAuthenticityToken', (service_function_parameter, return_data, yield_data) => {
 
       });
 

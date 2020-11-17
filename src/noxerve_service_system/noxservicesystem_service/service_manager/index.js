@@ -11,7 +11,7 @@
  * @module ServiceManager
  */
 
- const Tar = require('tar');
+ // const Tar = require('tar');
  const Zlib = require('zlib');
 
 function ServiceManager(settings) {
