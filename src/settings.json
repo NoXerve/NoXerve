@@ -49,7 +49,14 @@
   },
 
   "noxservicesystem_system_space_settings": {
+    "services": {
+      "noxserviceset": {
 
+      },
+      "noxfilesystem": {
+
+      }
+    }
   },
   "noxservicesystem_user_space_settings": {
 
