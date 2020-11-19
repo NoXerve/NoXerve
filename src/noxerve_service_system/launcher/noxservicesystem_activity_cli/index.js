@@ -43,7 +43,9 @@ process.on('message', (message) => {
                 if(answer === 'help') {
                   console.log(
                     ' help           --- This menu.\n'+
-                    ' addworker      --- Add worker for NSSystem service by "AddNewWorkerCode".\n'
+                    ' addworker      --- Add worker for NSSystem service by "AddNewWorkerCode".\n'+
+                    ' stop           --- Stop this NSSystem worker.\n'+
+                    ' restart        --- Restart this NSSystem worker.\n'
                   );
                   cli_cycle();
                 } else if(answer === 'addworker') {
@@ -52,6 +54,9 @@ process.on('message', (message) => {
                     console.log(result.add_new_worker_code);
                     cli_cycle();
                   });
+                }
+                else {
+                  cli_cycle();
                 }
               });
             };

@@ -83,14 +83,21 @@ Launcher.prototype.launch = function() {
       catch(e) {
 
       }
+      cli_subprocess.kill();
       process.exit();
     });
 
     process.on('SIGINT', () => {
       start_noxservicesystem_service_subprocess_to_be_relaunched = false;
-      subprocess.send({
-        message_code: message_codes.close_noxservicesystem_service
-      });
+      try{
+        subprocess.send({
+          message_code: message_codes.close_noxservicesystem_service
+        });
+      }
+      catch(e) {
+        cli_subprocess.kill();
+        process.exit();
+      }
     });
 
     const cli_subprocess = Fork(require.resolve('./noxservicesystem_activity_cli'), {
