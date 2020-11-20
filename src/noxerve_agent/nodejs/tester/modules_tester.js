@@ -435,9 +435,9 @@ Node2.start(() => {
                   finish('worker_group_channel_request');
                 });
 
-                channel.broadcastRequest(Buffer.from([0x53]), (group_peer_id, error, response_data_bytes, comfirm_error_finish_status) => {
+                channel.broadcastRequest(Buffer.from([0x53]), (group_peer_id, error, response_data_bytes, confirm_error_finish_status) => {
                   log('[Worker module: Channel] response(broadcast): ', group_peer_id, error, response_data_bytes);
-                  comfirm_error_finish_status(false, true);
+                  confirm_error_finish_status(false, true);
                 }, (error, finished_group_peer_id_list) => {
                   log('[Worker module: Channel] broadcastRequest onfinish results: ', error, finished_group_peer_id_list);
                   finish('worker_group_channel_braodcast_request');
@@ -453,7 +453,7 @@ Node2.start(() => {
 
                 channel.broadcastSynchronize(Buffer.from([0x00]), (group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes, register_synchronize_acknowledgment_status) => {
                   log('[Worker module: Channel] synchronize_acknowledgment(broadcast): ', group_peer_id, synchronize_error, synchronize_acknowledgment_message_bytes);
-                  // comfirm_synchronize_error_finish_status(false, true);
+                  // confirm_synchronize_error_finish_status(false, true);
                   if(synchronize_error) {
                     register_synchronize_acknowledgment_status({
                       synchronize_error: synchronize_error

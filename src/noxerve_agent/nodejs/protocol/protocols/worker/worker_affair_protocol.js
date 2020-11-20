@@ -153,7 +153,7 @@ WorkerAffairProtocol.prototype._ProtocolCodes = {
   worker_affairs_worker_peer_join_broadcast: Buf.from([0x04]),
   worker_affairs_worker_peer_update_broadcast: Buf.from([0x05]),
   worker_affairs_worker_peer_leave_broadcast: Buf.from([0x06]),
-  worker_affairs_worker_peer_operation_comfirm_broadcast: Buf.from([0x07]),
+  worker_affairs_worker_peer_operation_confirm_broadcast: Buf.from([0x07]),
   worker_affairs_worker_peer_operation_cancel_broadcast: Buf.from([0x08]),
 
   accept: Buf.from([0x01]),
@@ -591,24 +591,24 @@ WorkerAffairProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = func
     broadcast_bytes
   ]);
 
-  const a_worker_response_listener = (worker_id, error, response_data_bytes, comfirm_error_finish_status) => {
+  const a_worker_response_listener = (worker_id, error, response_data_bytes, confirm_error_finish_status) => {
     if (error) {
-      comfirm_error_finish_status(error, false);
+      confirm_error_finish_status(error, false);
     } else if (response_data_bytes[0] === worker_peer_opreation_byte[0]) {
       if (response_data_bytes[1] === this._ProtocolCodes.accept[0]) {
-        comfirm_error_finish_status(error, true);
+        confirm_error_finish_status(error, true);
       } else if (Utils.areBuffersEqual(response_data_bytes.slice(1, 3), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
         // [Flag]
-        comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'), false);
+        confirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'), false);
       } else if (Utils.areBuffersEqual(response_data_bytes.slice(1, 3), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
         // [Flag]
-        comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'), false);
+        confirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'), false);
       } else if (Utils.areBuffersEqual(response_data_bytes.slice(1, 3), Buf.from([0x00, 0x02]))) {
         // [Flag]
-        comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker affairs operation collision error.'), false);
+        confirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker affairs operation collision error.'), false);
       } else {
         // [Flag]
-        comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
+        confirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
       }
     }
   };
@@ -623,22 +623,22 @@ WorkerAffairProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = func
         encoded_authenticity_bytes
       ]);
 
-      const a_worker_response_listener = (worker_id, error, response_data_bytes, comfirm_error_finish_status) => {
+      const a_worker_response_listener = (worker_id, error, response_data_bytes, confirm_error_finish_status) => {
         if (response_data_bytes[0] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
           if (response_data_bytes[1] === this._ProtocolCodes.accept[0]) {
-            comfirm_error_finish_status(false, true);
+            confirm_error_finish_status(false, true);
 
           } else if (Utils.areBuffersEqual(response_data_bytes.slice(1, 3), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
-            comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'), false);
+            confirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'), false);
 
           } else if (Utils.areBuffersEqual(response_data_bytes.slice(1, 3), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
-            comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'), false);
+            confirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'), false);
 
           } else {
-            comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
+            confirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
           }
         } else {
-          comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
+          confirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
         }
       };
 
@@ -649,29 +649,29 @@ WorkerAffairProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = func
       };
       this._multicast_request(finished_worker_id_list, worker_affairs_worker_peer_operation_cancel_broadcast_bytes, a_worker_response_listener, inner_finished_listener);
     } else {
-      // Comfirm all operation done.
-      const worker_affairs_worker_peer_join_comfirm_broadcast_bytes = Buf.concat([
-        this._ProtocolCodes.worker_affairs_worker_peer_operation_comfirm_broadcast,
+      // confirm all operation done.
+      const worker_affairs_worker_peer_join_confirm_broadcast_bytes = Buf.concat([
+        this._ProtocolCodes.worker_affairs_worker_peer_operation_confirm_broadcast,
         Buf.encodeUInt32BE(target_worker_peer_worker_id),
         encoded_authenticity_bytes
       ]);
 
-      const a_worker_response_listener = (worker_id, error, response_data_bytes, comfirm_error_finish_status) => {
-        if (response_data_bytes[0] === this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast[0]) {
+      const a_worker_response_listener = (worker_id, error, response_data_bytes, confirm_error_finish_status) => {
+        if (response_data_bytes[0] === this._ProtocolCodes.worker_affairs_worker_peer_operation_confirm_broadcast[0]) {
           if (response_data_bytes[1] === this._ProtocolCodes.accept[0]) {
-            comfirm_error_finish_status(false, true);
+            confirm_error_finish_status(false, true);
 
           } else if (Utils.areBuffersEqual(response_data_bytes.slice(1, 3), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
-            comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'), false);
+            confirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'), false);
 
           } else if (Utils.areBuffersEqual(response_data_bytes.slice(1, 3), this._ProtocolCodes.unknown_reason_reject_2_bytes)) {
-            comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'), false);
+            confirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Rejected by unknown reason.'), false);
 
           } else {
-            comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
+            confirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
           }
         } else {
-          comfirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
+          confirm_error_finish_status(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown protocol.'), false);
         }
       };
 
@@ -690,7 +690,7 @@ WorkerAffairProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = func
         }
       };
 
-      this._multicast_request(finished_worker_id_list, worker_affairs_worker_peer_join_comfirm_broadcast_bytes, a_worker_response_listener, inner_finished_listener);
+      this._multicast_request(finished_worker_id_list, worker_affairs_worker_peer_join_confirm_broadcast_bytes, a_worker_response_listener, inner_finished_listener);
     }
     callback(error);
   };
@@ -703,7 +703,7 @@ WorkerAffairProtocol.prototype._broadcastWorkerAffairsWorkerPeerOperation = func
  * @memberof module:WorkerAffairProtocol
  * @private
  */
-WorkerAffairProtocol.prototype._synchronizeWorkerAffairsWorkerPeerOperationBroadcast = function(operation_type, synchronize_message_bytes, synchronize_acknowledgment) {
+WorkerAffairProtocol.prototype._WorkerAffairsWorkerPeerOperationBroadcastSynchronizeListener = function(operation_type, synchronize_message_bytes, synchronize_acknowledgment) {
 
   const event_listener_names = {
     'join': 'worker-peer-join-request',
@@ -738,7 +738,8 @@ WorkerAffairProtocol.prototype._synchronizeWorkerAffairsWorkerPeerOperationBroad
 
         this._setWorkerPeerWorkerAffairsLocked(target_worker_peer_worker_id, remote_worker_peer_worker_id);
 
-        const synchronize_acknowledgment_of_worker_module = (error, on_cancel) => {
+        const next_of_worker_module = (error, on_confirm, on_cancel) => {
+          this._worker_peer_settings_dict[target_worker_peer_worker_id].on_worker_affairs_worker_peer_operation_confirm = on_confirm;
           this._worker_peer_settings_dict[target_worker_peer_worker_id].on_worker_affairs_worker_peer_operation_cancel = on_cancel;
           if (error) {
             synchronize_acknowledgment(Buf.concat([
@@ -757,13 +758,13 @@ WorkerAffairProtocol.prototype._synchronizeWorkerAffairsWorkerPeerOperationBroad
 
         if (operation_type === 'leave') {
           this._worker_peer_settings_dict[target_worker_peer_worker_id].new_settings = null;
-          this._event_listener_dict[event_listener_name](target_worker_peer_worker_id, synchronize_acknowledgment_of_worker_module);
+          this._event_listener_dict[event_listener_name](target_worker_peer_worker_id, next_of_worker_module);
         } else if (operation_type === 'join') {
           this._worker_peer_settings_dict[target_worker_peer_worker_id].new_settings = {
             connectors_settings: new_worker_peer_connectors_settings,
             detail: new_worker_peer_detail
           };
-          this._event_listener_dict[event_listener_name](target_worker_peer_worker_id, new_worker_peer_connectors_settings, new_worker_peer_detail, synchronize_acknowledgment_of_worker_module);
+          this._event_listener_dict[event_listener_name](target_worker_peer_worker_id, new_worker_peer_connectors_settings, new_worker_peer_detail, next_of_worker_module);
         } else if (operation_type === 'update') {
           // If null preserve settings.
           if (!new_worker_peer_connectors_settings) {
@@ -776,7 +777,7 @@ WorkerAffairProtocol.prototype._synchronizeWorkerAffairsWorkerPeerOperationBroad
             connectors_settings: new_worker_peer_connectors_settings,
             detail: new_worker_peer_detail
           };
-          this._event_listener_dict[event_listener_name](target_worker_peer_worker_id, new_worker_peer_connectors_settings, new_worker_peer_detail, synchronize_acknowledgment_of_worker_module);
+          this._event_listener_dict[event_listener_name](target_worker_peer_worker_id, new_worker_peer_connectors_settings, new_worker_peer_detail, next_of_worker_module);
         }
       }
     } else {
@@ -879,27 +880,27 @@ WorkerAffairProtocol.prototype.SynchronizeListener =  function(synchronize_messa
       ]), synchronize_acknowledgment_error_handler);
     }
   } else if (synchronize_message_bytes[0] === this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast[0]) {
-    this._synchronizeWorkerAffairsWorkerPeerOperationBroadcast('join', synchronize_message_bytes.slice(1), (data_bytes) => {
+    this._WorkerAffairsWorkerPeerOperationBroadcastSynchronizeListener('join', synchronize_message_bytes.slice(1), (data_bytes) => {
       synchronize_acknowledgment(Buf.concat([
         this._ProtocolCodes.worker_affairs_worker_peer_join_broadcast,
         data_bytes
       ]));
     });
   } else if (synchronize_message_bytes[0] === this._ProtocolCodes.worker_affairs_worker_peer_update_broadcast[0]) {
-    this._synchronizeWorkerAffairsWorkerPeerOperationBroadcast('update', synchronize_message_bytes.slice(1), (data_bytes) => {
+    this._WorkerAffairsWorkerPeerOperationBroadcastSynchronizeListener('update', synchronize_message_bytes.slice(1), (data_bytes) => {
       synchronize_acknowledgment(Buf.concat([
         this._ProtocolCodes.worker_affairs_worker_peer_update_broadcast,
         data_bytes
       ]));
     });
   } else if (synchronize_message_bytes[0] === this._ProtocolCodes.worker_affairs_worker_peer_leave_broadcast[0]) {
-    this._synchronizeWorkerAffairsWorkerPeerOperationBroadcast('leave', synchronize_message_bytes.slice(1), (data_bytes) => {
+    this._WorkerAffairsWorkerPeerOperationBroadcastSynchronizeListener('leave', synchronize_message_bytes.slice(1), (data_bytes) => {
       synchronize_acknowledgment(Buf.concat([
         this._ProtocolCodes.worker_affairs_worker_peer_leave_broadcast,
         data_bytes
       ]));
     });
-  } else if (synchronize_message_bytes[0] === this._ProtocolCodes.worker_affairs_worker_peer_operation_comfirm_broadcast[0]) {
+  } else if (synchronize_message_bytes[0] === this._ProtocolCodes.worker_affairs_worker_peer_operation_confirm_broadcast[0]) {
     const target_worker_peer_worker_id = Buf.decodeUInt32BE(synchronize_message_bytes.slice(1, 5));
     const remote_worker_peer_authenticity_bytes = synchronize_message_bytes.slice(5);
 
@@ -909,16 +910,34 @@ WorkerAffairProtocol.prototype.SynchronizeListener =  function(synchronize_messa
         const new_settings = this._worker_peer_settings_dict[target_worker_peer_worker_id].new_settings;
         if (new_settings === null) {
           delete this._worker_peer_settings_dict[target_worker_peer_worker_id];
+          synchronize_acknowledgment(Buf.concat([
+            this._ProtocolCodes.worker_affairs_worker_peer_operation_confirm_broadcast,
+            this._ProtocolCodes.accept
+          ]));
         } else {
+          const synchronize_acknowledgment_of_confirm = (error) => {
+            if (error) {
+              // Send reject to master.
+              synchronize_acknowledgment(Buf.concat([
+                this._ProtocolCodes.worker_affairs_worker_peer_operation_confirm_broadcast,
+                this._ProtocolCodes.unknown_reason_reject_2_bytes
+              ]));
+            } else {
+              // Send accept to master.
+              synchronize_acknowledgment(Buf.concat([
+                this._ProtocolCodes.worker_affairs_worker_peer_operation_confirm_broadcast,
+                this._ProtocolCodes.accept
+              ]));
+            }
+          };
+          this._worker_peer_settings_dict[target_worker_peer_worker_id].on_worker_affairs_worker_peer_operation_confirm(synchronize_acknowledgment_of_confirm);
+
           this._worker_peer_settings_dict[target_worker_peer_worker_id] = new_settings;
           // Recalculate checksum.
           this._updateWorkerPeersIdsChecksum4Bytes(Object.keys(this._worker_peer_settings_dict));
+
           this._setWorkerPeerWorkerAffairUnLocked(target_worker_peer_worker_id);
         }
-        synchronize_acknowledgment(Buf.concat([
-          this._ProtocolCodes.worker_affairs_worker_peer_operation_cancel_broadcast,
-          this._ProtocolCodes.accept
-        ]));
       } else {
         // Send reject to master.
         synchronize_acknowledgment(Buf.concat([

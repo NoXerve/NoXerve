@@ -25,9 +25,9 @@ console.log('');
 console.log('NoxServiceSystem service worker process id: ' + process.pid);
 const message_codes = {
   start_noxservicesystem_service: 0x01,
-  start_noxservicesystem_service_comfirm: 0x02,
+  start_noxservicesystem_service_confirm: 0x02,
   close_noxservicesystem_service: 0x03,
-  close_noxservicesystem_service_comfirm: 0x04,
+  close_noxservicesystem_service_confirm: 0x04,
   terminate_noxservicesystem_service: 0x05,
   request_preloader_close: 0xff,
   request_preloader_terminate: 0xfe,
@@ -53,7 +53,7 @@ process.on('message', (message) => {
       close_executed_next_execute++;
       if (close_executed_next_execute === 2) {
         process.send({
-          message_code: message_codes.close_noxservicesystem_service_comfirm
+          message_code: message_codes.close_noxservicesystem_service_confirm
         });
       }
     };
@@ -149,7 +149,7 @@ process.on('message', (message) => {
               start_executed_next_execute++;
               if (start_executed_next_execute === 2) {
                 process.send({
-                  message_code: message_codes.start_noxservicesystem_service_comfirm
+                  message_code: message_codes.start_noxservicesystem_service_confirm
                 });
               }
             };

@@ -145,70 +145,73 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
     }
   });
   noxerve_agent.Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_connectors_settings, new_worker_peer_detail, next) => {
-    console.log('Worker peer joined.', new_worker_peer_id, new_worker_peer_connectors_settings, new_worker_peer_detail);
+    console.log('\nA worker peer request joining. Here are the informations:\n', {
+      new_worker_peer_id: new_worker_peer_id,
+      new_worker_peer_connectors_settings: new_worker_peer_connectors_settings,
+      new_worker_peer_detail: new_worker_peer_detail
+    });
     FS.readFile(Constants.noxservicesystem_worker_peers_settings_path, (error, worker_peers_settings_string) => {
-      if (error) next(error, () => {});
+      if (error) next(error, () => {},  () => {});
       else {
-        let worker_peers_settings = JSON.parse(worker_peers_settings_string);
-        worker_peers_settings[new_worker_peer_id] = {
-          connectors_settings: new_worker_peer_connectors_settings,
-          detail: new_worker_peer_detail
+        const on_confirm = (next_of_confirm) => {
+          console.log('Worker peer with worker id ' + new_worker_peer_id + ' joining confrimed.');
+          let worker_peers_settings = JSON.parse(worker_peers_settings_string);
+          worker_peers_settings[new_worker_peer_id] = {
+            connectors_settings: new_worker_peer_connectors_settings,
+            detail: new_worker_peer_detail
+          };
+          FS.writeFile(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2), next_of_confirm);
         };
-        FS.writeFile(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2), () => {
-          if (error) next(error, () => {});
-          else {
-            const on_cancel = (next_of_cancel) => {
-              console.log('Worker peer with worker id ' + new_worker_peer_id + ' joining canceled.');
-              next_of_cancel(false);
-            };
-            next(false, on_cancel);
-          }
-        });
+        const on_cancel = (next_of_cancel) => {
+          console.log('Worker peer with worker id ' + new_worker_peer_id + ' joining canceled.');
+          next_of_cancel(false);
+        };
+        next(false, on_confirm, on_cancel);
       }
     });
   });
 
   noxerve_agent.Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_connectors_settings, remote_worker_peer_detail, next) => {
-    console.log('Worker peer updated.', remote_worker_peer_id, remote_worker_peer_connectors_settings, remote_worker_peer_detail);
+    console.log('\nA worker peer request updating. Here are the informations:\n',  {
+      remote_worker_peer_id: remote_worker_peer_id,
+      remote_worker_peer_connectors_settings: remote_worker_peer_connectors_settings,
+      remote_worker_peer_detail: remote_worker_peer_detail
+    });
     FS.readFile(Constants.noxservicesystem_worker_peers_settings_path, (error, worker_peers_settings_string) => {
-      if (error) next(error, () => {});
+      if (error) next(error, () => {},  () => {});
       else {
-        let worker_peers_settings = JSON.parse(worker_peers_settings_string);
-        worker_peers_settings[remote_worker_peer_id] = {
-          connectors_settings: remote_worker_peer_connectors_settings,
-          detail: remote_worker_peer_detail
+        const on_confirm = (next_of_confirm) => {
+          let worker_peers_settings = JSON.parse(worker_peers_settings_string);
+          worker_peers_settings[remote_worker_peer_id] = {
+            connectors_settings: remote_worker_peer_connectors_settings,
+            detail: remote_worker_peer_detail
+          };
+          FS.writeFile(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2), next_of_confirm);
         };
-        FS.writeFile(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2), () => {
-          if (error) next(error, () => {});
-          else {
-            const on_cancel = (next_of_cancel) => {
-              console.log('Worker peer with worker id ' + remote_worker_peer_id + ' updating canceled.');
-              next_of_cancel(false);
-            };
-            next(false, on_cancel);
-          }
-        });
+        const on_cancel = (next_of_cancel) => {
+          console.log('Worker peer with worker id ' + remote_worker_peer_id + ' updating canceled.');
+          next_of_cancel(false);
+        };
+        next(false, on_confirm, on_cancel);
       }
     });
   });
 
   noxerve_agent.Worker.on('worker-peer-leave', (remote_worker_peer_id, next) => {
-    console.log('Worker peer leaved.', remote_worker_peer_id);
+    console.log('\nA worker peer request leaving. Here are the informations:\n', remote_worker_peer_id);
     FS.readFile(Constants.noxservicesystem_worker_peers_settings_path, (error, worker_peers_settings_string) => {
-      if (error) next(error, () => {});
+      if (error) next(error, () => {},  () => {});
       else {
-        let worker_peers_settings = JSON.parse(worker_peers_settings_string);
-        delete worker_peers_settings[remote_worker_peer_id];
-        FS.writeFile(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2), () => {
-          if (error) next(error, () => {});
-          else {
-            const on_cancel = (next_of_cancel) => {
-              console.log('Worker peer with worker id ' + remote_worker_peer_id + ' leaving canceled.');
-              next_of_cancel(false);
-            };
-            next(false, on_cancel);
-          }
-        });
+        const on_confirm = (next_of_confirm) => {
+          let worker_peers_settings = JSON.parse(worker_peers_settings_string);
+          delete worker_peers_settings[remote_worker_peer_id];
+          FS.writeFile(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2), next_of_confirm);
+        };
+        const on_cancel = (next_of_cancel) => {
+          console.log('Worker peer with worker id ' + remote_worker_peer_id + ' leaving canceled.');
+          next_of_cancel(false);
+        };
+        next(false, on_confirm, on_cancel);
       }
     });
   });

@@ -11,9 +11,9 @@ process.title = 'NoXerve Service System launcher';
 
 const message_codes = {
   start_noxservicesystem_service: 0x01,
-  start_noxservicesystem_service_comfirm: 0x02,
+  start_noxservicesystem_service_confirm: 0x02,
   close_noxservicesystem_service: 0x03,
-  close_noxservicesystem_service_comfirm: 0x04,
+  close_noxservicesystem_service_confirm: 0x04,
   terminate_noxservicesystem_service: 0x05,
   request_preloader_close: 0xff,
   request_preloader_terminate: 0xfe,
@@ -102,7 +102,7 @@ Launcher.prototype.launch = function() {
       cli_subprocess.kill();
       process.exit();
     });
-    
+
     subprocess.on('message', (message) => {
       const message_code = message.message_code;
       const data = message.data;
@@ -123,7 +123,7 @@ Launcher.prototype.launch = function() {
           message_code: message_codes.close_noxservicesystem_service
         });
 
-      } else if (message_code === message_codes.start_noxservicesystem_service_comfirm) {
+      } else if (message_code === message_codes.start_noxservicesystem_service_confirm) {
         cli_subprocess.send({
           message_code: cli_message_codes.start,
           data: {
@@ -135,7 +135,7 @@ Launcher.prototype.launch = function() {
         start_noxservicesystem_service_subprocess_to_be_relaunched = true;
         start_noxservicesystem_service_subprocess_retried_counts = 0;
 
-      } else if (message_code === message_codes.close_noxservicesystem_service_comfirm) {
+      } else if (message_code === message_codes.close_noxservicesystem_service_confirm) {
         subprocess.send({
           message_code: message_codes.terminate_noxservicesystem_service
         });

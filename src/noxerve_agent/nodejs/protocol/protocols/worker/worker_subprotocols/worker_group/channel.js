@@ -452,10 +452,10 @@ Channel.prototype.multicastRequest = function(group_peer_id_list, request_data_b
   for(let index in group_peer_id_list) {
     const group_peer_id = group_peer_id_list[index];
     this.request(group_peer_id, request_data_bytes, (error, response_data_bytes) => {
-      const comfirm_error_finish_status = (error, is_finished) => {
+      const confirm_error_finish_status = (error, is_finished) => {
         demultiplexing_callback(group_peer_id, error, is_finished);
       }
-      a_group_peer_response_listener(group_peer_id, error, response_data_bytes, comfirm_error_finish_status);
+      a_group_peer_response_listener(group_peer_id, error, response_data_bytes, confirm_error_finish_status);
     });
   }
 }

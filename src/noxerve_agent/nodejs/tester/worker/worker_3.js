@@ -128,29 +128,41 @@ initialize_interfaces(() => {
 
         Worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_connectors_settings, new_worker_peer_detail, next) => {
           console.log('[Worker ' + my_worker_id + '] "worker-peer-join" event.', new_worker_peer_id, new_worker_peer_connectors_settings, new_worker_peer_detail);
+          const on_confirm = (next_of_confirm)=> {
+            console.log('[Worker ' + my_worker_id + '] "worker-peer-join" confirm.');
+            next_of_confirm(false);
+          };
           const on_cancel = (next_of_cancel)=> {
             console.log('[Worker ' + my_worker_id + '] "worker-peer-join" cancel.');
             next_of_cancel(false);
           };
-          next(false, on_cancel);
+          next(false, on_confirm, on_cancel);
         });
 
         Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_connectors_settings, remote_worker_peer_detail, next) => {
           console.log('[Worker ' + my_worker_id + '] "worker-peer-update" event.', remote_worker_peer_id, remote_worker_peer_connectors_settings, remote_worker_peer_detail);
-          const on_cancel = ()=> {
+          const on_confirm = (next_of_confirm)=> {
+            console.log('[Worker ' + my_worker_id + '] "worker-peer-update" confirm.');
+            next_of_confirm(false);
+          };
+          const on_cancel = (next_of_cancel)=> {
             console.log('[Worker ' + my_worker_id + '] "worker-peer-update" cancel.');
             next_of_cancel(false);
           };
-          next(false, on_cancel);
+          next(false, on_confirm, on_cancel);
         });
 
         Worker.on('worker-peer-leave', (remote_worker_peer_id, next) => {
           console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" event.', remote_worker_peer_id);
-          const on_cancel = ()=> {
+          const on_confirm = (next_of_confirm)=> {
+            console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" confirm.');
+            next_of_confirm(false);
+          };
+          const on_cancel = (next_of_cancel)=> {
             console.log('[Worker ' + my_worker_id + '] "worker-peer-leave" cancel.');
             next_of_cancel(false);
           };
-          next(false, on_cancel);
+          next(false, on_confirm, on_cancel);
         });
 
         Worker.onWorkerSocketCreate('purpose 1', (parameters, remote_worker_id, worker_socket)=> {

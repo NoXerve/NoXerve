@@ -130,32 +130,32 @@ function WorkerProtocol(settings) {
     },
     multicast_request: (worker_id_list, data_bytes, a_worker_response_listener, finished_listener) => {
       const decorated_data_bytes = Buf.concat([this._ProtocolCodes.worker_affairs, data_bytes]);
-      const decorated_a_worker_response_listener = (worker_id, error, response_data_bytes, comfirm_error_finish_status) => {
+      const decorated_a_worker_response_listener = (worker_id, error, response_data_bytes, confirm_error_finish_status) => {
         if(error) {
-          a_worker_response_listener(worker_id, error, null, comfirm_error_finish_status);
+          a_worker_response_listener(worker_id, error, null, confirm_error_finish_status);
         }
         else if(
           response_data_bytes[0] === this._ProtocolCodes.worker_affairs[0]
         ) {
-          a_worker_response_listener(worker_id, error, response_data_bytes.slice(1), comfirm_error_finish_status);
+          a_worker_response_listener(worker_id, error, response_data_bytes.slice(1), confirm_error_finish_status);
         } else {
-          a_worker_response_listener(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_data_bytes.slice(3), comfirm_error_finish_status);
+          a_worker_response_listener(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_data_bytes.slice(3), confirm_error_finish_status);
         }
       };
       this._multicastRequest(worker_id_list, decorated_data_bytes, decorated_a_worker_response_listener, finished_listener);
     },
     broadcast_request: (data_bytes, a_worker_response_listener, finished_listener) => {
       const decorated_data_bytes = Buf.concat([this._ProtocolCodes.worker_affairs, data_bytes]);
-      const decorated_a_worker_response_listener = (worker_id, error, response_data_bytes, comfirm_error_finish_status) => {
+      const decorated_a_worker_response_listener = (worker_id, error, response_data_bytes, confirm_error_finish_status) => {
         if(error) {
-          a_worker_response_listener(worker_id, error, null, comfirm_error_finish_status);
+          a_worker_response_listener(worker_id, error, null, confirm_error_finish_status);
         }
         else if(
           response_data_bytes[0] === this._ProtocolCodes.worker_affairs[0]
         ) {
-          a_worker_response_listener(worker_id, error, response_data_bytes.slice(1), comfirm_error_finish_status);
+          a_worker_response_listener(worker_id, error, response_data_bytes.slice(1), confirm_error_finish_status);
         } else {
-          a_worker_response_listener(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_data_bytes.slice(3), comfirm_error_finish_status);
+          a_worker_response_listener(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_data_bytes.slice(3), confirm_error_finish_status);
         }
       };
       this._broadcastRequest(decorated_data_bytes, decorated_a_worker_response_listener, finished_listener);
@@ -389,36 +389,36 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
         },
         multicastRequest: (worker_id_list, data_bytes, a_worker_response_listener, finished_listener) => {
           const decorated_data_bytes = Buf.concat([prefix_data_bytes, data_bytes]);
-          const decorated_a_worker_response_listener = (worker_id, error, response_data_bytes, comfirm_error_finish_status) => {
+          const decorated_a_worker_response_listener = (worker_id, error, response_data_bytes, confirm_error_finish_status) => {
             if(error) {
-              a_worker_response_listener(worker_id, error, null, comfirm_error_finish_status);
+              a_worker_response_listener(worker_id, error, null, confirm_error_finish_status);
             }
             else if(
               response_data_bytes[0] === this._ProtocolCodes.worker_object[0] &&
               response_data_bytes[1] === worker_object_protocol_code_1byte[0] &&
               response_data_bytes[2] === worker_subprotocol_protocol_code_1byte[0]
             ) {
-              a_worker_response_listener(worker_id, error, response_data_bytes.slice(3), comfirm_error_finish_status);
+              a_worker_response_listener(worker_id, error, response_data_bytes.slice(3), confirm_error_finish_status);
             } else {
-              a_worker_response_listener(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_data_bytes.slice(3), comfirm_error_finish_status);
+              a_worker_response_listener(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_data_bytes.slice(3), confirm_error_finish_status);
             }
           };
           this._multicastRequest(worker_id_list, decorated_data_bytes, decorated_a_worker_response_listener, finished_listener);
         },
         broadcastRequest: (data_bytes, a_worker_response_listener, finished_listener) => {
           const decorated_data_bytes = Buf.concat([prefix_data_bytes, data_bytes]);
-          const decorated_a_worker_response_listener = (worker_id, error, response_data_bytes, comfirm_error_finish_status) => {
+          const decorated_a_worker_response_listener = (worker_id, error, response_data_bytes, confirm_error_finish_status) => {
             if(error) {
-              a_worker_response_listener(worker_id, error, null, comfirm_error_finish_status);
+              a_worker_response_listener(worker_id, error, null, confirm_error_finish_status);
             }
             else if(
               response_data_bytes[0] === this._ProtocolCodes.worker_object[0] &&
               response_data_bytes[1] === worker_object_protocol_code_1byte[0] &&
               response_data_bytes[2] === worker_subprotocol_protocol_code_1byte[0]
             ) {
-              a_worker_response_listener(worker_id, error, response_data_bytes.slice(3), comfirm_error_finish_status);
+              a_worker_response_listener(worker_id, error, response_data_bytes.slice(3), confirm_error_finish_status);
             } else {
-              a_worker_response_listener(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_data_bytes.slice(3), comfirm_error_finish_status);
+              a_worker_response_listener(worker_id, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker object or worker subprotocol protocol codes mismatched.'), response_data_bytes.slice(3), confirm_error_finish_status);
             }
           };
           this._broadcastRequest(decorated_data_bytes, decorated_a_worker_response_listener, finished_listener);

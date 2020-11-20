@@ -50,7 +50,7 @@ function SecuredNode(settings) {
    * @type {object}
    * @private
    */
-  this._secured_node_comfirm_protocol_code = Buf.from([0xfe]);
+  this._secured_node_confirm_protocol_code = Buf.from([0xfe]);
 
   /**
    * @memberof module:SecuredNode
@@ -252,7 +252,7 @@ SecuredNode.prototype.createTunnel = function(interface_name, connector_settings
             });
 
             tunnel.on('data', (data) => {
-              if (data[0] === this._secured_node_comfirm_protocol_code[0]) {
+              if (data[0] === this._secured_node_confirm_protocol_code[0]) {
                 if (aes_cbc_256_shared_key) {
                   tunnel.on('data', (data) => {
                     try {
@@ -393,7 +393,7 @@ SecuredNode.prototype.start = function(callback) {
 
                 // Finished.
                 this._event_listener_dict['tunnel-create'](secured_tunnel);
-                tunnel.send(this._secured_node_comfirm_protocol_code);
+                tunnel.send(this._secured_node_confirm_protocol_code);
                 secured_tunnel_emitter('ready');
               } else {
                 tunnel.close();
