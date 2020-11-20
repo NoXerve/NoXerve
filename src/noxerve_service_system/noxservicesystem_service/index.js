@@ -12,7 +12,7 @@
  */
 
 const FS = require('fs');
-const Initializer = require('./initializer');
+const WorkerAffairManager = require('./worker_affair_manager');
 const ServiceManager = require('./service_manager');
 const Manifest = require('./manifest.json');
 const Stream = require('stream');
@@ -33,7 +33,15 @@ CustomReadable.prototype._read = function(size) {
 function NoxServiceSystemService(noxerve_agent, preloader_parameters) {
   this._noxerve_agent = noxerve_agent;
   this._preloader_parameters = preloader_parameters;
-  this._service_manager = new ServiceManager({});
+
+  this._worker_affair_manager = new WorkerAffairManager({
+    noxerve_agent_worker: noxerve_agent.Worker
+  });
+
+  this._service_manager = new ServiceManager({
+    noxerve_agent_worker: noxerve_agent.Worker,
+    worker_affair_manager: this._worker_affair_manager
+  });
 }
 
 NoxServiceSystemService.prototype.start = function(finish_start) {
@@ -55,7 +63,7 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
 
   // Initialize.
   const initailize_noxerve_agent_worker = (next) => {
-    Initializer.initailizeNoXerveAgentWorker(this._noxerve_agent, this._preloader_parameters, (error) => {
+    this._worker_affair_manager.initailizeNoXerveAgentWorker(this._noxerve_agent, this._preloader_parameters, (error) => {
       if_error_then_close_preloader(error, () => {
         next(false);
       });
@@ -120,8 +128,8 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
 
       });
 
-      service_of_activity.define('getAddNewWorkerCode', (service_function_parameter, return_data, yield_data) => {
-        Initializer.getAddNewWorkerCode((error, add_new_worker_code) => {
+      service_of_activity.define('getJoinNewWorkerCode', (service_function_parameter, return_data, yield_data) => {
+        this._worker_affair_manager.getJoinNewWorkerCode((error, add_new_worker_code) => {
           return_data({
             error: error,
             add_new_worker_code: add_new_worker_code
@@ -131,8 +139,8 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
 
     });
     this._noxerve_agent.Service.onActivityCreate('cli', (parameter, service_of_activity)=> {
-      service_of_activity.define('getAddNewWorkerCode', (service_function_parameter, return_data, yield_data) => {
-        Initializer.getAddNewWorkerCode((error, add_new_worker_code) => {
+      service_of_activity.define('getJoinNewWorkerCode', (service_function_parameter, return_data, yield_data) => {
+        this._worker_affair_manager.getJoinNewWorkerCode((error, add_new_worker_code) => {
           return_data({
             error: error,
             add_new_worker_code: add_new_worker_code
@@ -156,8 +164,13 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
         initailize_noxerve_agent_worker((error) => {
           if_error_then_close_preloader(error, () => {
             //
-            service_setup((error) => {
-              if_error_then_close_preloader(error, finish_start);
+            this._service_manager.start((error) => {
+              if_error_then_close_preloader(error, () => {
+                //
+                service_setup((error) => {
+                  if_error_then_close_preloader(error, finish_start);
+                });
+              })
             });
           });
         });
@@ -166,11 +179,11 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
   };
 
   // Initializing.
-  if (Initializer.isMyWorkerFilesInitailized()) {
+  if (this._worker_affair_manager.isMyWorkerFilesInitailized()) {
     start_normally_setting_up();
   } else {
     console.log('NoxServiceSystem Service files not initailized. Initializing...');
-    Initializer.initailizeMyWorkerFiles(this._noxerve_agent, this._preloader_parameters, (error) => {
+    this._worker_affair_manager.initailizeMyWorkerFiles(this._noxerve_agent, this._preloader_parameters, (error) => {
       if_error_then_close_preloader(error, () => {
         console.log('NoxServiceSystem Service files Initialized.');
         start_normally_setting_up();

@@ -106,7 +106,7 @@ function WorkerProtocol(settings) {
     return_node_interface_preferance_level: this._return_node_interface_preferance_level,
     nsdt_embedded_protocol: this._nsdt_embedded_protocol,
     synchronize_function: (interface_name, connector_settings, synchronize_message_bytes, synchronize_error_handler, synchronize_acknowledgment_handler) => {
-      const decorated_synchronize_message_bytes = Buf.concat([this._ProtocolCodes.worker_affairs, synchronize_message_bytes]);
+      const decorated_synchronize_message_bytes = Buf.concat([this._ProtocolCodes.worker_affair, synchronize_message_bytes]);
       const decorated_synchronize_acknowledgment_handler = (synchronize_acknowledgment_message_bytes, acknowledge) => {
         const decorated_acknowledge = (data_bytes, acknowledge_callback) => {
           if(Buf.isBuffer(data_bytes)) {
@@ -118,7 +118,7 @@ function WorkerProtocol(settings) {
         }
 
         if(
-          synchronize_acknowledgment_message_bytes[0] === this._ProtocolCodes.worker_affairs[0]
+          synchronize_acknowledgment_message_bytes[0] === this._ProtocolCodes.worker_affair[0]
         ) {
           synchronize_acknowledgment_handler(synchronize_acknowledgment_message_bytes.slice(1), decorated_acknowledge);
         } else {
@@ -129,13 +129,13 @@ function WorkerProtocol(settings) {
       this._synchronize_function(interface_name, connector_settings, decorated_synchronize_message_bytes, synchronize_error_handler, decorated_synchronize_acknowledgment_handler);
     },
     multicast_request: (worker_id_list, data_bytes, a_worker_response_listener, finished_listener) => {
-      const decorated_data_bytes = Buf.concat([this._ProtocolCodes.worker_affairs, data_bytes]);
+      const decorated_data_bytes = Buf.concat([this._ProtocolCodes.worker_affair, data_bytes]);
       const decorated_a_worker_response_listener = (worker_id, error, response_data_bytes, confirm_error_finish_status) => {
         if(error) {
           a_worker_response_listener(worker_id, error, null, confirm_error_finish_status);
         }
         else if(
-          response_data_bytes[0] === this._ProtocolCodes.worker_affairs[0]
+          response_data_bytes[0] === this._ProtocolCodes.worker_affair[0]
         ) {
           a_worker_response_listener(worker_id, error, response_data_bytes.slice(1), confirm_error_finish_status);
         } else {
@@ -145,13 +145,13 @@ function WorkerProtocol(settings) {
       this._multicastRequest(worker_id_list, decorated_data_bytes, decorated_a_worker_response_listener, finished_listener);
     },
     broadcast_request: (data_bytes, a_worker_response_listener, finished_listener) => {
-      const decorated_data_bytes = Buf.concat([this._ProtocolCodes.worker_affairs, data_bytes]);
+      const decorated_data_bytes = Buf.concat([this._ProtocolCodes.worker_affair, data_bytes]);
       const decorated_a_worker_response_listener = (worker_id, error, response_data_bytes, confirm_error_finish_status) => {
         if(error) {
           a_worker_response_listener(worker_id, error, null, confirm_error_finish_status);
         }
         else if(
-          response_data_bytes[0] === this._ProtocolCodes.worker_affairs[0]
+          response_data_bytes[0] === this._ProtocolCodes.worker_affair[0]
         ) {
           a_worker_response_listener(worker_id, error, response_data_bytes.slice(1), confirm_error_finish_status);
         } else {
@@ -183,7 +183,7 @@ function WorkerProtocol(settings) {
  */
 WorkerProtocol.prototype._ProtocolCodes = {
   // Root protocol code
-  worker_affairs: Buf.from([0x02]),
+  worker_affair: Buf.from([0x02]),
   // Worker Object protocol
   worker_object: Buf.from([0x03]),
 
@@ -427,6 +427,9 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
       return_my_worker_id: () => {
         return this._worker_affair_protocol.returnMyWorkerId();
       },
+      return_worker_peers_settings: () => {
+        return this._worker_affair_protocol.returnAllWorkerPeersSettings();
+      },
       hash_manager: this._hash_manager,
       nsdt_embedded_protocol: this._nsdt_embedded_protocol,
       worker_global_protocol_codes: this._ProtocolCodes,
@@ -498,6 +501,10 @@ WorkerProtocol.prototype.start = function(callback) {
     this._worker_affair_protocol.getWorkerPeerDetail(target_worker_peer_worker_id, callback);
   });
 
+  this._worker_module.on('all-worker-peers-settings-get', (callback) => {
+    this._worker_affair_protocol.getAllWorkerPeersSettings(callback);
+  });
+
   this._worker_module.on('global-deterministic-random-manager-get', (callback) => {
     this._worker_affair_protocol.getGlobalDeterministicRandomManager(callback);
   });
@@ -559,13 +566,13 @@ WorkerProtocol.prototype.SynchronizeListener = function(synchronize_message_byte
   // Synchronize information for handshake
   // Worker Affairs Protocol
   const protocol_code_int = synchronize_message_bytes[0];
-  if (protocol_code_int === this._ProtocolCodes.worker_affairs[0]) {
+  if (protocol_code_int === this._ProtocolCodes.worker_affair[0]) {
 
     const decorated_synchronize_acknowledgment = (synchronize_acknowledgment_message_bytes, synchronize_acknowledgment_error_handler, acknowledge_handler) => {
       if(Buf.isBuffer(synchronize_acknowledgment_message_bytes)) {
         const decorated_acknowledge_handler = (acknowledge_message_bytes, tunnel) => {
           if (
-            acknowledge_message_bytes[0] === this._ProtocolCodes.worker_affairs[0]
+            acknowledge_message_bytes[0] === this._ProtocolCodes.worker_affair[0]
           ) {
             acknowledge_handler(acknowledge_message_bytes.slice(1), tunnel);
           } else {
@@ -575,7 +582,7 @@ WorkerProtocol.prototype.SynchronizeListener = function(synchronize_message_byte
         };
 
         synchronize_acknowledgment(Buf.concat([
-          this._ProtocolCodes.worker_affairs,
+          this._ProtocolCodes.worker_affair,
           synchronize_acknowledgment_message_bytes
         ]), synchronize_acknowledgment_error_handler, decorated_acknowledge_handler);
       }

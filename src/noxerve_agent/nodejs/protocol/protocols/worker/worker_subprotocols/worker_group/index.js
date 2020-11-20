@@ -81,6 +81,14 @@ function WorkerGroupProtocol(settings) {
    */
   this._max_concurrent_connections_count = settings.max_concurrent_connections_count;
 
+
+  /**
+   * @memberof module:WorkerGroup
+   * @type {object}
+   * @private
+   */
+  this._return_worker_peers_settings = settings.return_worker_peers_settings;
+
   /**
    * @memberof module:WorkerGroupProtocol
    * @type {object}
@@ -134,6 +142,17 @@ WorkerGroupProtocol.prototype.start = function(callback) {
       worker_group_create_request_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('GroupPeersList\'s must include yourself (with worker id: ' + this._return_my_worker_id() + ').'));
     }
     else if (group_peer_worker_id_list.length <= MaxGroupPeersCount) {
+      // Check is worker id in worker peers list.
+      const worker_ids = Object.keys(this._return_worker_peers_settings()).map(x=> {return parseInt(x);});
+      for(let index in group_peer_worker_id_list) {
+        const worker_id = group_peer_worker_id_list[index];
+        if(!worker_ids.includes(parseInt(worker_id))) {
+          worker_group_create_request_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('Does not include worker peer (with worker id ' + worker_id + ').'));
+          return;
+        }
+      }
+
+
       let _tunnel_create_listener;
 
       const create_tunnel = (group_peer_id, create_tunnel_callback) => {

@@ -16,9 +16,9 @@
  const fs = require('fs');
 
 function ServiceManager(settings) {
-
-  this._worker_module = settings.worker_module;
-
+  this._noxerve_agent_worker = settings.noxerve_agent_worker;
+  this._worker_affair_manager = settings.worker_affair_manager;
+  this._stable_worker_list = [];
 }
 
 ServiceManager.prototype.installService = function(service_manifest, service_package_tar_gz_readable_stream, callback) {
@@ -41,6 +41,29 @@ ServiceManager.prototype.closeService = function() {
 }
 
 ServiceManager.prototype.restartService = function() {
+
+}
+
+ServiceManager.prototype.start = function(callback) {
+  this._worker_affair_manager.onWorkerPeerJoin();
+  this._worker_affair_manager.onWorkerPeerUpdate();
+  this._worker_affair_manager.onWorkerPeerLeave();
+
+  this._noxerve_agent_worker.getAllWorkerPeersSettings((error, worker_peer_settings_dict) => {
+    if(error) {callback(error); return;}
+    // Generate stable worker list
+    console.log(worker_peer_settings_dict);
+    this._noxerve_agent_worker.createWorkerGroup('core_worker_group', [1, 2], (error, worker_group) => {
+      if(error) {callback(error); return;}
+      worker_group.createVariable('service_dict', (error, service_list_group_var) => {
+        if(error) {callback(error); return;}
+        worker_group.createVariable('worker_room_dict', (error, service_list_group_var) => {
+          if(error) {callback(error); return;}
+          callback(false);
+        });
+      });
+    });
+  });
 
 }
 

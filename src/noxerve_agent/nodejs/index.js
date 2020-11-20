@@ -137,6 +137,9 @@ function NoXerveAgent(settings) {
     getWorkerPeerDetail: (worker_id, callback) => {
       this._worker_module.getWorkerPeerDetail(worker_id, callback);
     },
+    getAllWorkerPeersSettings: (callback) => {
+      this._worker_module.getAllWorkerPeersSettings(callback);
+    },
     getGlobalDeterministicRandomManager: (callback) => {
       this._worker_module.getGlobalDeterministicRandomManager(callback);
     },

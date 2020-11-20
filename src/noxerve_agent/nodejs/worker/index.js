@@ -307,6 +307,19 @@ Worker.prototype.getWorkerPeerDetail = function(worker_id, callback) {
 }
 
 /**
+ * @callback module:Worker~callback_of_all_worker_peers_settings_get
+ * @param {error} error
+ * @param {noxerve_supported_data_type} worker_peers_settings
+ */
+/**
+ * @memberof module:Worker
+ * @param {module:Worker~callback_of_all_worker_peers_settings_get} callback
+ */
+Worker.prototype.getAllWorkerPeersSettings = function(callback) {
+  this._event_listener_dict['all-worker-peers-settings-get'](callback);
+}
+
+/**
  * @callback module:Worker~callback_of_worker_peer_detail_get
  * @param {error} error
  * @param {object} global_deterministic_random_manager

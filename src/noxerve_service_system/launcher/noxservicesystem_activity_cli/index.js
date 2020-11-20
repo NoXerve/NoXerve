@@ -82,14 +82,15 @@ process.on('message', (message) => {
                 if(answer === 'help') {
                   console.log(
                     ' help           --- This menu.\n'+
-                    ' addworker      --- Add worker for NSSystem service by "AddNewWorkerCode".\n'+
+                    ' joinworker      --- Add worker for NSSystem service by "JoinNewWorkerCode".\n'+
+                    ' leaveme        --- Leave this NSSystem worker.\n'+
                     ' stop           --- Stop this NSSystem worker.\n'+
                     ' restart        --- Restart this NSSystem worker.\n'
                   );
                   cli_cycle();
-                } else if(answer === 'addworker') {
-                  noxservicesystem_service.call('getAddNewWorkerCode', null, (err, result) => {
-                    console.log('Paste below "AddNewWorkerCode" during the new worker joining setup.');
+                } else if(answer === 'joinworker') {
+                  noxservicesystem_service.call('getJoinNewWorkerCode', null, (err, result) => {
+                    console.log('Paste below "JoinNewWorkerCode" during the new worker joining setup.');
                     console.log(result.add_new_worker_code);
                     cli_cycle();
                   });
