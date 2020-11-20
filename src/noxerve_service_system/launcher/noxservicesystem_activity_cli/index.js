@@ -69,7 +69,7 @@ process.on('message', (message) => {
                     push(read_bytes);
                   }
                 });
-                result.call('installService', service_package_tar_gz_readable_stream_callable_structure, (error) => {
+                result.call('installService', {}, service_package_tar_gz_readable_stream_callable_structure, (error) => {
                   console.log('finished.');
                 });
               });

@@ -21,7 +21,7 @@ function ServiceManager(settings) {
 
 }
 
-ServiceManager.prototype.installService = function(service_package_tar_gz_readable_stream, callback) {
+ServiceManager.prototype.installService = function(service_manifest, service_package_tar_gz_readable_stream, callback) {
   let writeStream = fs.createWriteStream('test.txt');
   let on_finish_called = false;
   const on_finish = () => {

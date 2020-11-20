@@ -73,14 +73,14 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
     const service_manager_callable_struture = this._noxerve_agent.NSDT.createCallableStructure({
       startService: (service_id, callback) => {},
       closeService: (service_id, callback) => {},
-      installService: (service_package_tar_gz_readable_stream_callable_structure, callback) => {
+      installService: (service_manifest, service_package_tar_gz_readable_stream_callable_structure, callback) => {
         const service_package_tar_gz_readable_stream = new CustomReadable({
           _read_custom: (bytes_size, push) => {
             service_package_tar_gz_readable_stream_callable_structure.call('read_bytes', bytes_size, push);
           }
         });
 
-        this._service_manager.installService(service_package_tar_gz_readable_stream, callback);
+        this._service_manager.installService(service_manifest, service_package_tar_gz_readable_stream, callback);
       },
       uninstallService: (service_id, callback) => {},
       getServiceStatus: (service_id, callback) => {},
