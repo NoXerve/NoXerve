@@ -311,6 +311,10 @@ Node.prototype.createTunnel = function(interface_name, connector_settings, callb
   // Catch error.
   try {
     this._checkConnectorAvaliable(interface_name, (error) => {
+      if(error) {
+        callback(error);
+        return;
+      }
       // Check connector settings match the requirement of interface module.
       let pass = true;
       let connector_settings_keys = Object.keys(connector_settings?connector_settings:{});

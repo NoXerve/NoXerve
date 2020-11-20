@@ -213,7 +213,7 @@ Connector.prototype.connect = function(connect_settings, new_tunnel_callback) {
   // // Catch error.
   // try {
   // Create a Websocket client whatsoever.
-  let ws = new Websocket('ws://' + connect_settings.host + ':' + connect_settings.port);
+  let ws = new Websocket('ws://' + connect_settings.host + ':' + connect_settings.port, {handshakeTimeout: 2000});
 
   // Call new_tunnel() function aquired from the function caller.
   new_tunnel_callback(

@@ -149,7 +149,7 @@ Protocol.prototype._returnNodeInterfacePreferanceLevel = function(interface_name
   */
 Protocol.prototype._synchronize = function (interface_name, connector_settings, synchronize_message_bytes, synchronize_error_handler, synchronize_acknowledgment_handler) {
   this._node_module.createTunnel(interface_name, connector_settings, (error, tunnel) => {
-    if (error) {if(synchronize_acknowledgment_handler) synchronize_error_handler(error);}
+    if (error) {if(synchronize_error_handler) synchronize_error_handler(error);}
     else {
       let synchronize_message_bytes_sent = false;
       let acknowledged = false;
@@ -212,6 +212,7 @@ Protocol.prototype._synchronize = function (interface_name, connector_settings, 
       });
 
       tunnel.on('error', (error) => {
+        console.log(error);
         if(acknowledged) {
           acknowledge_callback_outside(error);
           acknowledge_callback_outside = () => {};

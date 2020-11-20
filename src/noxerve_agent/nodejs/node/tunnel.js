@@ -137,7 +137,7 @@ Tunnel.prototype.getEmitter = function(callback) {
   if (this._emitter_distributed) {
     callback(new Errors.ERR_NOXERVEAGENT_NODE_TUNNEL_GET_EMITTER('Emitter cannot be distributed twice.'));
   } else {
-    callback(false, this._emitter);
+    callback(false, this._emitter.bind(this));
     this._emitter_distributed = true;
   }
 }

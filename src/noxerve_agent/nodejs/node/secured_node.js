@@ -16,6 +16,7 @@ const Crypto = require('crypto');
 const RandomBytesBytesCount = 16;
 const Tunnel = require('./tunnel');
 const Buf = require('../buffer');
+const Errors = require('../errors');
 
 /**
  * @constructor module:SecuredNode
@@ -247,58 +248,60 @@ SecuredNode.prototype.createTunnel = function(interface_name, connector_settings
           if (error) callback(error);
           else {
             tunnel.on('ready', () => {
-              tunnel.on('data', (data) => {
-                if (data[0] === this._secured_node_comfirm_protocol_code[0]) {
-                  if (aes_cbc_256_shared_key) {
-                    tunnel.on('data', (data) => {
-                      try {
-                        const decrypted_data = this._decryptAESCBC256(aes_cbc_256_shared_key, data);
-                        secured_tunnel_emitter('data', decrypted_data);
-                      } catch (error) {
-                        secured_tunnel_emitter('error', error);
-                      }
-                    });
-                    tunnel.on('close', () => {
-                      secured_tunnel_emitter('close');
-                    });
-                    tunnel.on('error', (error) => {
+
+            });
+
+            tunnel.on('data', (data) => {
+              if (data[0] === this._secured_node_comfirm_protocol_code[0]) {
+                if (aes_cbc_256_shared_key) {
+                  tunnel.on('data', (data) => {
+                    try {
+                      const decrypted_data = this._decryptAESCBC256(aes_cbc_256_shared_key, data);
+                      secured_tunnel_emitter('data', decrypted_data);
+                    } catch (error) {
                       secured_tunnel_emitter('error', error);
-                    });
+                    }
+                  });
+                  tunnel.on('close', () => {
+                    secured_tunnel_emitter('close');
+                  });
+                  tunnel.on('error', (error) => {
+                    secured_tunnel_emitter('error', error);
+                  });
 
-                    // Finished.
-                    callback(false, secured_tunnel);
-                    secured_tunnel_emitter('ready');
-                  } else {
-                    callback(new Errors.ERR_NOXERVEAGENT_NODE_CREATE_TUNNEL('SecuredNode AES CBC mode shared key has not been created.'));
-                  }
-                } else if (data[0] === this._secured_node_protocol_code[0]) {
-                  const rsa_2048_public_key_decoded = Buf.decode(data.slice(1));
-                  const random_bytes = Crypto.randomBytes(RandomBytesBytesCount);
-                  const salt_8bytes = Crypto.randomBytes(8);
-                  aes_cbc_256_shared_key = this._derivateAESCBC256SharedKey(data.slice(1), random_bytes);
-                  const encrypted_salt_8bytes_random_bytes = Crypto.publicEncrypt(rsa_2048_public_key_decoded,
-                    Buf.concat([salt_8bytes, random_bytes])
-                  );
-
-                  const upgrade_secured_node_bytes = Buf.concat([
-                    this._secured_node_protocol_code,
-                    encrypted_salt_8bytes_random_bytes
-                  ]);
-
-                  tunnel.send(upgrade_secured_node_bytes);
-
+                  // Finished.
+                  callback(false, secured_tunnel);
+                  secured_tunnel_emitter('ready');
                 } else {
-                  tunnel.close();
+                  callback(new Errors.ERR_NOXERVEAGENT_NODE_CREATE_TUNNEL('SecuredNode AES CBC mode shared key has not been created.'));
                 }
-              });
+              } else if (data[0] === this._secured_node_protocol_code[0]) {
+                const rsa_2048_public_key_decoded = Buf.decode(data.slice(1));
+                const random_bytes = Crypto.randomBytes(RandomBytesBytesCount);
+                const salt_8bytes = Crypto.randomBytes(8);
+                aes_cbc_256_shared_key = this._derivateAESCBC256SharedKey(data.slice(1), random_bytes);
+                const encrypted_salt_8bytes_random_bytes = Crypto.publicEncrypt(rsa_2048_public_key_decoded,
+                  Buf.concat([salt_8bytes, random_bytes])
+                );
 
-              tunnel.on('error', () => {
+                const upgrade_secured_node_bytes = Buf.concat([
+                  this._secured_node_protocol_code,
+                  encrypted_salt_8bytes_random_bytes
+                ]);
+
+                tunnel.send(upgrade_secured_node_bytes);
+
+              } else {
                 tunnel.close();
-              });
+              }
+            });
 
-              tunnel.on('close', () => {
-                callback(new Errors.ERR_NOXERVEAGENT_NODE_CREATE_TUNNEL('Tunnel closed. SecuredNode cannot be established.'));
-              });
+            tunnel.on('error', () => {
+              tunnel.close();
+            });
+
+            tunnel.on('close', () => {
+              callback(new Errors.ERR_NOXERVEAGENT_NODE_CREATE_TUNNEL('Tunnel closed. SecuredNode cannot be established.'));
             });
           }
         });

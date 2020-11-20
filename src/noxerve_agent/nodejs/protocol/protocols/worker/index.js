@@ -204,51 +204,50 @@ WorkerProtocol.prototype._synchronizeWorkerPeerByWorkerId = function(
     return;
   }
 
-  if (!this._worker_affair_protocol.returnWorkerPeerSettingsByWorkerId(target_worker_peer_worker_id)) {
+  else if (!this._worker_affair_protocol.returnWorkerPeerSettingsByWorkerId(target_worker_peer_worker_id)) {
     synchronize_error_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker(id: ' + target_worker_peer_worker_id + ').'));
     return;
   }
-
-  const results = this._worker_affair_protocol.returnWorkerPeerConnectorsSettingsByWorkerId(target_worker_peer_worker_id);
-  const connectors_settings = results.connectors_settings;
-  const connectors_settings_index_sorted_by_preference_list = results.connectors_settings_index_sorted_by_preference_list;
-
-  let index = 0;
-  const synchronize_error_list = [];
-  const loop_next = () => {
-    index++;
-    if (index < connectors_settings.length) {
-      loop();
-    }
-    // No more next loop. Exit.
-    else {
-      synchronize_error_handler(synchronize_error_list);
-    }
-  };
-
-  const loop = () => {
-    const interface_name = connectors_settings[connectors_settings_index_sorted_by_preference_list[index]].interface_name;
-    const connector_settings = connectors_settings[connectors_settings_index_sorted_by_preference_list[index]].connector_settings;
-
-    // "_" is for distincting the one from parameters.
-    const _synchronize_error_handler = (synchronize_error) => {
-      // Unable to open handshake. Next loop.
-      synchronize_error_list.push(synchronize_error);
-      loop_next();
+  else {
+    const results = this._worker_affair_protocol.returnWorkerPeerConnectorsSettingsByWorkerId(target_worker_peer_worker_id);
+    const connectors_settings = results.connectors_settings;
+    const connectors_settings_index_sorted_by_preference_list = results.connectors_settings_index_sorted_by_preference_list;
+    let index = 0;
+    const synchronize_error_list = [];
+    const loop_next = () => {
+      index++;
+      if (index < connectors_settings.length) {
+        loop();
+      }
+      // No more next loop. Exit.
+      else {
+        synchronize_error_handler(synchronize_error_list);
+      }
     };
 
-    // "_" is for distincting the one from parameters.
-    const _synchronize_acknowledgment_handler = (synchronize_acknowledgment_message_bytes, acknowledge) => {
-      // synchronize_acknowledgment_handler obtained from parameters.
-      synchronize_acknowledgment_handler(synchronize_acknowledgment_message_bytes, acknowledge);
+    const loop = () => {
+      const interface_name = connectors_settings[connectors_settings_index_sorted_by_preference_list[index]].interface_name;
+      const connector_settings = connectors_settings[connectors_settings_index_sorted_by_preference_list[index]].connector_settings;
+      // "_" is for distincting the one from parameters.
+      const _synchronize_error_handler = (synchronize_error) => {
+        // Unable to open handshake. Next loop.
+        synchronize_error_list.push(synchronize_error);
+        loop_next();
+      };
+
+      // "_" is for distincting the one from parameters.
+      const _synchronize_acknowledgment_handler = (synchronize_acknowledgment_message_bytes, acknowledge) => {
+        // synchronize_acknowledgment_handler obtained from parameters.
+        synchronize_acknowledgment_handler(synchronize_acknowledgment_message_bytes, acknowledge);
+      };
+
+      // Callbacks setup completed. Start handshake process.
+      this._synchronize_function(interface_name, connector_settings, synchronize_message_bytes, _synchronize_error_handler, _synchronize_acknowledgment_handler);
     };
 
-    // Callbacks setup completed. Start handshake process.
-    this._synchronize_function(interface_name, connector_settings, synchronize_message_bytes, _synchronize_error_handler, _synchronize_acknowledgment_handler);
-  };
-
-  // If it is worker itself. Make it easier.
-  loop();
+    // If it is worker itself. Make it easier.
+    loop();
+  }
 }
 
 /**

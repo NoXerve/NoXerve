@@ -44,7 +44,9 @@ for(const index in worker_indexs) {
   const worker_index = worker_indexs[index];
   let child = child_process.fork('./worker_' + worker_index, {stdio: [process.stdin, process.stdout, process.stderr, 'ipc']});
   worker_childs[worker_index] = child;
-
+  child.on('close', () => {
+    worker_childs[worker_index] = false;
+  });
   child.on('message', (msg)=> {
     if(msg === 'ready') {
       console.log('[Test] Worker '+ worker_index +' ready.');
@@ -53,7 +55,9 @@ for(const index in worker_indexs) {
         const next = ()=> {
           rl.question('[Test] Input test index to execute test.\n'+JSON.stringify(test_indexs, null, 2)+'\n>>> ', (number)=> {
             for(const index in worker_indexs) {
-              worker_childs[worker_indexs[index]].send(number);
+              if(worker_childs[worker_indexs[index]]) {
+                worker_childs[worker_indexs[index]].send(number);
+              }
             }
             next();
           });

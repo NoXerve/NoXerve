@@ -75,29 +75,17 @@ Launcher.prototype.launch = function() {
     // Close noxservicesystem service.
     process.on('SIGTERM', () => {
       start_noxservicesystem_service_subprocess_to_be_relaunched = false;
-      try{
-        subprocess.send({
-          message_code: message_codes.terminate_noxservicesystem_service
-        });
-      }
-      catch(e) {
+      subprocess.send({
+        message_code: message_codes.terminate_noxservicesystem_service
+      });
 
-      }
-      cli_subprocess.kill();
-      process.exit();
     });
 
     process.on('SIGINT', () => {
       start_noxservicesystem_service_subprocess_to_be_relaunched = false;
-      try{
-        subprocess.send({
-          message_code: message_codes.close_noxservicesystem_service
-        });
-      }
-      catch(e) {
-        cli_subprocess.kill();
-        process.exit();
-      }
+      subprocess.send({
+        message_code: message_codes.close_noxservicesystem_service
+      });
     });
 
     const cli_subprocess = Fork(require.resolve('./noxservicesystem_activity_cli'), {
@@ -110,7 +98,11 @@ Launcher.prototype.launch = function() {
 
     // Register.
     this._noxservicesystem_service_preloader_subprocess = subprocess;
-
+    subprocess.on('close', () => {
+      cli_subprocess.kill();
+      process.exit();
+    });
+    
     subprocess.on('message', (message) => {
       const message_code = message.message_code;
       const data = message.data;

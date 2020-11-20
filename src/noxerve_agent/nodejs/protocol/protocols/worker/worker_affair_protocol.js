@@ -415,12 +415,12 @@ WorkerAffairProtocol.prototype.joinMe = function (remote_worker_connectors_setti
           } else if (Utils.areBuffersEqual(synchronize_acknowledgment_message_bytes.slice(1, 3), this._ProtocolCodes.authentication_reason_reject_2_bytes)) {
             acknowledge(false);
             me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Worker authentication error.'));
-          } else if (Utils.areBuffersEqual(synchronize_acknowledgment_message_bytes.slice(1, 3), Buf.from([0x00, 0x02]))) {
+          } else if (Utils.areBuffersEqual(synchronize_acknowledgment_message_bytes.slice(1, 3), Buf.from([0x00, 0x03]))) {
             acknowledge(false);
-            me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Broadcast error'));
+            me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Remote broadcasting error.'));
           } else {
             acknowledge(false);
-            me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown error'));
+            me_join_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Unknown error.'));
           }
           // Return acknowledge binary.
         } else {
@@ -838,7 +838,7 @@ WorkerAffairProtocol.prototype.SynchronizeListener =  function(synchronize_messa
             if (error) {
               synchronize_acknowledgment(Buf.concat([
                 this._ProtocolCodes.worker_affairs_worker_peer_join_request_respond,
-                Buf.from([0x00, 0x02]) // Reject Broadcast error.
+                Buf.from([0x00, 0x03]) // Reject Remote broadcasting error..
               ]), synchronize_acknowledgment_error_handler);
             } else {
               let worker_peer_settings_dict = {};
