@@ -11,6 +11,7 @@
 const Crypto = require('crypto');
 const FS = require('fs');
 const Constants = require('./constants.json');
+const Manifest = require('./manifest.json');
 
 module.exports.isMyWorkerFilesInitailized = function() {
   return FS.existsSync(Constants.noxservicesystem_my_worker_initailized_locker_path);
@@ -20,7 +21,7 @@ module.exports.getAddNewWorkerCode = function(callback) {
   const my_worker_settings = JSON.parse(FS.readFileSync(Constants.noxservicesystem_my_worker_settings_path));
   const worker_authentication_token_base64 = my_worker_settings.worker_authentication_token_base64;
   const connectors_settings_json_base64 = Buffer.from(JSON.stringify(my_worker_settings.connectors_settings)).toString('base64');
-  callback(false, my_worker_settings.worker_id+'.'+connectors_settings_json_base64+'.'+worker_authentication_token_base64);
+  callback(false, my_worker_settings.worker_id + '.' + connectors_settings_json_base64 + '.' + worker_authentication_token_base64);
 };
 
 const decodeAddNewWorkerCode = function(add_new_worker_code) {
@@ -73,18 +74,19 @@ module.exports.initailizeMyWorkerFiles = function(noxerve_agent, preloader_param
         } else if (answer === '2') {
           rl.question('Please enter "AddNewWorkerCode" obtain from other already joined worker: \n', (add_new_worker_code) => {
             const decode_result = decodeAddNewWorkerCode(add_new_worker_code);
-            const remote_worker_id =  decode_result[0];
-            const remote_worker_interfaces_for_joining_me =  decode_result[1];
-            const worker_authentication_token_base64 =  decode_result[2];
-            noxerve_agent.Worker.joinMe(remote_worker_interfaces_for_joining_me, preloader_parameters.settings.connectors_settings,
-              {
-                name: 'A NoxServiceSystem service worker joined by worker with worker_id "'+remote_worker_id+'".'
+            const remote_worker_id = decode_result[0];
+            const remote_worker_interfaces_for_joining_me = decode_result[1];
+            const worker_authentication_token_base64 = decode_result[2];
+            noxerve_agent.Worker.joinMe(remote_worker_interfaces_for_joining_me, preloader_parameters.settings.connectors_settings, {
+                name: 'A NoxServiceSystem service worker joined by worker with worker_id "' + remote_worker_id + '".'
               }, {
                 worker_authentication_token: worker_authentication_token_base64
               },
               (error, my_worker_id, worker_peers_settings, static_global_random_seed_4096bytes) => {
-                if(error) next(error);
-                else {
+                if (error) {
+                  console.log('\n***** Please comfirm that all ' + Manifest.service_display_name + ' workers are online. *****\n');
+                  next(error)
+                } else {
                   rl.close();
                   rl.removeAllListeners();
                   FS.writeFileSync(Constants.noxservicesystem_static_global_random_seed_4096bytes_path, static_global_random_seed_4096bytes);
@@ -128,7 +130,7 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
   const preloader_parameters_settings_connectors_settings = preloader_parameters.settings.connectors_settings;
   const my_worker_settings = JSON.parse(FS.readFileSync(Constants.noxservicesystem_my_worker_settings_path));
   const my_worker_files_interfaces = my_worker_settings.interfaces;
-  const worker_authentication_token_base64 =  my_worker_settings.worker_authentication_token_base64;
+  const worker_authentication_token_base64 = my_worker_settings.worker_authentication_token_base64;
   const my_worker_files_connectors_settings = my_worker_settings.connectors_settings;
   const is_interfaces_changed = !(JSON.stringify(preloader_parameters_settings_interfaces) === JSON.stringify(my_worker_files_interfaces));
   const is_connectors_settings_changed = !(JSON.stringify(preloader_parameters_settings_connectors_settings) === JSON.stringify(my_worker_files_connectors_settings));
@@ -151,7 +153,7 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
       new_worker_peer_detail: new_worker_peer_detail
     });
     FS.readFile(Constants.noxservicesystem_worker_peers_settings_path, (error, worker_peers_settings_string) => {
-      if (error) next(error, () => {},  () => {});
+      if (error) next(error, () => {}, () => {});
       else {
         const on_confirm = (next_of_confirm) => {
           console.log('Worker peer with worker id ' + new_worker_peer_id + ' joining confrimed.');
@@ -172,13 +174,13 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
   });
 
   noxerve_agent.Worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_connectors_settings, remote_worker_peer_detail, next) => {
-    console.log('\nA worker peer request updating. Here are the informations:\n',  {
+    console.log('\nA worker peer request updating. Here are the informations:\n', {
       remote_worker_peer_id: remote_worker_peer_id,
       remote_worker_peer_connectors_settings: remote_worker_peer_connectors_settings,
       remote_worker_peer_detail: remote_worker_peer_detail
     });
     FS.readFile(Constants.noxservicesystem_worker_peers_settings_path, (error, worker_peers_settings_string) => {
-      if (error) next(error, () => {},  () => {});
+      if (error) next(error, () => {}, () => {});
       else {
         const on_confirm = (next_of_confirm) => {
           let worker_peers_settings = JSON.parse(worker_peers_settings_string);
@@ -200,7 +202,7 @@ module.exports.initailizeNoXerveAgentWorker = function(noxerve_agent, preloader_
   noxerve_agent.Worker.on('worker-peer-leave', (remote_worker_peer_id, next) => {
     console.log('\nA worker peer request leaving. Here are the informations:\n', remote_worker_peer_id);
     FS.readFile(Constants.noxservicesystem_worker_peers_settings_path, (error, worker_peers_settings_string) => {
-      if (error) next(error, () => {},  () => {});
+      if (error) next(error, () => {}, () => {});
       else {
         const on_confirm = (next_of_confirm) => {
           let worker_peers_settings = JSON.parse(worker_peers_settings_string);

@@ -39,12 +39,13 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
   console.log(Manifest.service_display_name + ' service(version ' + Manifest.service_version + ') worker started.');
   console.log(Manifest.service_description);
 
-  const if_error_then_close_preloader = (error, next) => {
+  const if_error_then_close_preloader = (error, next, tips) => {
     if (error) {
-      finish_start();
+      // finish_start();
       console.log(error);
+      if(tips) console.log(tips);
       setTimeout(() => {
-        this._preloader_parameters.closePreloader()
+        this._preloader_parameters.terminatePreloader()
       }, 100);
     } else {
       next();

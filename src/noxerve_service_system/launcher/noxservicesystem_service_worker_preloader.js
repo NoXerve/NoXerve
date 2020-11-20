@@ -143,6 +143,11 @@ process.on('message', (message) => {
                 throw new Error('"closePreloader" is not available until serivce start function executed.');
               }
             };
+            data.terminatePreloader = () => {
+              process.send({
+                message_code: message_codes.request_preloader_terminate
+              });
+            };
             noxservicesystem_service_instance = new NoxServiceSystemService(noxerve_agent, data);
 
             const start_executed_next_execute_plus_one = () => {
