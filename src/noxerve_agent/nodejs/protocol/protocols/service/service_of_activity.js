@@ -266,7 +266,9 @@ ServiceOfActivityProtocol.prototype.handleTunnel = function(error, service_of_ac
         });
 
         tunnel.on('error', (error) => {
-          service_of_activity.emitEventListener('externel-error');
+          // [Flag]
+          console.log(error);
+          // service_of_activity.emitEventListener('externel-error');
         });
 
         tunnel.on('close', () => {

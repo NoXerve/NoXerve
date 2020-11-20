@@ -9,6 +9,10 @@
 
 process.title = 'NoxServiceSystem Cli';
 
+// test
+const Crypto = require('crypto');
+ const fs = require('fs');
+
 const readline = require("readline");
 
 const cli_message_codes = {
@@ -37,6 +41,41 @@ process.on('message', (message) => {
         noxerve_agent.Activity.createActivity(data.settings.connectors_settings, 'cli', null, (error, noxservicesystem_service) => {
           if(error) console.log(error);
           else {
+            // test
+            noxservicesystem_service.call('getServiceManager', null, (err, result) => {
+
+
+              // let remain = 5;
+              // const service_package_tar_gz_readable_stream_callable_structure = noxerve_agent.NSDT.createCallableStructure({
+              //   read_bytes: (bytes_size, push) => {
+              //     if(remain) {
+              //       remain--;
+              //
+              //       const buf = Crypto.randomBytes(bytes_size);
+              //       console.log(bytes_size);
+              //       push(buf);
+              //     }
+              //     else {
+              //       push(null);
+              //     }
+              //   }
+              // });
+              let readStream = fs.createReadStream(require("path").join(__dirname, "./stream_test.txt"));
+              readStream.on('open', () => {
+                const service_package_tar_gz_readable_stream_callable_structure = noxerve_agent.NSDT.createCallableStructure({
+                  read_bytes: (bytes_size, push) => {
+                    const read_bytes = readStream.read(bytes_size);
+                    // console.log(bytes_size, read_bytes);
+                    push(read_bytes);
+                  }
+                });
+                result.call('installService', service_package_tar_gz_readable_stream_callable_structure, (error) => {
+                  console.log('finished.');
+                });
+              });
+
+            });
+
             const cli_cycle = () => {
               rl.question('(NoxServiceSystem CLI) >>> ', (answer)=> {
                 // console.log('CLI has not completed yet.', answer);

@@ -33,6 +33,7 @@ CustomReadable.prototype._read = function(size) {
 function NoxServiceSystemService(noxerve_agent, preloader_parameters) {
   this._noxerve_agent = noxerve_agent;
   this._preloader_parameters = preloader_parameters;
+  this._service_manager = new ServiceManager({});
 }
 
 NoxServiceSystemService.prototype.start = function(finish_start) {
@@ -69,6 +70,32 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
   };
 
   const service_setup = (next) => {
+    const service_manager_callable_struture = this._noxerve_agent.NSDT.createCallableStructure({
+      startService: (service_id, callback) => {},
+      closeService: (service_id, callback) => {},
+      installService: (service_package_tar_gz_readable_stream_callable_structure, callback) => {
+        const service_package_tar_gz_readable_stream = new CustomReadable({
+          _read_custom: (bytes_size, push) => {
+            service_package_tar_gz_readable_stream_callable_structure.call('read_bytes', bytes_size, push);
+          }
+        });
+
+        this._service_manager.installService(service_package_tar_gz_readable_stream, callback);
+      },
+      uninstallService: (service_id, callback) => {},
+      getServiceStatus: (service_id, callback) => {},
+
+      getAllServiceStatus: (service_id, callback) => {},
+      getWorkerRoomStatus: (worker_room_id) => {
+
+      },
+      getAllWorkerRoomsStatus: () => {
+
+      },
+      deployWorkerOfService: (service_id, worker_room_id, callback) => {},
+      undeployWorkerOfService: (worker_room_id, callback) => {},
+    });
+
     const user_space_service_activity_create_handler = (parameter, service_of_activity) => {
 
     };
@@ -79,24 +106,6 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
       const service_id = parameter.service_id;
       const worker_id = parameter.worker_id;
       const system_space_service_token = parameter.system_space_service_token;
-
-      const service_manager_callable_struture = NoXerveAgent.NSDT.createCallableStructure({
-        installService: (service_package_tar_gz_readable_stream_callable_structure, callback) => {
-          const service_package_tar_gz_readable_stream = new CustomReadable({
-            _read_custom: (bytes_size, push) => {
-              service_package_tar_gz_readable_stream_callable_structure.call('read_bytes', bytes_size, push);
-            }
-          });
-
-          this._service_manager.installService(service_package_tar_gz_readable_stream, callback);
-        },
-        uninstallService: (service_id, callback) => {},
-        getServiceStatus: (service_id, callback) => {},
-        startService: (service_id, callback) => {},
-        closeService: (service_id, callback) => {},
-        deployWorkerOfService: (service_id, host_id, platfrom_name, callback) => {},
-        undeployWorkerOfService: (service_id, worker_id, callback) => {},
-      });
 
       service_of_activity.define('getServiceManager', (service_function_parameter, return_data, yield_data) => {
         // Need authentication.
@@ -111,6 +120,15 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
 
       });
 
+      service_of_activity.define('getAddNewWorkerCode', (service_function_parameter, return_data, yield_data) => {
+        Initializer.getAddNewWorkerCode((error, add_new_worker_code) => {
+          return_data({
+            error: error,
+            add_new_worker_code: add_new_worker_code
+          });
+        });
+      });
+
     });
     this._noxerve_agent.Service.onActivityCreate('cli', (parameter, service_of_activity)=> {
       service_of_activity.define('getAddNewWorkerCode', (service_function_parameter, return_data, yield_data) => {
@@ -120,6 +138,11 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
             add_new_worker_code: add_new_worker_code
           });
         });
+      });
+
+      service_of_activity.define('getServiceManager', (service_function_parameter, return_data, yield_data) => {
+        // Need authentication.
+        return_data(service_manager_callable_struture);
       });
     });
     // console.log('123');

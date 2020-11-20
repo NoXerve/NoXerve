@@ -13,6 +13,7 @@
 
  // const Tar = require('tar');
  const Zlib = require('zlib');
+ const fs = require('fs');
 
 function ServiceManager(settings) {
 
@@ -21,7 +22,13 @@ function ServiceManager(settings) {
 }
 
 ServiceManager.prototype.installService = function(service_package_tar_gz_readable_stream, callback) {
-  service_package_tar_gz_readable_stream.pipe();
+  let writeStream = fs.createWriteStream('test.txt');
+  let on_finish_called = false;
+  const on_finish = () => {
+    console.log('uploaded.');
+    callback(false);
+  };
+  service_package_tar_gz_readable_stream.pipe(writeStream).on('finish', on_finish);
   // register_service_package_tar_gz_readable_stream();
 }
 
