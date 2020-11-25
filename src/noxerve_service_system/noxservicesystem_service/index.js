@@ -48,6 +48,61 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
   console.log(Manifest.service_display_name + ' service(version ' + Manifest.service_version + ') worker started.');
   console.log(Manifest.service_description);
 
+
+  // Cabinet Commission
+
+  this._noxerve_agent.Worker.onWorkerSocketCreate('CabinetCommissionQuery', (parameters, remote_worker_id, worker_socket) => {
+    worker_socket.define('joinDepartments',  (service_function_parameter, return_data, yield_data) => {
+
+    });
+
+    worker_socket.define('isWorkerInDepartment',  (service_function_parameter, return_data, yield_data) => {
+
+    });
+
+    worker_socket.define('whoIsInDepartment',  (service_function_parameter, return_data, yield_data) => {
+
+    });
+  });
+
+  this._noxerve_agent.Worker.onWorkerSocketCreate('CabinetCommissionAssignment', (parameters, remote_worker_id, worker_socket) => {
+    // worker_socket.define('getServiceStatus',  (service_function_parameter, return_data, yield_data) => {
+    //
+    // });
+  });
+
+
+  // Foreign Services Affair
+
+  this._noxerve_agent.Worker.onWorkerSocketCreate('ForeignServicesAffairQuery', (parameters, remote_worker_id, worker_socket) => {
+    worker_socket.define('getServiceStatus',  (service_function_parameter, return_data, yield_data) => {
+
+    });
+
+    worker_socket.define('getServiceStatus',  (service_function_parameter, return_data, yield_data) => {
+
+    });
+  });
+  this._noxerve_agent.Worker.onWorkerSocketCreate('ForeignServicesAffairAssignment', (parameters, remote_worker_id, worker_socket) => {
+
+  });
+
+
+  // Foreign Workers Affair
+
+  this._noxerve_agent.Worker.onWorkerSocketCreate('ForeignWorkersAffairQuery', (parameters, remote_worker_id, worker_socket) => {
+    worker_socket.define('getServiceStatus',  (service_function_parameter, return_data, yield_data) => {
+
+    });
+  });
+
+  this._noxerve_agent.Worker.onWorkerSocketCreate('ForeignWorkersAffairAssignment', (parameters, remote_worker_id, worker_socket) => {
+    worker_socket.define('installWorkerOfService',  (service_function_parameter, return_data, yield_data) => {
+      // Check worker room avaliable.
+    });
+  });
+  
+
   const if_error_then_close_preloader = (error, next, tips) => {
     if (error) {
       // finish_start();
@@ -117,6 +172,11 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
 
       service_of_activity.define('getServiceManager', (service_function_parameter, return_data, yield_data) => {
         // Need authentication.
+        this._noxerve_agent.Worker.createWorkerSocket('ForeignWorkersAffairQuery', (error, worker_socket) => {
+          worker_socket.define('getServiceStatus',  (service_function_parameter, return_data, yield_data) => {
+
+          });
+        });
         return_data(service_manager_callable_struture);
       });
 
