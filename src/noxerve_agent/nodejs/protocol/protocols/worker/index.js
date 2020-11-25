@@ -164,7 +164,12 @@ function WorkerProtocol(settings) {
 
   // Register imports.
   this._worker_module.on('static-global-random-seed-import', (static_global_random_seed_4096bytes, callback) => {
-    this._worker_affair_protocol.importStaticGlobalRandomSeed(static_global_random_seed_4096bytes, callback);
+    this._worker_affair_protocol.importStaticGlobalRandomSeed(static_global_random_seed_4096bytes, (error) => {
+      if(!error) {
+        this._worker_module.GlobalDeterministicRandomManager = this._worker_affair_protocol.returnGlobalDeterministicRandomManager();
+      }
+      callback(error);
+    });
   });
 
   this._worker_module.on('my-worker-authenticity-data-import', (worker_id, worker_authenticity_information, callback) => {

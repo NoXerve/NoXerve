@@ -12,8 +12,11 @@ const Crypto = require('crypto');
 const FS = require('fs');
 const Constants = require('./constants.json');
 const Manifest = require('./manifest.json');
+const PROBABILITY_OF_BEING_CABINET_MEMBER = 20;
+const MAX_CABINET_MEMBER_COUNT = 20;
 
 function WorkerAffairManager(settings) {
+  this._settings = settings;
   this._noxerve_agent_worker = settings.noxerve_agent_worker;
 };
 
@@ -37,6 +40,13 @@ const decodeJoinNewWorkerCode = function(add_new_worker_code) {
   return result;
 };
 
+WorkerAffairManager.prototype._calculateIsCabinetMemberByWorkerId = function(worker_id_int, callback) {
+  this._settings.noxerve_agent_worker.GlobalDeterministicRandomManager.generateIntegerInRange(Buffer.from([worker_id_int]), 0, 100, (error, result) => {
+    callback(false, (result <= PROBABILITY_OF_BEING_CABINET_MEMBER)?true:false);
+  });
+  // callback(true, true);
+};
+
 WorkerAffairManager.prototype.decodeJoinNewWorkerCode = decodeJoinNewWorkerCode;
 
 WorkerAffairManager.prototype.initailizeMyWorkerFiles = function(noxerve_agent, preloader_parameters, callback) {
@@ -50,7 +60,7 @@ WorkerAffairManager.prototype.initailizeMyWorkerFiles = function(noxerve_agent, 
       });
 
       console.log('Has not set up worker peer settings.');
-      rl.question('Do you want to:\n 1. Setup as the first worker.\n 2. Join other worker peers?(As a unstable worker) \n 3. Join other worker peers?(As a stable worker) \nInput a number: \n', (answer) => {
+      rl.question('Do you want to:\n 1. Setup as the first worker.\n 2. Join other worker peers?(As a worker without suffrage) \n 3. Join other worker peers?(As a worker with suffrage) \nInput a number: \n', (answer) => {
         if (answer === '1') {
           rl.close();
           rl.removeAllListeners();
@@ -70,7 +80,8 @@ WorkerAffairManager.prototype.initailizeMyWorkerFiles = function(noxerve_agent, 
               connectors_settings: preloader_parameters.settings.connectors_settings,
               detail: {
                 name: 'The first NoxServiceSystem service worker.',
-                stable: true
+                suffrage: true,
+                member_of_cabinet: true
               }
             }
           }, null, 2));
@@ -84,7 +95,7 @@ WorkerAffairManager.prototype.initailizeMyWorkerFiles = function(noxerve_agent, 
             const worker_authentication_token_base64 = decode_result[2];
             this._noxerve_agent_worker.joinMe(remote_worker_interfaces_for_joining_me, preloader_parameters.settings.connectors_settings, {
                 name: 'A NoxServiceSystem service worker joined by worker with worker_id "' + remote_worker_id + '".',
-                stable: answer === '2'?false:true
+                suffrage: answer === '2'?false:true
               }, {
                 worker_authentication_token: worker_authentication_token_base64
               },
@@ -95,20 +106,39 @@ WorkerAffairManager.prototype.initailizeMyWorkerFiles = function(noxerve_agent, 
                 } else {
                   rl.close();
                   rl.removeAllListeners();
-                  FS.writeFileSync(Constants.noxservicesystem_static_global_random_seed_4096bytes_path, static_global_random_seed_4096bytes);
-                  console.log('Created static global random seed file at "' + Constants.noxservicesystem_static_global_random_seed_4096bytes_path + '".');
+                  this._noxerve_agent_worker.importStaticGlobalRandomSeed(static_global_random_seed_4096bytes, (error) => {
+                    if (error) {callback(error); return;};
+                    let is_cabinet_member = false;
 
-                  FS.writeFileSync(Constants.noxservicesystem_my_worker_settings_path, JSON.stringify({
-                    worker_id: my_worker_id,
-                    worker_authentication_token_base64: worker_authentication_token_base64,
-                    interfaces: preloader_parameters.settings.interfaces,
-                    connectors_settings: preloader_parameters.settings.connectors_settings,
-                  }, null, 2));
-                  console.log('Created my worker settings file at "' + Constants.noxservicesystem_my_worker_settings_path + '".');
+                    const proceed = () => {
+                      worker_peers_settings[my_worker_id].detail.member_of_cabinet = is_cabinet_member;
 
-                  FS.writeFileSync(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2));
-                  console.log('Created worker peers settings file at "' + Constants.noxservicesystem_worker_peers_settings_path + '".');
-                  next(false);
+                      FS.writeFileSync(Constants.noxservicesystem_static_global_random_seed_4096bytes_path, static_global_random_seed_4096bytes);
+                      console.log('Created static global random seed file at "' + Constants.noxservicesystem_static_global_random_seed_4096bytes_path + '".');
+
+                      FS.writeFileSync(Constants.noxservicesystem_my_worker_settings_path, JSON.stringify({
+                        worker_id: my_worker_id,
+                        worker_authentication_token_base64: worker_authentication_token_base64,
+                        interfaces: preloader_parameters.settings.interfaces,
+                        connectors_settings: preloader_parameters.settings.connectors_settings,
+                      }, null, 2));
+                      console.log('Created my worker settings file at "' + Constants.noxservicesystem_my_worker_settings_path + '".');
+
+                      FS.writeFileSync(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2));
+                      console.log('Created worker peers settings file at "' + Constants.noxservicesystem_worker_peers_settings_path + '".');
+                      next(false);
+                    };
+
+                    if(answer === '2'?false:true) {
+                      this._calculateIsCabinetMemberByWorkerId(my_worker_id, (error, result) => {
+                        is_cabinet_member = result;
+                        proceed();
+                      });
+                    }
+                    else{
+                      proceed();
+                    }
+                  });
                 }
               });
           });
@@ -153,30 +183,46 @@ WorkerAffairManager.prototype.initailizeNoXerveAgentWorker = function(noxerve_ag
     }
   });
   this._noxerve_agent_worker.on('worker-peer-join', (new_worker_peer_id, new_worker_peer_connectors_settings, new_worker_peer_detail, next) => {
-    console.log('\nA worker peer request joining. Here are the informations:\n', {
-      new_worker_peer_id: new_worker_peer_id,
-      new_worker_peer_connectors_settings: new_worker_peer_connectors_settings,
-      new_worker_peer_detail: new_worker_peer_detail
-    });
-    FS.readFile(Constants.noxservicesystem_worker_peers_settings_path, (error, worker_peers_settings_string) => {
-      if (error) next(error, () => {}, () => {});
-      else {
-        const on_confirm = (next_of_confirm) => {
-          console.log('Worker peer with worker id ' + new_worker_peer_id + ' joining confrimed.');
-          let worker_peers_settings = JSON.parse(worker_peers_settings_string);
-          worker_peers_settings[new_worker_peer_id] = {
-            connectors_settings: new_worker_peer_connectors_settings,
-            detail: new_worker_peer_detail
+    let is_cabinet_member = false;
+    const proceed = () => {
+      console.log('\nA worker peer request joining. Here are the informations:\n', {
+        new_worker_peer_id: new_worker_peer_id,
+        new_worker_peer_connectors_settings: new_worker_peer_connectors_settings,
+        new_worker_peer_detail: new_worker_peer_detail,
+        member_of_cabinet: is_cabinet_member
+      });
+
+      FS.readFile(Constants.noxservicesystem_worker_peers_settings_path, (error, worker_peers_settings_string) => {
+        if (error) next(error, () => {}, () => {});
+        else {
+          const on_confirm = (next_of_confirm) => {
+            console.log('Worker peer with worker id ' + new_worker_peer_id + ' joining confrimed.');
+            let worker_peers_settings = JSON.parse(worker_peers_settings_string);
+            new_worker_peer_detail.member_of_cabinet = is_cabinet_member;
+            worker_peers_settings[new_worker_peer_id] = {
+              connectors_settings: new_worker_peer_connectors_settings,
+              detail: new_worker_peer_detail,
+            };
+            FS.writeFile(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2), next_of_confirm);
           };
-          FS.writeFile(Constants.noxservicesystem_worker_peers_settings_path, JSON.stringify(worker_peers_settings, null, 2), next_of_confirm);
-        };
-        const on_cancel = (next_of_cancel) => {
-          console.log('Worker peer with worker id ' + new_worker_peer_id + ' joining canceled.');
-          next_of_cancel(false);
-        };
-        next(false, on_confirm, on_cancel);
-      }
-    });
+          const on_cancel = (next_of_cancel) => {
+            console.log('Worker peer with worker id ' + new_worker_peer_id + ' joining canceled.');
+            next_of_cancel(false);
+          };
+          next(false, on_confirm, on_cancel);
+        }
+      });
+    };
+
+    if(new_worker_peer_detail.suffrage) {
+      this._calculateIsCabinetMemberByWorkerId(new_worker_peer_id, (error, result) => {
+        is_cabinet_member = result;
+        proceed();
+      });
+    }
+    else{
+      proceed();
+    }
   });
 
   this._noxerve_agent_worker.on('worker-peer-update', (remote_worker_peer_id, remote_worker_peer_connectors_settings, remote_worker_peer_detail, next) => {

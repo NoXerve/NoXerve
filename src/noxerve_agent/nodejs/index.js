@@ -120,7 +120,10 @@ function NoXerveAgent(settings) {
       this._worker_module.importMyWorkerAuthenticityData(worker_id, worker_authenticity_information, callback);
     },
     importStaticGlobalRandomSeed: (static_global_random_seed_4096bytes, callback) => {
-      this._worker_module.importStaticGlobalRandomSeed(static_global_random_seed_4096bytes, callback);
+      this._worker_module.importStaticGlobalRandomSeed(static_global_random_seed_4096bytes, (error) => {
+        if(!error) this.Worker.GlobalDeterministicRandomManager = this._worker_module.GlobalDeterministicRandomManager,
+        callback(error);
+      });
     },
     importWorkerPeersSettings: (worker_peers_settings, callback) => {
       this._worker_module.importWorkerPeersSettings(worker_peers_settings, callback);
