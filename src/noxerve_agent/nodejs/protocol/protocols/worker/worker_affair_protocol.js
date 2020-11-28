@@ -203,7 +203,7 @@ WorkerAffairProtocol.prototype.returnWorkerPeerConnectorsSettingsByWorkerId = fu
         let interface_preference_level = connectors_settings[j].interface_preference_level;
         if(interface_preference_level === null  || typeof(interface_preference_level) === 'undefined') {
           const interface_name = connectors_settings[j].interface_name;
-          // Get default from node module via protocl api.
+          // Get default from node module via protocol api.
           interface_preference_level = this._return_node_interface_preferance_level(interface_name);
         }
         if (parseInt(interface_preference_level) === parseInt(i)) {

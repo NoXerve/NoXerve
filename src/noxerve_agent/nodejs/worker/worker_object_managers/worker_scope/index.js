@@ -18,7 +18,7 @@ const Errors = require('../../../errors');
  * @description NoXerve Agent WorkerScopeManager Object.
  */
 
-function WorkerScopeManager(worker_subprotocol_object_managers) {
+function WorkerScopeManager(settings) {
   // /**
   //  * @memberof module:WorkerScopeManager
   //  * @type {buffer}
@@ -29,7 +29,7 @@ function WorkerScopeManager(worker_subprotocol_object_managers) {
    * @type {object}
    * @private
    */
-  this._worker_subprotocol_object_managers = worker_subprotocol_object_managers;
+  this._worker_subprotocol_object_managers = settings.worker_subprotocol_object_managers;
 }
 
 /**

@@ -20,19 +20,19 @@ const AbsenceToleranceRecordCommission = require('./absence_tolerance_record_com
  * @description NoXerve Agent AbsenceToleranceRecordCommissionManager Object.
  */
 
-function AbsenceToleranceRecordCommissionManager(worker_subprotocol_object_managers, hash_manager) {
+function AbsenceToleranceRecordCommissionManager(settings) {
   /**
    * @memberof module:AbsenceToleranceRecordCommissionManager
    * @type {object}
    * @private
    */
-  this._worker_subprotocol_object_managers = worker_subprotocol_object_managers;
+  this._worker_subprotocol_object_managers = settings.worker_subprotocol_object_managers;
   /**
    * @memberof module:AbsenceToleranceRecordCommissionManager
    * @type {object}
    * @private
    */
-  this._hash_manager = hash_manager;
+  this._hash_manager = settings.hash_manager;
 }
 
 
@@ -49,7 +49,7 @@ function AbsenceToleranceRecordCommissionManager(worker_subprotocol_object_manag
  * @description Create a worker group in order to communicate with another worker.
  */
 AbsenceToleranceRecordCommissionManager.prototype.create = function(atr_commission_purpose_name, settings, callback) {
-  const commission_peers_worker_id_list = settings.coo、mmission_peers;
+  const commission_peers_worker_id_list = settings.commission_peers;
   const update_rate_percentage_int = settings.update_rate;
   const record_dict = settings.records;
   this._worker_subprotocol_object_managers.worker_scope.create(atr_commission_purpose_name, commission_peers_worker_id_list, (error, worker_scope) => {

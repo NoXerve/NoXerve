@@ -116,7 +116,7 @@ AbsenceToleranceRecordCommission.prototype.start = function(callback) {
 
     }
     else if(protocol_code_int === this._ProtocolCodes.check_record_update_interation[0]) {
-
+      response(Buf.concat());
     }
     else if(protocol_code_int === this._ProtocolCodes.sync_record_value[0]) {
 

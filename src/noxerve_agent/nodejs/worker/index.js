@@ -78,22 +78,41 @@ Worker.prototype.start = function(callback) {
   if(this._event_listener_dict['worker-subprotocol-managers-request']) {
     this._event_listener_dict['hash-manager-request']((error, hash_manager) => {
       if(error) {callback(error); return;};
-      // Request for worker group. With < 256 register_code.
-      this._event_listener_dict['worker-subprotocol-managers-request'](WorkerGroupManager.register_code, (error, worker_subprotocol_object_managers)=> {
+      this._event_listener_dict['nsdt-embedded-protocol-request']((error, nsdt_embedded_protocol) => {
         if(error) {callback(error); return;};
-        this._worker_object_managers['worker_group'] = new WorkerGroupManager.module(worker_subprotocol_object_managers, hash_manager);
-        // Request for worker socket. With < 256 register_code.
-        this._event_listener_dict['worker-subprotocol-managers-request'](WorkerSocketManager.register_code, (error, worker_subprotocol_object_managers)=> {
+        // Request for worker group. With < 256 register_code.
+        this._event_listener_dict['worker-subprotocol-managers-request'](WorkerGroupManager.register_code, (error, worker_subprotocol_object_managers)=> {
           if(error) {callback(error); return;};
-          this._worker_object_managers['worker_socket'] = new WorkerSocketManager.module(worker_subprotocol_object_managers, hash_manager);
-          // Request for worker scope. With < 256 register_code.
-          this._event_listener_dict['worker-subprotocol-managers-request'](WorkerScopeManager.register_code, (error, worker_subprotocol_object_managers)=> {
+          this._worker_object_managers['worker_group'] = new WorkerGroupManager.module({
+            worker_subprotocol_object_managers: worker_subprotocol_object_managers,
+            hash_manager: hash_manager,
+            nsdt_embedded_protocol: nsdt_embedded_protocol
+          });
+          // Request for worker socket. With < 256 register_code.
+          this._event_listener_dict['worker-subprotocol-managers-request'](WorkerSocketManager.register_code, (error, worker_subprotocol_object_managers)=> {
             if(error) {callback(error); return;};
-            this._worker_object_managers['worker_scope'] = new WorkerScopeManager.module(worker_subprotocol_object_managers, hash_manager);
-            this._event_listener_dict['worker-subprotocol-managers-request'](AbsenceToleranceRecordCommissionManager.register_code, (error, worker_subprotocol_object_managers)=> {
+            this._worker_object_managers['worker_socket'] = new WorkerSocketManager.module({
+              worker_subprotocol_object_managers: worker_subprotocol_object_managers,
+              hash_manager: hash_manager,
+              nsdt_embedded_protocol: nsdt_embedded_protocol
+            });
+            // Request for worker scope. With < 256 register_code.
+            this._event_listener_dict['worker-subprotocol-managers-request'](WorkerScopeManager.register_code, (error, worker_subprotocol_object_managers)=> {
               if(error) {callback(error); return;};
-              this._worker_object_managers['absence_tolerance_record_commission'] = new AbsenceToleranceRecordCommissionManager.module(worker_subprotocol_object_managers, hash_manager);
-              callback(error);
+              this._worker_object_managers['worker_scope'] = new WorkerScopeManager.module({
+                worker_subprotocol_object_managers: worker_subprotocol_object_managers,
+                hash_manager: hash_manager,
+                nsdt_embedded_protocol: nsdt_embedded_protocol
+              });
+              this._event_listener_dict['worker-subprotocol-managers-request'](AbsenceToleranceRecordCommissionManager.register_code, (error, worker_subprotocol_object_managers)=> {
+                if(error) {callback(error); return;};
+                this._worker_object_managers['absence_tolerance_record_commission'] = new AbsenceToleranceRecordCommissionManager.module({
+                  worker_subprotocol_object_managers: worker_subprotocol_object_managers,
+                  hash_manager: hash_manager,
+                  nsdt_embedded_protocol: nsdt_embedded_protocol
+                });
+                callback(error);
+              });
             });
           });
         });

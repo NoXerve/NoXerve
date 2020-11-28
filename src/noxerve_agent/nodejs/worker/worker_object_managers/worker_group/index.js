@@ -18,7 +18,7 @@ const Errors = require('../../../errors');
  * @description NoXerve Agent WorkerGroupManager Object.
  */
 
-function WorkerGroupManager(worker_subprotocol_object_managers) {
+function WorkerGroupManager(settings) {
   // /**
   //  * @memberof module:WorkerGroupManager
   //  * @type {buffer}
@@ -29,7 +29,7 @@ function WorkerGroupManager(worker_subprotocol_object_managers) {
    * @type {object}
    * @private
    */
-  this._worker_subprotocol_object_managers = worker_subprotocol_object_managers;
+  this._worker_subprotocol_object_managers = settings.worker_subprotocol_object_managers;
 }
 
 /**
