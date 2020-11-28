@@ -33,7 +33,7 @@ function WorkerScope(settings) {
    * @type {object}
    * @private
    */
-        this._scope_peer_list = settings.scope_peer_list;
+  this._scope_peer_list = settings.scope_peer_list;
 
   /**
    * @memberof module:WorkerScope

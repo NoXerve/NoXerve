@@ -15,6 +15,7 @@ const Errors = require('../errors');
 const WorkerSocketManager = require('./worker_object_managers/worker_socket');
 const WorkerScopeManager = require('./worker_object_managers/worker_scope');
 const WorkerGroupManager = require('./worker_object_managers/worker_group');
+const AbsenceToleranceRecordCommissionManager = require('./worker_object_managers/absence_tolerance_record_commission');
 
 /**
  * @constructor module:Worker
@@ -83,7 +84,10 @@ Worker.prototype.start = function(callback) {
         // Request for worker scope. With < 256 register_code.
         this._event_listener_dict['worker-subprotocol-managers-request'](WorkerScopeManager.register_code, (error, worker_subprotocol_object_managers)=> {
           this._worker_object_managers['worker_scope'] = new WorkerScopeManager.module(worker_subprotocol_object_managers);
-          if (callback) callback(error);
+          this._event_listener_dict['worker-subprotocol-managers-request'](AbsenceToleranceRecordCommissionManager.register_code, (error, worker_subprotocol_object_managers)=> {
+            this._worker_object_managers['absence_tolerance_record_commission'] = new AbsenceToleranceRecordCommissionManager.module(worker_subprotocol_object_managers);
+            if (callback) callback(error);
+          });
         });
       });
     });
@@ -214,6 +218,22 @@ Worker.prototype.createWorkerScope = function(worker_scope_purpose_name, worker_
  */
 Worker.prototype.createWorkerGroup = function(worker_group_purpose_name, worker_peers_worker_id_list, callback) {
   this._worker_object_managers.worker_group.create(worker_group_purpose_name, worker_peers_worker_id_list, callback);
+}
+
+/**
+ * @callback module:Worker~callback_of_create_absence_tolerance_record_commission
+ * @param {object} absence_tolerance_record_commission
+ * @param {error} error
+ */
+/**
+ * @memberof module:Worker
+ * @param {string} atr_commission_purpose_name - The purpose for this absence tolerance record commission.
+ * @param {list} worker_peers_worker_id_list - The worker peers that you want to communicate with.
+ * @param {module:Worker~callback_of_create_absence_tolerance_record_commission} callback
+ * @description Create a absence_tolerance_record_commission in order to save records.
+ */
+Worker.prototype.createAbsenceToleranceRecordCommission = function(atr_commission_purpose_name, worker_peers_worker_id_list, callback) {
+  this._worker_object_managers.absence_tolerance_record_commission.create(worker_group_purpose_name, worker_peers_worker_id_list, callback);
 }
 
 /**
