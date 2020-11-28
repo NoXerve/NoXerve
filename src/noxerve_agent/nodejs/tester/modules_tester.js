@@ -13,6 +13,7 @@ const static_global_random_seed_4096bytes = fs.readFileSync('./worker/static_glo
 const log = (...params) => {
   console.log.apply(null, params);
 };
+const my_worker_id = 2;
 
 log('[Tester] Start testing...');
 
@@ -31,6 +32,7 @@ let Tests = [
   'nsdt_close',
   'worker_scope_check_integrity',
   'worker_scope_get_peer_list',
+  'worker_scope_multicast_request_reponse',
   'worker_scope_broadcast_request_reponse',
   // 'worker_scope_add_worker',
   'worker_group_creation',
@@ -182,21 +184,21 @@ Node2.start(() => {
 
     // **** Worker Module Test Start ****
 
-    let worker_peers_settings = {
-      1: {
-        connectors_settings: [{
-          interface_name: 'WebSocket',
-          connector_settings: {
-            host: '0.0.0.0',
-            port: 12345
-          }
-        }],
-        detail: {}
-      }
+    let worker_peers_settings = {};
+    worker_peers_settings[my_worker_id] = {
+      connectors_settings: [{
+        interface_name: 'WebSocket',
+        connector_settings: {
+          host: '0.0.0.0',
+          port: 12345
+        }
+      }],
+      detail: {}
     };
+
     Worker.importStaticGlobalRandomSeed(static_global_random_seed_4096bytes, (error) => {
       if (error) log('[Worker module] importStaticGlobalRandomSeed error.', error);
-      Worker.importMyWorkerAuthenticityData(1, 'whatsoever_auth', (error)=> {
+      Worker.importMyWorkerAuthenticityData(my_worker_id, 'whatsoever_auth', (error)=> {
         if (error) log('[Worker module] importMyWorkerAuthenticityData error.', error);
         Worker.importWorkerPeersSettings(worker_peers_settings, (error)=> {
           if (error) log('[Worker module] importWorkerPeersSettings error.', error);
@@ -267,7 +269,7 @@ Node2.start(() => {
             });
 
             // WorkerSocket test
-            Worker.createWorkerSocket('purpose 1', {p: 1}, 1, (error, worker_socket)=> {
+            Worker.createWorkerSocket('purpose 1', {p: 1}, my_worker_id, (error, worker_socket)=> {
               if (error) {
                 log('[Worker module] createWorkerSocket error.', error);
               }
@@ -316,69 +318,66 @@ Node2.start(() => {
             });
 
             // WorkerScope tests
-            Worker.createWorkerScope('test_scope', [1], (error, worker_scope) => {
+            Worker.createWorkerScope('test_scope', [my_worker_id], (error, worker_scope) => {
               if (error) log('[Worker module] "test_scope" error.', error);
               // log('worker list: ', worker_scope._worker_list);
-              worker_scope.on('integrity-pass', () => {
-
+              worker_scope.on('request-response', (scope_peer_id, request_data_bytes, response) => {
+                log('[Worker module: Worker Scope]  Scope peer (with scope_peer_id '+scope_peer_id+') request. Request data_bytes:', request_data_bytes);
+                response(Buffer.from([0x01, 0x06, 0x06, 0x06, 0x06]));
               });
               worker_scope.checkIntegrity((error) => {
-                if (error) log('[Worker module] "checkIntegrity" error.', error);
+                if (error) log('[Worker module: Worker Scope]  "checkIntegrity" error.', error);
                 finish('worker_scope_check_integrity');
               });
               let list = worker_scope.returnScopePeerList();
               // log('workers in scope: ', list);
               finish('worker_scope_get_peer_list');
-              worker_scope.broadcastRequest(Buffer.from([0x02,6,6,6,6]),
-                (worker_id, synchronize_error, synchronize_acknowledgment_message_bytes, callback) => {
-                  // maybe need more check for security
-                  // log('[worker_scope] worker '+ worker_id +' respond !');
-                  // log('sync_ack info: ' + synchronize_acknowledgment_message_bytes.toString('utf8'));
+              worker_scope.broadcastRequest(Buffer.from([0x02, 0x06, 0x06, 0x06, 0x06]),
+                (scope_peer_id, synchronize_error, response_data_bytes, confirm_error_finish_status) => {
+                  log('[Worker module: Worker Scope] Scope with scope id '+ scope_peer_id +' respond:', response_data_bytes);
                   if(synchronize_error) {
                     // log('with error: '+ synchronize_error);
-                    callback(synchronize_error, false);
+                    confirm_error_finish_status(synchronize_error, false);
                   }
-                  else callback(false, true);
+                  else confirm_error_finish_status(false, true);
                 },
                 (error, finished_worker_list) => {
                   if(error) {
-                    // log('[worker_scope] finish broadcastRequest with error:' + error);
-                    // log('only ' + finished_worker_list + ' finished');
+                    log('[Worker module: Worker Scope] finish broadcastRequest with error:' + error);
+                    log('[Worker module: Worker Scope] only ' + finished_worker_list + ' finished');
                   }
                   else{
-                    // log('[worker_scope] finish broadcastRequest');
-                    // log('all finished. ( ' + finished_worker_list + ' )');
+                    log('[Worker module: Worker Scope] finish broadcastRequest');
+                    log('[Worker module: Worker Scope] all finished. ( ' + finished_worker_list + ' )');
                   }
                   finish('worker_scope_broadcast_request_reponse');
                 }
               );
-              // plese don't add worker itself. It will break the other worker scope tests.
-              worker_scope.add_worker(1,
-                (worker_id, synchronize_error, request_message_bytes, _callback) => {
-                // maybe need more check for security
-                log('[worker_scope] add_worker: worker '+ worker_id +' respond.');
-                if(synchronize_error) {
-                  log('[worker_scope] sync with error: '+ synchronize_error);
-                  _callback(synchronize_error, false);
-                }
-                else _callback(false, true);
+              worker_scope.multicastRequest([1], Buffer.from([0x03, 0x06, 0x06, 0x06, 0x06]),
+                (scope_peer_id, synchronize_error, response_data_bytes, confirm_error_finish_status) => {
+                  log('[Worker module: Worker Scope] Scope with scope id '+ scope_peer_id +' respond:', response_data_bytes);
+                  if(synchronize_error) {
+                    // log('with error: '+ synchronize_error);
+                    confirm_error_finish_status(synchronize_error, false);
+                  }
+                  else confirm_error_finish_status(false, true);
                 },
                 (error, finished_worker_list) => {
                   if(error) {
-                    log('[worker_scope] finish adding worker with error:' + error);
-                    log('[worker_scope] only ' + finished_worker_list + ' finished');
+                    log('[Worker module: Worker Scope] finish multicastRequest with error:' + error);
+                    log('[Worker module: Worker Scope] only ' + finished_worker_list + ' finished');
                   }
                   else{
-                    log('[worker_scope] finish adding worker');
-                    log('[worker_scope] all finished. ( ' + finished_worker_list + ' )');
+                    log('[Worker module: Worker Scope] finish multicastRequest');
+                    log('[Worker module: Worker Scope] all finished. ( ' + finished_worker_list + ' )');
                   }
-                  finish('worker_scope_add_worker');
+                  finish('worker_scope_multicast_request_reponse');
                 }
               );
             });
 
             // WorkerGroup tests
-            Worker.createWorkerGroup('test_group', [1], (error, worker_group) => {
+            Worker.createWorkerGroup('test_group', [my_worker_id], (error, worker_group) => {
               if (error) log('[Worker module] "test_group" error.', error);
               else {
                 finish('worker_group_creation');

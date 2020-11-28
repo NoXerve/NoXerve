@@ -40,44 +40,11 @@ function WorkerScope(settings) {
    * @type {object}
    * @private
    */
-  this._max_concurrent_connections_count = settings.max_concurrent_connections_count;
-
-  /**
-   * @memberof module:WorkerScope
-   * @type {object}
-   * @private
-   */
-  this._create_tunnel = settings.create_tunnel;
-
-  /**
-   * @memberof module:WorkerScope
-   * @type {object}
-   * @private
-   */
   this._event_listener_dict = {
-    request: () => {},
-    worker_added: () => {},
-    worker_rmoved: () => {}
+    'request-response': (scope_peer_id, data_bytes, response) => {
+      response(null);
+    },
   };
-
-  /**
-   * Dictionary of workers re-labeled from 0
-	 * @memberof module:WorkerScopeProtocol
-	 * @type {object}
-	 * @private
-	 */
-	this._worker_list = {};
-  this._createWorkerList(this._scope_peer_list);
-}
-
-/**
- * Transfer the given workers to a labeled list starting from 0
- * @param  {Array} workers
- */
-WorkerScope.prototype._createWorkerList = function(workers) {
-	for (let i = 0; i < workers.length; i++) {
-		this._worker_list[i] = workers[i];
-	}
 }
 
 /**
@@ -104,16 +71,6 @@ WorkerScope.prototype.checkIntegrity = function(callback) {
  */
 WorkerScope.prototype.returnScopePeerList = function() {
   return this._scope_peer_list;
-}
-
-
-WorkerScope.prototype.add_worker = function(worker_peer_worker_ID, a_worker_response_listener, finished_listener) {
-  // user(or Service System) should be responsible to handle if there's any worker didn't finished.
-  this._settings.add_worker(worker_peer_worker_ID, a_worker_response_listener, finished_listener);
-}
-
-WorkerScope.prototype.remove_worker = function(worker_inner_ID_List) {
-
 }
 
 /**

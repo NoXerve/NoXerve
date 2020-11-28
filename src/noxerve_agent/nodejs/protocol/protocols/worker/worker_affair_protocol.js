@@ -269,6 +269,10 @@ WorkerAffairProtocol.prototype.validateAuthenticityBytes = function(remote_authe
     callback(error, false, remote_worker_peer_worker_id);
     return;
   }
+  // console.log(this._worker_peers_worker_ids_checksum_4bytes);
+  // console.log(remote_worker_peers_worker_ids_checksum_4bytes);
+  // console.log(this._static_global_random_seed_checksum_4bytes);
+  // console.log(remote_worker_peers_static_global_random_seed_checksum_4bytes);
 
   // Check worker_peers_worker_ids_checksum_4bytes.
   if (Utils.areBuffersEqual(this._worker_peers_worker_ids_checksum_4bytes, remote_worker_peers_worker_ids_checksum_4bytes) &&
@@ -759,7 +763,7 @@ WorkerAffairProtocol.prototype._WorkerAffairsWorkerPeerOperationBroadcastSynchro
             //   detail: new_worker_peer_detail
             // };
             synchronize_acknowledgment(Buf.concat([
-              this._ProtocolCodes.accept // Reject. Authenticication error.
+              this._ProtocolCodes.accept // Accept.
             ]));
           }
         };
