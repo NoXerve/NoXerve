@@ -58,7 +58,7 @@ AbsenceToleranceRecordCommissionManager.prototype.create = function(atr_commissi
       worker_scope: worker_scope,
       update_rate_percentage_int: update_rate_percentage_int,
       record_dict: record_dict,
-      hash_manager: hash_manager
+      hash_manager: this._hash_manager
     });
     atr_commission.start((error) => {
       callback(error, atr_commission);

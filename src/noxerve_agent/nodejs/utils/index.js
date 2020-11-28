@@ -8,28 +8,33 @@
 
 let Crypto = require('crypto');
 
-// Crypto level random bytes.
+module.exports.generateUniqueIntegerListInRangeRandomly = function(begin_int, end_int, list_length) {
+  let list = [];
+  while(list.length < list_length){
+      let r = Math.floor(Math.random() * (end_int - begin_int + 1)) + begin_int;
+      if(list.indexOf(r) === -1) list.push(r);
+  }
+  return list;
+}
+
 module.exports.hash4BytesMd5 = function(bytes) {
   const hash = Crypto.createHash('md5');
   hash.update(bytes);
   return hash.digest().slice(0, 4);
 }
 
-// Crypto level random bytes.
 module.exports.hash8BytesMd5 = function(bytes) {
   const hash = Crypto.createHash('md5');
   hash.update(bytes);
   return hash.digest().slice(0, 8);
 }
 
-// Crypto level random bytes.
 module.exports.hash16BytesMd5 = function(bytes) {
   const hash = Crypto.createHash('md5');
   hash.update(bytes);
   return hash.digest().slice(0, 16);
 }
 
-// Crypto level random bytes.
 module.exports.hash32BytesMd5 = function(bytes) {
   const hash = Crypto.createHash('md5');
   hash.update(bytes);

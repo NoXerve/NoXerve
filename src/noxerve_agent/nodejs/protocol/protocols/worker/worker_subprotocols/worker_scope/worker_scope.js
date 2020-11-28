@@ -48,29 +48,26 @@ function WorkerScope(settings) {
 }
 
 /**
- * @callback module:WorkerScope~callback_of_check_all_scope_peers_alive
+ * @callback module:WorkerScope~callback_of_check_integrity
  * @param {error} error
  */
 /**
  * @memberof module:WorkerScope
- * @param {module:WorkerScope~callback_of_check_all_scope_peers_alive} callback
+ * @param {module:WorkerScope~callback_of_check_integrity} callback
  * @description Check all peers alive by sending byte.
  */
 WorkerScope.prototype.checkIntegrity = function(callback) {
   this._settings.check_integrity(callback);
 }
 
-/**
- * @callback module:WorkerScope~callback_of_check_all_scope_peers_alive
- * @param {error} error
- */
-/**
- * @memberof module:WorkerScope
- * @param {module:WorkerScope~callback_of_check_all_scope_peers_alive} callback
- * @description Check all peers alive by sending byte.
- */
+// [Flag]
 WorkerScope.prototype.returnScopePeerWorkerIdList = function() {
   return this._scope_peer_worker_id_list;
+}
+
+// [Flag]
+WorkerScope.prototype.returnScopePeersCount = function() {
+  return this._scope_peer_worker_id_list.length;
 }
 
 /**

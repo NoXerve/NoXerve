@@ -11,6 +11,7 @@
  * @module AbsenceToleranceRecordCommission
  */
 
+const Utils = require('../../../utils');
 const Buf = require('../../../buffer');
 const Errors = require('../../../errors');
 /**
@@ -27,12 +28,19 @@ function AbsenceToleranceRecordCommission(settings) {
    */
    this._worker_scope = settings.worker_scope;
 
+  /**
+   * @memberof module:WorkerScopeManager
+   * @type {integer}
+   * @private
+   */
+   this._commission_peers_count = settings.worker_scope.returnScopePeersCount();
+
    /**
     * @memberof module:WorkerScopeManager
     * @type {object}
     * @private
     */
-   this._hash_manager = hash_manager;
+   this._hash_manager = settings.hash_manager;
 
    /**
     * @memberof module:WorkerScopeManager
@@ -46,7 +54,21 @@ function AbsenceToleranceRecordCommission(settings) {
     * @type {integer}
     * @private
     */
-    this._sync_rate_percentage_int = 100 - settings.sync_rate_percentage_int;
+    this._update_peers_count_int = Math.min(this._commission_peers_count, Math.ceil(this._commission_peers_count*(this._update_rate_percentage_int/100)) + 1);
+
+   /**
+    * @memberof module:WorkerScopeManager
+    * @type {integer}
+    * @private
+    */
+    this._sync_rate_percentage_int = 100 - settings.update_rate_percentage_int;
+
+  /**
+    * @memberof module:WorkerScopeManager
+    * @type {integer}
+    * @private
+    */
+    this._sync_peers_count_int = Math.min(this._commission_peers_count, Math.ceil(this._commission_peers_count*(this._sync_rate_percentage_int/100)));
 
    /**
     * @memberof module:WorkerScopeManager
@@ -72,11 +94,13 @@ AbsenceToleranceRecordCommission.prototype.returnRecords = function() {
 
 // [Flag]
 AbsenceToleranceRecordCommission.prototype.updateRecordValue = function(record_name, update_rate_percentage_int, value, callback) {
-
+  const selected_commission_peers = Utils.generateUniqueIntegerListInRangeRandomly(1, this._commission_peers_count, this._update_peers_count_int);
 }
 
 // [Flag]
 AbsenceToleranceRecordCommission.prototype.syncRecord = function(record_name) {
+  const selected_commission_peers = Utils.generateUniqueIntegerListInRangeRandomly(1, this._commission_peers_count, this._sync_peers_count_int);
+  // console.log(this._sync_peers_count_int, selected_commission_peers, this._sync_rate_percentage_int);
   // this._worker_scope.
 }
 
