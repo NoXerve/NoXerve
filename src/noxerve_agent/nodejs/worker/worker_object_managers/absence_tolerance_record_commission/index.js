@@ -49,7 +49,7 @@ function AbsenceToleranceRecordCommissionManager(worker_subprotocol_object_manag
  * @description Create a worker group in order to communicate with another worker.
  */
 AbsenceToleranceRecordCommissionManager.prototype.create = function(atr_commission_purpose_name, settings, callback) {
-  const commission_peers_worker_id_list = settings.coommission_peers;
+  const commission_peers_worker_id_list = settings.coo、mmission_peers;
   const update_rate_percentage_int = settings.update_rate;
   const record_dict = settings.records;
   this._worker_subprotocol_object_managers.worker_scope.create(atr_commission_purpose_name, commission_peers_worker_id_list, (error, worker_scope) => {

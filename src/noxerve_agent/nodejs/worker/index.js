@@ -134,7 +134,7 @@ Worker.prototype.importMyWorkerAuthenticityData = function(worker_id, worker_aut
   this._event_listener_dict['my-worker-authenticity-data-import'](worker_id, worker_authenticity_information, callback);
   // Tests
   // this._worker_object_managers.absence_tolerance_record_commission.create('atr_commission_purpose_name', {
-  //   coommission_peers: [1, 2, 5, 7, 8],
+  //   coo、mmission_peers: [1, 2, 5, 7, 8],
   //   update_rate: 50,
   //   records: {
   //     'r1': 10
