@@ -11,6 +11,7 @@
  * @module AbsenceToleranceRecordCommission
  */
 
+const Buf = require('../../../buffer');
 const Errors = require('../../../errors');
 /**
  * @constructor module:AbsenceToleranceRecordCommission
@@ -25,16 +26,79 @@ function AbsenceToleranceRecordCommission(settings) {
    * @private
    */
    this._worker_scope = settings.worker_scope;
+
+   /**
+    * @memberof module:WorkerScopeManager
+    * @type {object}
+    * @private
+    */
+   this._hash_manager = hash_manager;
+
+   /**
+    * @memberof module:WorkerScopeManager
+    * @type {integer}
+    * @private
+    */
+    this._update_rate_percentage_int = settings.update_rate_percentage_int;
+
+   /**
+    * @memberof module:WorkerScopeManager
+    * @type {integer}
+    * @private
+    */
+    this._sync_rate_percentage_int = 100 - settings.sync_rate_percentage_int;
+
+   /**
+    * @memberof module:WorkerScopeManager
+    * @type {object}
+    * @private
+    */
+    // record_name
+    // -> update_iterations
+    // -> record_value
+    this._record_dict = settings.records_dict;
+}
+
+AbsenceToleranceRecordCommission.prototype._ProtocolCodes = {
+  update_record: Buf.from([0x00]),
+  check_record_update_interation: Buf.from([0x01]),
+  sync_record_value: Buf.from([0x02])
 }
 
 // [Flag]
-AbsenceToleranceRecordCommission.prototype.updateRecord = function(record_name) {
+AbsenceToleranceRecordCommission.prototype.returnRecords = function() {
+  return this._record_dict;
+}
+
+// [Flag]
+AbsenceToleranceRecordCommission.prototype.updateRecordValue = function(record_name, update_rate_percentage_int, value, callback) {
 
 }
 
 // [Flag]
-AbsenceToleranceRecordCommission.prototype.readRecord = function() {
+AbsenceToleranceRecordCommission.prototype.syncRecord = function(record_name) {
+  // this._worker_scope.
+}
 
+// [Flag]
+AbsenceToleranceRecordCommission.prototype.returnRecordValue = function(record_name) {
+  return this._record_dict[record_name];
+}
+
+AbsenceToleranceRecordCommission.prototype.start = function(callback) {
+  this._worker_scope.on('request-response', (scope_peer_id, request_data_bytes, response) => {
+    const protocol_code_int = request_data_bytes[0];
+    if(protocol_code_int === this._ProtocolCodes.update_record[0]) {
+
+    }
+    else if(protocol_code_int === this._ProtocolCodes.check_record_update_interation[0]) {
+
+    }
+    else if(protocol_code_int === this._ProtocolCodes.sync_record_value[0]) {
+
+    }
+  });
+  callback(false);
 }
 
 module.exports = AbsenceToleranceRecordCommission;

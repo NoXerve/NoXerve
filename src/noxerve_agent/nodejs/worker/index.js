@@ -74,24 +74,31 @@ function Worker(settings) {
  * @description Start the worker module.
  */
 Worker.prototype.start = function(callback) {
+  if(!callback) {callback = () => {};};
   if(this._event_listener_dict['worker-subprotocol-managers-request']) {
-    // Request for worker group. With < 256 register_code.
-    this._event_listener_dict['worker-subprotocol-managers-request'](WorkerGroupManager.register_code, (error, worker_subprotocol_object_managers)=> {
-      this._worker_object_managers['worker_group'] = new WorkerGroupManager.module(worker_subprotocol_object_managers);
-      // Request for worker socket. With < 256 register_code.
-      this._event_listener_dict['worker-subprotocol-managers-request'](WorkerSocketManager.register_code, (error, worker_subprotocol_object_managers)=> {
-        this._worker_object_managers['worker_socket'] = new WorkerSocketManager.module(worker_subprotocol_object_managers);
-        // Request for worker scope. With < 256 register_code.
-        this._event_listener_dict['worker-subprotocol-managers-request'](WorkerScopeManager.register_code, (error, worker_subprotocol_object_managers)=> {
-          this._worker_object_managers['worker_scope'] = new WorkerScopeManager.module(worker_subprotocol_object_managers);
-          this._event_listener_dict['worker-subprotocol-managers-request'](AbsenceToleranceRecordCommissionManager.register_code, (error, worker_subprotocol_object_managers)=> {
-            this._worker_object_managers['absence_tolerance_record_commission'] = new AbsenceToleranceRecordCommissionManager.module(worker_subprotocol_object_managers);
-            if (callback) callback(error);
+    this._event_listener_dict['hash-manager-request']((error, hash_manager) => {
+      if(error) {callback(error); return;};
+      // Request for worker group. With < 256 register_code.
+      this._event_listener_dict['worker-subprotocol-managers-request'](WorkerGroupManager.register_code, (error, worker_subprotocol_object_managers)=> {
+        if(error) {callback(error); return;};
+        this._worker_object_managers['worker_group'] = new WorkerGroupManager.module(worker_subprotocol_object_managers, hash_manager);
+        // Request for worker socket. With < 256 register_code.
+        this._event_listener_dict['worker-subprotocol-managers-request'](WorkerSocketManager.register_code, (error, worker_subprotocol_object_managers)=> {
+          if(error) {callback(error); return;};
+          this._worker_object_managers['worker_socket'] = new WorkerSocketManager.module(worker_subprotocol_object_managers, hash_manager);
+          // Request for worker scope. With < 256 register_code.
+          this._event_listener_dict['worker-subprotocol-managers-request'](WorkerScopeManager.register_code, (error, worker_subprotocol_object_managers)=> {
+            if(error) {callback(error); return;};
+            this._worker_object_managers['worker_scope'] = new WorkerScopeManager.module(worker_subprotocol_object_managers, hash_manager);
+            this._event_listener_dict['worker-subprotocol-managers-request'](AbsenceToleranceRecordCommissionManager.register_code, (error, worker_subprotocol_object_managers)=> {
+              if(error) {callback(error); return;};
+              this._worker_object_managers['absence_tolerance_record_commission'] = new AbsenceToleranceRecordCommissionManager.module(worker_subprotocol_object_managers, hash_manager);
+              callback(error);
+            });
           });
         });
       });
     });
-
   }
   else {
     const error = new Errors.ERR_NOXERVEAGENT_WORKER('Worker module starting failed. Probably because protocol module has\'t started.');
@@ -232,8 +239,8 @@ Worker.prototype.createWorkerGroup = function(worker_group_purpose_name, worker_
  * @param {module:Worker~callback_of_create_absence_tolerance_record_commission} callback
  * @description Create a absence_tolerance_record_commission in order to save records.
  */
-Worker.prototype.createAbsenceToleranceRecordCommission = function(atr_commission_purpose_name, worker_peers_worker_id_list, callback) {
-  this._worker_object_managers.absence_tolerance_record_commission.create(worker_group_purpose_name, worker_peers_worker_id_list, callback);
+Worker.prototype.createAbsenceToleranceRecordCommission = function(atr_commission_purpose_name, settings, callback) {
+  this._worker_object_managers.absence_tolerance_record_commission.create(worker_group_purpose_name, settings, callback);
 }
 
 /**

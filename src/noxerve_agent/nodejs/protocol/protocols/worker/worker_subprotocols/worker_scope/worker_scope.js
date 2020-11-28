@@ -33,7 +33,7 @@ function WorkerScope(settings) {
    * @type {object}
    * @private
    */
-  this._scope_peer_list = settings.scope_peer_list;
+  this._scope_peer_worker_id_list = settings.scope_peer_worker_id_list;
 
   /**
    * @memberof module:WorkerScope
@@ -69,8 +69,8 @@ WorkerScope.prototype.checkIntegrity = function(callback) {
  * @param {module:WorkerScope~callback_of_check_all_scope_peers_alive} callback
  * @description Check all peers alive by sending byte.
  */
-WorkerScope.prototype.returnScopePeerList = function() {
-  return this._scope_peer_list;
+WorkerScope.prototype.returnScopePeerWorkerIdList = function() {
+  return this._scope_peer_worker_id_list;
 }
 
 /**

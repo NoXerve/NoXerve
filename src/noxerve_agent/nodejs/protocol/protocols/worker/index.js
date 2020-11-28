@@ -486,6 +486,10 @@ WorkerProtocol.prototype.start = function(callback) {
     }
   });
 
+  this._worker_module.on('hash-manager-request', (callback) => {
+    callback(false, this._hash_manager);
+  });
+
   this._worker_module.on('me-join', (remote_worker_connectors_settings, my_worker_connectors_settings, my_worker_detail, my_worker_authenticity_data, me_join_callback) => {
     this._worker_affair_protocol.joinMe(remote_worker_connectors_settings, my_worker_connectors_settings, my_worker_detail, my_worker_authenticity_data, me_join_callback);
   });
