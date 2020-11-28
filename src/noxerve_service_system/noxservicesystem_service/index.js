@@ -91,13 +91,13 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
   // Foreign Workers Affair
 
   this._noxerve_agent.Worker.onWorkerSocketCreate('ForeignWorkersAffairQuery', (parameters, remote_worker_id, worker_socket) => {
-    worker_socket.define('getServiceStatus',  (service_function_parameter, return_data, yield_data) => {
+    worker_socket.define('getServiceStatus',  (worker_socket_function_parameter, return_data, yield_data) => {
 
     });
   });
 
   this._noxerve_agent.Worker.onWorkerSocketCreate('ForeignWorkersAffairAssignment', (parameters, remote_worker_id, worker_socket) => {
-    worker_socket.define('installWorkerOfService',  (service_function_parameter, return_data, yield_data) => {
+    worker_socket.define('installWorkerOfService',  (worker_socket_function_parameter, return_data, yield_data) => {
       // Check worker room avaliable.
     });
   });
