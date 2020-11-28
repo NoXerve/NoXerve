@@ -52,15 +52,15 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
   // Cabinet Commission
 
   this._noxerve_agent.Worker.onWorkerSocketCreate('CabinetCommissionQuery', (parameters, remote_worker_id, worker_socket) => {
-    worker_socket.define('joinDepartments',  (service_function_parameter, return_data, yield_data) => {
+    worker_socket.define('joinDepartments',  (worker_socket_function_parameter, return_data, yield_data) => {
 
     });
 
-    worker_socket.define('isWorkerInDepartment',  (service_function_parameter, return_data, yield_data) => {
+    worker_socket.define('isWorkerInDepartment',  (worker_socket_function_parameter, return_data, yield_data) => {
 
     });
 
-    worker_socket.define('whoIsInDepartment',  (service_function_parameter, return_data, yield_data) => {
+    worker_socket.define('whoIsInDepartment',  (worker_socket_function_parameter, return_data, yield_data) => {
 
     });
   });
@@ -75,11 +75,11 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
   // Foreign Services Affair
 
   this._noxerve_agent.Worker.onWorkerSocketCreate('ForeignServicesAffairQuery', (parameters, remote_worker_id, worker_socket) => {
-    worker_socket.define('getServiceStatus',  (service_function_parameter, return_data, yield_data) => {
+    worker_socket.define('getServiceStatus',  (worker_socket_function_parameter, return_data, yield_data) => {
 
     });
 
-    worker_socket.define('getServiceStatus',  (service_function_parameter, return_data, yield_data) => {
+    worker_socket.define('getServiceStatus',  (worker_socket_function_parameter, return_data, yield_data) => {
 
     });
   });
@@ -101,7 +101,7 @@ NoxServiceSystemService.prototype.start = function(finish_start) {
       // Check worker room avaliable.
     });
   });
-  
+
 
   const if_error_then_close_preloader = (error, next, tips) => {
     if (error) {
