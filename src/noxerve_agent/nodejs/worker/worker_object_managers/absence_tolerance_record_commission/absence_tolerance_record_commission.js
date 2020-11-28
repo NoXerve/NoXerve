@@ -19,6 +19,21 @@ const Errors = require('../../../errors');
  */
 
 function AbsenceToleranceRecordCommission(settings) {
+  /**
+   * @memberof module:WorkerScopeManager
+   * @type {object}
+   * @private
+   */
+   this._worker_scope = settings.worker_scope;
+}
+
+// [Flag]
+AbsenceToleranceRecordCommission.prototype.updateRecord = function(record_name) {
+
+}
+
+// [Flag]
+AbsenceToleranceRecordCommission.prototype.readRecord = function() {
 
 }
 

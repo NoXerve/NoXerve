@@ -29,11 +29,11 @@ let Tests = [
   'worker_field1_yield_test',
   'nsdt_test',
   'nsdt_close',
-  // 'worker_scope_check_integrity',
-  // 'worker_scope_get_peer_list',
-  // 'worker_scope_broad_request_reponse',
+  'worker_scope_check_integrity',
+  'worker_scope_get_peer_list',
+  'worker_scope_broadcast_request_reponse',
   // 'worker_scope_add_worker',
-  // 'worker_group_creation',
+  'worker_group_creation',
   'global_deterministic_random_manager_1',
   'global_deterministic_random_manager_2',
   // 'global_deterministic_random_manager_3',
@@ -349,7 +349,7 @@ Node2.start(() => {
                     // log('[worker_scope] finish broadcastRequest');
                     // log('all finished. ( ' + finished_worker_list + ' )');
                   }
-                  finish('worker_scope_broad_request_reponse');
+                  finish('worker_scope_broadcast_request_reponse');
                 }
               );
               // plese don't add worker itself. It will break the other worker scope tests.
