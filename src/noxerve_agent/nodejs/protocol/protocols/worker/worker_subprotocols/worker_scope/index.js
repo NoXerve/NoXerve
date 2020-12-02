@@ -122,7 +122,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
     const worker_scope = new WorkerScope({
       worker_scope_purpose_name: worker_scope_purpose_name,
       scope_peer_worker_id_list: scope_peer_worker_id_list,
-      broadcast_request: (data_bytes, a_scope_peer_response_listener, finished_listener) => {
+      broadcast_request: (data_bytes, a_scope_peer_response_listener, finished_listener, do_not_escape_if_error) => {
         const my_worker_authenticity_bytes = this._worker_protocol_actions.encodeAuthenticityBytes();
         const decorated_data_bytes = Buf.concat([
           this._ProtocolCodes.request_response,
@@ -159,9 +159,9 @@ WorkerScopeProtocol.prototype.start = function(callback) {
             a_scope_peer_response_listener(null, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE('Worker(id: ' + worker_id + ') did not return request_response code.'), null, confirm_error_finish_status);
           }
         };
-        this._worker_protocol_actions.multicastRequest(scope_peer_worker_id_list, decorated_data_bytes, a_worker_response_listener, finished_listener);
+        this._worker_protocol_actions.multicastRequest(scope_peer_worker_id_list, decorated_data_bytes, a_worker_response_listener, finished_listener, do_not_escape_if_error);
       },
-      multicast_request: (scope_peer_id_list, data_bytes, a_scope_peer_response_listener, finished_listener) => {
+      multicast_request: (scope_peer_id_list, data_bytes, a_scope_peer_response_listener, finished_listener, do_not_escape_if_error) => {
         let worker_id_list = [];
 
         // Translate scope_peer_id_list to worker_id_list.
@@ -205,7 +205,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
             a_scope_peer_response_listener(null, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE('Worker(id: ' + worker_id + ') did not return request_response code.'), null, confirm_error_finish_status);
           }
         };
-        this._worker_protocol_actions.multicastRequest(worker_id_list, decorated_data_bytes, a_worker_response_listener, finished_listener);
+        this._worker_protocol_actions.multicastRequest(worker_id_list, decorated_data_bytes, a_worker_response_listener, finished_listener, do_not_escape_if_error);
       },
       check_integrity: (callback) => {
         const data_bytes = Buf.concat([

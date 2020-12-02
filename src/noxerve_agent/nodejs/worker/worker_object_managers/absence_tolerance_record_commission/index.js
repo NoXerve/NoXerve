@@ -27,12 +27,20 @@ function AbsenceToleranceRecordCommissionManager(settings) {
    * @private
    */
   this._worker_subprotocol_object_managers = settings.worker_subprotocol_object_managers;
+
   /**
    * @memberof module:AbsenceToleranceRecordCommissionManager
    * @type {object}
    * @private
    */
   this._hash_manager = settings.hash_manager;
+
+  /**
+   * @memberof module:AbsenceToleranceRecordCommissionManager
+   * @type {object}
+   * @private
+   */
+  this._nsdt_embedded_protocol = settings.nsdt_embedded_protocol;
 }
 
 
@@ -51,14 +59,19 @@ function AbsenceToleranceRecordCommissionManager(settings) {
 AbsenceToleranceRecordCommissionManager.prototype.create = function(atr_commission_purpose_name, settings, callback) {
   const commission_peers_worker_id_list = settings.commission_peers;
   const update_rate_percentage_int = settings.update_rate;
+  const min_successful_update_rate_percentage_int = settings.min_successful_update_rate;
   const record_dict = settings.records;
+
+  const int_list =123;
   this._worker_subprotocol_object_managers.worker_scope.create(atr_commission_purpose_name, commission_peers_worker_id_list, (error, worker_scope) => {
     if(error) {callback(error); return;};
     const atr_commission = new AbsenceToleranceRecordCommission({
       worker_scope: worker_scope,
       update_rate_percentage_int: update_rate_percentage_int,
+      min_successful_update_rate_percentage_int: min_successful_update_rate_percentage_int,
       record_dict: record_dict,
-      hash_manager: this._hash_manager
+      hash_manager: this._hash_manager,
+      nsdt_embedded_protocol: this._nsdt_embedded_protocol
     });
     atr_commission.start((error) => {
       callback(error, atr_commission);

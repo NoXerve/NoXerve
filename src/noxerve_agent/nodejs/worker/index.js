@@ -75,6 +75,9 @@ function Worker(settings) {
  */
 Worker.prototype.start = function(callback) {
   if(!callback) {callback = () => {};};
+  // this._event_listener_dict['global-deterministic-random-manager-get']((error, global_deterministic_random_manager) => {
+  //   console.log(error, global_deterministic_random_manager);
+  // });
   if(this._event_listener_dict['worker-subprotocol-managers-request']) {
     this._event_listener_dict['hash-manager-request']((error, hash_manager) => {
       if(error) {callback(error); return;};
@@ -152,15 +155,19 @@ Worker.prototype.close = function(callback) {
 Worker.prototype.importMyWorkerAuthenticityData = function(worker_id, worker_authenticity_information, callback) {
   this._event_listener_dict['my-worker-authenticity-data-import'](worker_id, worker_authenticity_information, callback);
   // Tests
-  // this._worker_object_managers.absence_tolerance_record_commission.create('atr_commission_purpose_name', {
-  //   coo、mmission_peers: [1, 2, 5, 7, 8],
-  //   update_rate: 50,
-  //   records: {
-  //     'r1': 10
-  //   }
-  // }, (error, atr_commission) => {
-  //   atr_commission.syncRecord();
-  // });
+  this._worker_object_managers.absence_tolerance_record_commission.create('atr_commission_purpose_name', {
+    commission_peers: [1, 2, 5, 7, 8],
+    update_rate: 100,
+    min_successful_update_rate: 90,
+    records: {
+      'r1': {
+        update_iterations: 1
+      },
+
+    }
+  }, (error, atr_commission) => {
+    atr_commission.updateRecordValue('r1', 123);
+  });
 }
 
 /**

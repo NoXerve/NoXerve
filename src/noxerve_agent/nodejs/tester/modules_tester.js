@@ -329,7 +329,7 @@ Node2.start(() => {
                 if (error) log('[Worker module: Worker Scope]  "checkIntegrity" error.', error);
                 finish('worker_scope_check_integrity');
               });
-              let list = worker_scope.returnScopePeerList();
+              let list = worker_scope.returnScopePeerWorkerIdList();
               // log('workers in scope: ', list);
               finish('worker_scope_get_peer_list');
               worker_scope.broadcastRequest(Buffer.from([0x02, 0x06, 0x06, 0x06, 0x06]),

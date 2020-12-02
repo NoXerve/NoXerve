@@ -1,5 +1,5 @@
 /**
- * @file NoXerveAgent global deterministic random manager(GDRM) file. [global_deterministic_random_manager.js]
+ * @file NoXerveAgent global deterministic random manager(GDRM) (Constitution) file. [global_deterministic_random_manager.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
  * @author idoleat <dppss92132@gmail.com>

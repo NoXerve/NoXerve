@@ -259,7 +259,7 @@ WorkerProtocol.prototype._synchronizeWorkerPeerByWorkerId = function(
  * @memberof module:WorkerProtocol
  * @private
  */
-WorkerProtocol.prototype._multicastRequest = function(worker_id_list, data_bytes, a_worker_response_listener, finished_listener) {
+WorkerProtocol.prototype._multicastRequest = function(worker_id_list, data_bytes, a_worker_response_listener, finished_listener, do_not_escape_if_error) {
 
   // Broadcast worker join start.
   // max concurrent connections.
@@ -285,7 +285,7 @@ WorkerProtocol.prototype._multicastRequest = function(worker_id_list, data_bytes
         a_worker_response_listener(worker_id, synchronize_error, synchronize_acknowledgment_message_bytes, (error, is_finished) => {
           if (error) {
             worker_peers_errors[worker_id] = error;
-            escape_loop_with_error = true;
+            if(!do_not_escape_if_error) escape_loop_with_error = true;
           }
           if (is_finished) {
             finished_worker_id_list.push(worker_id);
