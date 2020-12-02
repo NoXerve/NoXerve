@@ -70,6 +70,10 @@ WorkerScope.prototype.returnScopePeersCount = function() {
   return this._scope_peer_worker_id_list.length;
 }
 
+WorkerScope.prototype.request = function(scope_peer_id, request_data_bytes, on_scope_peer_response) {
+  this._settings.request(scope_peer_id, request_data_bytes, on_scope_peer_response);
+}
+
 /**
  * @callback module:WorkerScope~a_worker_response_listener
  * @param {integer} scope_peer_id

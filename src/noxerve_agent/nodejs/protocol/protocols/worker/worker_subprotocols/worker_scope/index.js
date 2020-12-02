@@ -122,6 +122,47 @@ WorkerScopeProtocol.prototype.start = function(callback) {
     const worker_scope = new WorkerScope({
       worker_scope_purpose_name: worker_scope_purpose_name,
       scope_peer_worker_id_list: scope_peer_worker_id_list,
+      request: (scope_peer_id, request_data_bytes, on_scope_peer_response) => {
+        const target_worker_peer_worker_id = scope_peer_worker_id_list[scope_peer_id-1];
+        const my_worker_authenticity_bytes = this._worker_protocol_actions.encodeAuthenticityBytes();
+        const synchronize_message_bytes = Buf.concat([
+          this._ProtocolCodes.request_response,
+          Buf.encodeUInt32BE(my_worker_authenticity_bytes.length),
+          my_worker_authenticity_bytes,
+          worker_scope_purpose_name_4bytes,
+          request_data_bytes
+        ]);
+
+        const synchronize_error_handler = (synchronize_error) => {
+          on_scope_peer_response(synchronize_error);
+        };
+
+        const synchronize_acknowledgment_handler = (response_data_bytes, acknowledge) => {
+          acknowledge(false);
+          if(response_data_bytes[0] === this._ProtocolCodes.request_response[0]) {
+            const remote_worker_peer_authenticity_bytes_length = Buf.decodeUInt32BE(response_data_bytes.slice(1, 5));
+            const remote_worker_peer_authenticity_bytes = response_data_bytes.slice(5, 5 + remote_worker_peer_authenticity_bytes_length);
+            this._worker_protocol_actions.validateAuthenticityBytes(remote_worker_peer_authenticity_bytes, (error, is_authenticity_valid, remote_worker_peer_worker_id) => {
+              if (is_authenticity_valid && !error) {
+                const scope_peer_id = scope_peer_worker_id_list.indexOf(remote_worker_peer_worker_id) + 1;
+                if(response_data_bytes[5 + remote_worker_peer_authenticity_bytes_length] !== this._worker_global_protocol_codes.accept[0]) {
+                  // No scope_peer_id
+                  on_scope_peer_response(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE('Worker(id: ' + worker_id + ') rejected or failed integrity check.'));
+                }
+                else {
+                  on_scope_peer_response(false, response_data_bytes.slice(5 + remote_worker_peer_authenticity_bytes_length + 1));
+                }
+              } else {
+                on_scope_peer_response(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE('Worker(id: ' + worker_id + ') failed "validateAuthenticityBytes" check.'));
+              }
+            });
+          }
+          else {
+            on_scope_peer_response(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE('Worker(id: ' + worker_id + ') did not return request_response code.'));
+          }
+        };
+        this._worker_protocol_actions.synchronizeWorkerPeerByWorkerId(target_worker_peer_worker_id, synchronize_message_bytes, synchronize_error_handler, synchronize_acknowledgment_handler);
+      },
       broadcast_request: (data_bytes, a_scope_peer_response_listener, finished_listener, do_not_escape_if_error) => {
         const my_worker_authenticity_bytes = this._worker_protocol_actions.encodeAuthenticityBytes();
         const decorated_data_bytes = Buf.concat([
@@ -159,7 +200,15 @@ WorkerScopeProtocol.prototype.start = function(callback) {
             a_scope_peer_response_listener(null, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE('Worker(id: ' + worker_id + ') did not return request_response code.'), null, confirm_error_finish_status);
           }
         };
-        this._worker_protocol_actions.multicastRequest(scope_peer_worker_id_list, decorated_data_bytes, a_worker_response_listener, finished_listener, do_not_escape_if_error);
+
+        const decorated_finished_listener = (error, finished_worker_id_list) => {
+          let finished_scope_peer_id_list = finished_worker_id_list.map((worker_id) => {
+            return scope_peer_worker_id_list.indexOf(worker_id) + 1;
+          });
+          finished_listener(error, finished_scope_peer_id_list);
+        };
+
+        this._worker_protocol_actions.multicastRequest(scope_peer_worker_id_list, decorated_data_bytes, a_worker_response_listener, decorated_finished_listener, do_not_escape_if_error);
       },
       multicast_request: (scope_peer_id_list, data_bytes, a_scope_peer_response_listener, finished_listener, do_not_escape_if_error) => {
         let worker_id_list = [];
@@ -205,7 +254,15 @@ WorkerScopeProtocol.prototype.start = function(callback) {
             a_scope_peer_response_listener(null, new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_SCOPE('Worker(id: ' + worker_id + ') did not return request_response code.'), null, confirm_error_finish_status);
           }
         };
-        this._worker_protocol_actions.multicastRequest(worker_id_list, decorated_data_bytes, a_worker_response_listener, finished_listener, do_not_escape_if_error);
+
+        const decorated_finished_listener = (error, finished_worker_id_list) => {
+          let finished_scope_peer_id_list = finished_worker_id_list.map((worker_id) => {
+            return scope_peer_worker_id_list.indexOf(worker_id) + 1;
+          });
+          finished_listener(error, finished_scope_peer_id_list);
+        };
+
+        this._worker_protocol_actions.multicastRequest(worker_id_list, decorated_data_bytes, a_worker_response_listener, decorated_finished_listener, do_not_escape_if_error);
       },
       check_integrity: (callback) => {
         const data_bytes = Buf.concat([

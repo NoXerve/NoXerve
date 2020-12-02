@@ -156,17 +156,21 @@ Worker.prototype.importMyWorkerAuthenticityData = function(worker_id, worker_aut
   this._event_listener_dict['my-worker-authenticity-data-import'](worker_id, worker_authenticity_information, callback);
   // Tests
   this._worker_object_managers.absence_tolerance_record_commission.create('atr_commission_purpose_name', {
-    commission_peers: [1, 2, 5, 7, 8],
+    commission_peers: [3, 2],
     update_rate: 100,
     min_successful_update_rate: 90,
     records: {
       'r1': {
-        update_iterations: 1
+        on_duty_commission_peer_id: 2,
+        update_iterations: 0
       },
 
     }
   }, (error, atr_commission) => {
     atr_commission.updateRecordValue('r1', 123);
+    atr_commission._getAliveCommissionPeers((error, result) => {
+      console.log(123, result);
+    });
   });
 }
 

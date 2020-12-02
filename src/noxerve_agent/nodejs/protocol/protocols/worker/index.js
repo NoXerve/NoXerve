@@ -210,7 +210,7 @@ WorkerProtocol.prototype._synchronizeWorkerPeerByWorkerId = function(
   }
 
   else if (!this._worker_affair_protocol.returnWorkerPeerSettingsByWorkerId(target_worker_peer_worker_id)) {
-    synchronize_error_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker(id: ' + target_worker_peer_worker_id + ').'));
+    synchronize_error_handler(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Does not exist worker peer with such worker_id(' + target_worker_peer_worker_id + ').'));
     return;
   }
   else {
