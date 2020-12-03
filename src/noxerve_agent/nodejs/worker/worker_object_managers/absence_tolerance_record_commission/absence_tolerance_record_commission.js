@@ -51,6 +51,13 @@ function AbsenceToleranceRecordCommission(settings) {
 
    /**
     * @memberof module:WorkerScopeManager
+    * @type {object}
+    * @private
+    */
+   this._global_deterministic_random_manager = settings.global_deterministic_random_manager;
+
+   /**
+    * @memberof module:WorkerScopeManager
     * @type {integer}
     * @private
     */
@@ -242,6 +249,7 @@ AbsenceToleranceRecordCommission.prototype.start = function(callback) {
       const record_name = this._hash_manager.stringify4BytesHash(request_data_bytes.slice(1, 5));
       const value = this._nsdt_embedded_protocol.decode(request_data_bytes.slice(5));
       if(record_name) {
+        // console.log(this._worker_scope.MyScopePeerId);
         if(this._record_dict[record_name].on_duty_commission_peer_id === this._worker_scope.MyScopePeerId) {
           console.log(this._worker_scope.MyScopePeerId);
         }
@@ -285,7 +293,13 @@ AbsenceToleranceRecordCommission.prototype.start = function(callback) {
     }
   });
   for(let record_name in this._record_dict) {
-    this._hash_manager.hashString4Bytes(record_name);
+    const record_name_hash_4bytes = this._hash_manager.hashString4Bytes(record_name);
+    if(!this._record_dict[record_name].update_iterations) {
+      this._record_dict[record_name].update_iterations = 1;
+    }
+    if(!this._record_dict[record_name].on_duty_commission_peer_id) {
+      this._record_dict[record_name].on_duty_commission_peer_id = this._global_deterministic_random_manager.generateIntegerInRange(record_name_hash_4bytes, 1, this._worker_scope.returnScopePeersCount());
+    }
   }
   for(let i = 0; i < this._commission_peers_count; i++) {
     this._commission_peer_alive_dict[i+1] = {

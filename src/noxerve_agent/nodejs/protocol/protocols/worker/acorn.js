@@ -2,6 +2,7 @@
  * @file The k-th order Additive Congruential Random Number (ACORN) generator. More details at http://acorn.wikramaratna.org/concept.html
  * @author nooxy <thenooxy@gmail.com>
  * @author idoleat <dppss92132@gmail.com>
+ * @author noowyee <magneticchen@gmail.com>
  * @copyright 2019-2020 nooxy. All Rights Reserved.
  */
 
@@ -15,6 +16,9 @@ TODO if seed isn't odd
  */
 
 'use strict';
+
+const Errors = require('../../../errors');
+
 /**
  * The k-th order Additive Congruential Random Number (ACORN) generator.
  */
@@ -31,27 +35,27 @@ function ACORN() {
 
 ACORN.prototype.isInputValid = function(seed, length) {
 	if (Number.isNaN(seed)) {
-		console.log('Invalid seed. Must be a number.');
+		throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Invalid seed. Must be a number.');
 		return false;
 	}
 	if (seed === 0){
-		console.log('Invalid seed. Must > 0.');
+		throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Invalid seed. Must > 0.');
 		return false;
 	}
 	if (seed % 2 === 0) {
 		// [flag] this may cause two seed with same result
 		if (this.auto_correct_seed) this.seed -= 1;
 		else {
-			console.log('Invalid seed. Must be odd.');
+			throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Invalid seed. Must be odd.');
 			return false;
 		}
 	}
 	if (length < 1) {
-		console.log('Invalid length. Must >= 1.');
+		throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Invalid length. Must >= 1.');
 		return false;
 	}
 	if (!Number.isInteger(length)) {
-		console.log('Invalid length. Must be integer.');
+		throw new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Invalid length. Must be integer.');
 		return false;
 	}
 
@@ -75,7 +79,6 @@ ACORN.prototype.setProperty = function(precision_multiplier, order, auto_correct
  */
 ACORN.prototype.setInitialValue = function(initial_value){
 	this.K = initial_value.length;
-	console.log('[acornJs] set initial_value length: ' + this.K);
 	this.initial_value = initial_value;
 }
 /**

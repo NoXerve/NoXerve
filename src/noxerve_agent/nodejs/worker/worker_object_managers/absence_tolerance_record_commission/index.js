@@ -67,6 +67,7 @@ AbsenceToleranceRecordCommissionManager.prototype.create = function(atr_commissi
     if(error) {callback(error); return;};
     const atr_commission = new AbsenceToleranceRecordCommission({
       worker_scope: worker_scope,
+      global_deterministic_random_manager: this._worker_subprotocol_object_managers.global_deterministic_random_manager,
       update_rate_percentage_int: update_rate_percentage_int,
       min_successful_update_rate_percentage_int: min_successful_update_rate_percentage_int,
       record_dict: record_dict,

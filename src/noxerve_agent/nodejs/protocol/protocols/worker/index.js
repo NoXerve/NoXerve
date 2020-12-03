@@ -433,6 +433,7 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
       return_worker_peers_settings: () => {
         return this._worker_affair_protocol.returnAllWorkerPeersSettings();
       },
+      global_deterministic_random_manager: this._worker_affair_protocol.returnGlobalDeterministicRandomManager(),
       hash_manager: this._hash_manager,
       nsdt_embedded_protocol: this._nsdt_embedded_protocol,
       worker_global_protocol_codes: this._ProtocolCodes,
@@ -457,6 +458,7 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
         this._worker_object_protocol_with_worker_subprotocol_modules_dict[worker_object_protocol_code_int][worker_subprotocol_protocol_code_1byte[0]] = protocol_module;
         // If finish appending asyncly. Call callback.
         if (Object.keys(subprotocol_managers).length === Object.keys(WorkerSubprotocols).length) {
+          subprotocol_managers['global_deterministic_random_manager'] = this._worker_affair_protocol.returnGlobalDeterministicRandomManager();
           callback(false, subprotocol_managers);
         }
       }

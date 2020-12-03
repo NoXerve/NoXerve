@@ -161,16 +161,17 @@ Worker.prototype.importMyWorkerAuthenticityData = function(worker_id, worker_aut
     min_successful_update_rate: 90,
     records: {
       'r1': {
-        on_duty_commission_peer_id: 1,
-        update_iterations: 0
+        // on_duty_commission_peer_id: 1,
+        update_iterations: 0,
+        value: 123
       },
 
     }
   }, (error, atr_commission) => {
     setTimeout(() => {
-      // atr_commission.updateRecordValue('r1', 123);
+      atr_commission.updateRecordValue('r1', 123);
       atr_commission._getAliveCommissionPeers((error, result) => {
-        console.log(123, result);
+        console.log('atrc test', result);
       });
     }, 100);
 

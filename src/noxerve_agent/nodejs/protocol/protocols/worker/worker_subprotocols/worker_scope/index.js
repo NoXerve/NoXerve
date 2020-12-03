@@ -317,6 +317,7 @@ WorkerScopeProtocol.prototype.start = function(callback) {
       }
     });
     worker_scope.MyScopePeerId = scope_peer_worker_id_list.indexOf(this._my_worker_id) + 1;
+    // console.log(this._my_worker_id, scope_peer_worker_id_list, scope_peer_worker_id_list.indexOf(this._my_worker_id) + 1);
     this._worker_scopes_dict[worker_scope_purpose_name] = worker_scope;
     inner_callback(false, worker_scope);
   });

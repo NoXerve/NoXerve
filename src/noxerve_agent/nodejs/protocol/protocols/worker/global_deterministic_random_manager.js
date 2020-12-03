@@ -79,7 +79,8 @@ GlobalDeterministicRandomManager.prototype.generateIntegerInRange = function(ini
     this[index] = Math.round(begin_int + this[index] * (end_int - begin_int));
   }, result);
 
-  callback(false, result[0]);
+  if(callback) callback(false, result[0]);
+  else return result[0];
 };
 
 // [Flag] retuen many random integerers
@@ -108,7 +109,8 @@ GlobalDeterministicRandomManager.prototype.generateIntegerListInRange = function
     this[index] = Math.round(begin_int + this[index] * (end_int - begin_int));
   }, result);
 
-  callback(false, result);
+  if(callback) callback(false, result);
+  else return result;
 };
 
 // [Flag]
