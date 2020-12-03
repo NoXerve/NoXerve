@@ -46,7 +46,7 @@ let Tests = [
   'worker_group_channel_synchronize',
   'worker_group_channel_braodcast_synchronize',
   'other_test',
-  'block'
+  // 'block'
 ];
 
 process.on('SIGINT', ()=> {

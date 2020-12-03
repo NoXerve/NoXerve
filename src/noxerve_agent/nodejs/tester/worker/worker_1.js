@@ -273,7 +273,7 @@ initialize_interfaces(()=> {
                     if (error) console.log('[Worker ' + my_worker_id + '] update error.', error);
                   });
                 }
-                else if(msg === '11') {
+                else if(msg === '91') {
                   process.exit();
                 }
               });

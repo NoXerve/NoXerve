@@ -62,7 +62,7 @@ AbsenceToleranceRecordCommissionManager.prototype.create = function(atr_commissi
   const min_successful_update_rate_percentage_int = settings.min_successful_update_rate;
   const record_dict = settings.records;
 
-  const int_list =123;
+  const int_list = 123;
   this._worker_subprotocol_object_managers.worker_scope.create(atr_commission_purpose_name, commission_peers_worker_id_list, (error, worker_scope) => {
     if(error) {callback(error); return;};
     const atr_commission = new AbsenceToleranceRecordCommission({

@@ -249,7 +249,7 @@ initialize_interfaces(()=> {
                     console.log('[Worker ' + my_worker_id + '] getValue :', value);
                   });
                 }
-                else if(msg === '12') {
+                else if(msg === '92') {
                   process.exit();
                 }
               });

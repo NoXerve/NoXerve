@@ -23,7 +23,7 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
-const worker_indexs = ['1', '2', '3'];
+const worker_indexs = ['1', '2', '3', '4', '5'];
 const test_indexs = {
   1: 'join worker 3',
   2: 'update worker 3',
@@ -34,6 +34,10 @@ const test_indexs = {
   7: 'get variable value from worker 1',
   8: 'update variable value from worker 1',
   9: 'get variable value from worker 2',
+  10: 'join worker 4',
+  11: 'join worker 5',
+  91: 'kill worker 1',
+  92: 'kill worker 2',
 };
 
 let worker_ready_left = Object.keys(worker_indexs).length;
