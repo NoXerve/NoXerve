@@ -242,6 +242,12 @@ AbsenceToleranceRecordCommission.prototype.start = function(callback) {
       const record_name = this._hash_manager.stringify4BytesHash(request_data_bytes.slice(1, 5));
       const value = this._nsdt_embedded_protocol.decode(request_data_bytes.slice(5));
       if(record_name) {
+        if(this._record_dict[record_name].on_duty_commission_peer_id === this._worker_scope.MyScopePeerId) {
+          console.log(this._worker_scope.MyScopePeerId);
+        }
+        else {
+
+        }
         // if(this._record_dict[record_name]) {
         //   callback(new Errors.ERR_NOXERVEAGENT_WORKER('You cannot update a record twice concurrently.'));
         // }

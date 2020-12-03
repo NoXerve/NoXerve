@@ -429,9 +429,7 @@ WorkerProtocol.prototype._createWorkerObjectProtocolWithWorkerSubprotocolManager
           this._broadcastRequest(decorated_data_bytes, decorated_a_worker_response_listener, finished_listener);
         },
       },
-      return_my_worker_id: () => {
-        return this._worker_affair_protocol.returnMyWorkerId();
-      },
+      my_worker_id: this._worker_affair_protocol.returnMyWorkerId(),
       return_worker_peers_settings: () => {
         return this._worker_affair_protocol.returnAllWorkerPeersSettings();
       },

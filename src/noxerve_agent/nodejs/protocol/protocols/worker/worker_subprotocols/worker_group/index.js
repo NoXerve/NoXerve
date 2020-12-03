@@ -37,7 +37,7 @@ function WorkerGroupProtocol(settings) {
    * @type {object}
    * @private
    */
-  this._return_my_worker_id = settings.return_my_worker_id;
+  this._my_worker_id = settings.my_worker_id;
 
   /**
    * @memberof module:WorkerGroupProtocol
@@ -138,8 +138,8 @@ WorkerGroupProtocol.prototype.close = function(callback) {
  */
 WorkerGroupProtocol.prototype.start = function(callback) {
   this._worker_group_manager.on('worker-group-create-request', (worker_group_purpose_name, group_peer_worker_id_list, worker_group_create_request_callback) => {
-    if(!group_peer_worker_id_list.includes(this._return_my_worker_id())) {
-      worker_group_create_request_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('GroupPeersList\'s must include yourself (with worker id: ' + this._return_my_worker_id() + ').'));
+    if(!group_peer_worker_id_list.includes(this._my_worker_id)) {
+      worker_group_create_request_callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER_SUBPROTOCOL_WORKER_GROUP('GroupPeersList\'s must include yourself (with worker id: ' + this._my_worker_id + ').'));
     }
     else if (group_peer_worker_id_list.length <= MaxGroupPeersCount) {
       // Check is worker id in worker peers list.
@@ -232,7 +232,7 @@ WorkerGroupProtocol.prototype.start = function(callback) {
         nsdt_embedded_protocol: this._nsdt_embedded_protocol,
         global_deterministic_random_manager: this._global_deterministic_random_manager,
         worker_global_protocol_codes: this._worker_global_protocol_codes,
-        my_group_peer_id: group_peer_worker_id_list.indexOf(this._return_my_worker_id())+1
+        my_group_peer_id: group_peer_worker_id_list.indexOf(this._my_worker_id)+1
       });
 
       worker_group.start((error)=> {
