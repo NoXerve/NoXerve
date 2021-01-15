@@ -147,10 +147,12 @@ AbsenceToleranceRecordCommission.prototype._ProtocolCodes = {
 
   accept: Buf.from([0x01]),
   reject: Buf.from([0x00]),
-  record_name_not_found_reject: Buf.from([0x02]),
-  concurrently_update_reject: Buf.from([0x03]),
-  not_on_duty_reject: Buf.from([0x04]),
-  no_enough_alive_peers: Buf.from([0x05]),
+  correction: Buf.from([0x02]),
+  record_name_not_found_reject: Buf.from([0x03]),
+  concurrently_update_reject: Buf.from([0x04]),
+  not_on_duty_reject: Buf.from([0x05]),
+  no_enough_alive_peers_reject: Buf.from([0x06]),
+  update_iteration_reject: Buf.from([0x07]),
 }
 
 AbsenceToleranceRecordCommission.prototype._getAliveCommissionPeers = function(callback) {
@@ -209,6 +211,11 @@ AbsenceToleranceRecordCommission.prototype._getAliveCommissionPeers = function(c
   }
 }
 
+AbsenceToleranceRecordCommission.prototype._writeRecordByDataBytes = function(data_bytes) {
+
+  return;
+};
+
 // [Flag]
 AbsenceToleranceRecordCommission.prototype.returnRecords = function() {
   return this._record_dict;
@@ -222,9 +229,17 @@ AbsenceToleranceRecordCommission.prototype.updateRecordValue = function(record_n
     this._nsdt_embedded_protocol.encode(value)
   ]);
   this._worker_scope.request(this._record_dict[record_name].on_duty_commission_peer_id, data_bytes, (error, response_data_bytes) => {
-    console.log(error, response_data_bytes);
+    // console.log(error, response_data_bytes);
     if(response_data_bytes[0] === this._ProtocolCodes.accept[0]) {
 
+    }
+    else if(response_data_bytes[0] === this._ProtocolCodes.correction[0]) {
+      // Correction
+      if(this._writeRecordByDataBytes(response_data_bytes.slice(1))) {
+        callback(new Errors.ERR_NOXERVEAGENT_WORKER('Remote require correction, but the original record already newer then request one.'));
+      } else {
+        this.updateRecordValue(record_name, value, callback);
+      }
     }
     else if(response_data_bytes[0] === this._ProtocolCodes.concurrently_update_reject[0]) {
       callback(new Errors.ERR_NOXERVEAGENT_WORKER('You cannot update a record twice concurrently.'));
@@ -258,41 +273,78 @@ AbsenceToleranceRecordCommission.prototype.start = function(callback) {
 
     // Update record request
     else if(protocol_code_int === this._ProtocolCodes.update_record_request[0]) {
-      const record_name = this._hash_manager.stringify4BytesHash(request_data_bytes.slice(1, 5));
-      const value = this._nsdt_embedded_protocol.decode(request_data_bytes.slice(5));
+      const record_name_bytes = request_data_bytes.slice(1, 5);
+      const remote_update_iteration = Buf.decodeUInt32BE(request_data_bytes.slice(5, 9));
+      const record_value_bytes = request_data_bytes.slice(9);
 
-      if(record_name) {
+      const multicast_update_record = () => {
+        this._record_dict[record_name].me_on_duty_dict.updating = true;
+        this._getAliveCommissionPeers((error, result) => {
+          if(result.length >= this._update_commission_peers_count_int) {
+            const selected_commission_peers = Utils.generateUniqueIntegerListInRangeRandomly(1, this._commission_peers_count, this._update_commission_peers_count_int);
+            const update_iterations = this._record_dict[record_name].update_iterations;
+
+            const data_bytes = Buf.concat([
+              this._ProtocolCodes.update_record_multicast,
+              record_name_bytes,
+              Buf.encodeUInt32BE(update_iterations+1),
+              record_value_bytes
+            ]);
+
+            const a_worker_response_listener = (scope_peer_id, synchronize_error, response_data_bytes, confirm_error_finish_status) => {
+              if(synchronize_error) {
+                confirm_error_finish_status(synchronize_error, false);
+              } else if (response_data_bytes[0] === this._ProtocolCodes.accept[0]) {
+                confirm_error_finish_status(false, true);
+              } else {
+                confirm_error_finish_status(true, false);
+              }
+            };
+
+            const finished_listener = (error, finished_worker_list) => {
+              if(finished_worker_list.length > this._min_successful_update_commission_peers_count_int) {
+                response(this._ProtocolCodes.accept);
+              }
+              else {
+                response(this._ProtocolCodes.reject);
+              }
+            };
+
+            this._worker_scope.multicastRequest(selected_commission_peers, data_bytes, a_worker_response_listener, finished_listener);
+          }
+          else {
+            response(this._ProtocolCodes.no_enough_alive_peers);
+          }
+        });
+      };
+
+      if(remote_update_iteration < this._record_dict[record_name].update_iterations) {
+        response(Buf.concat([
+          this._ProtocolCodes.correction,
+          Buf.encodeUInt32BE(this._record_dict[record_name].update_iterations),
+          this._nsdt_embedded_protocol.encode(this._record_dict[record_name].record_value)
+        ]));
+      }
+      else if(remote_update_iteration > this._record_dict[record_name].update_iterations) {
+        this.syncRecord(record_name, (error)=> {
+          if(error) {
+            response(Buf.concat([
+              this._ProtocolCodes.reject
+            ]));
+          }
+          else {
+            broadcast_record_update();
+          }
+        });
+      }
+      else if(record_name) {
         // console.log(this._worker_scope.MyScopePeerId);
         if(this._record_dict[record_name].on_duty_commission_peer_id === this._worker_scope.MyScopePeerId) {
           if(this._record_dict[record_name].me_on_duty_dict.updating) {
             response(this._ProtocolCodes.concurrently_update_reject);
           }
           else {
-            this._record_dict[record_name].me_on_duty_dict.updating = true;
-            this._getAliveCommissionPeers((error, result) => {
-              console.log('atrc test', result);
-              if(result.length >= this._update_commission_peers_count_int) {
-                  const selected_commission_peers = Utils.generateUniqueIntegerListInRangeRandomly(1, this._commission_peers_count, this._update_commission_peers_count_int);
-                //   const update_iterations = (this._record_dict[record_name])?this._record_dict[record_name].update_iterations:1;
-                //
-                //   const data_bytes = Buf.concat([
-                //     this._ProtocolCodes.check_alive_request
-                //   ]);
-                //
-                //   const a_worker_response_listener = () => {
-                //
-                //   };
-                //
-                //   const finished_listener = () => {
-                //
-                //   };
-                //
-                //   this._worker_scope.multicastRequest(selected_commission_peers, data_bytes, a_worker_response_listener, finished_listener);
-              }
-              else {
-                response(this._ProtocolCodes.no_enough_alive_peers);
-              }
-            });
+            broadcast_record_update();
           }
         }
         else {
@@ -308,15 +360,27 @@ AbsenceToleranceRecordCommission.prototype.start = function(callback) {
     }
 
 
-    else if(protocol_code_int === this._ProtocolCodes.check_record_update_iteration[0]) {
-      response(Buf.concat());
+    else if(protocol_code_int === this._ProtocolCodes.update_record_multicast[0]) {
+      if(this._writeRecordByDataBytes(request_data_bytes.slice(1))) {
+        response(Buf.concat([
+
+        ]));
+      } else {
+        response(Buf.concat([
+
+        ]));
+      };
     }
 
 
     else if(protocol_code_int === this._ProtocolCodes.sync_record_value[0]) {
+      response(Buf.concat([
 
+      ]));
     }
   });
+
+  // this._worker_scope.on('handshake',);
   for(let record_name in this._record_dict) {
     const record_name_hash_4bytes = this._hash_manager.hashString4Bytes(record_name);
     if(!this._record_dict[record_name].update_iterations) {
@@ -324,6 +388,7 @@ AbsenceToleranceRecordCommission.prototype.start = function(callback) {
     }
     if(!this._record_dict[record_name].on_duty_commission_peer_id) {
       this._record_dict[record_name].on_duty_commission_peer_id = this._global_deterministic_random_manager.generateIntegerInRange(record_name_hash_4bytes, 1, this._commission_peers_count);
+      console.log(this._record_dict[record_name].on_duty_commission_peer_id);
     }
     this._record_dict[record_name].me_on_duty_dict = {
       updating: false
