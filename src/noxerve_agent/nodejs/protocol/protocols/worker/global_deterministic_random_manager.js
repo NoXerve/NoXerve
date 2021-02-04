@@ -128,13 +128,34 @@ GlobalDeterministicRandomManager.prototype.generateUniqueIntegerListInRange = fu
     callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Input of "generateUniqueIntegerListInRange" is invalid.'));
     return;
   }
-  //this.generateIntegerInRange()
+  let seed = Buf.decodeUInt32BE(
+    hash('sha256').update(initialization_vector_bytes).digest()
+  );
 
-  callback(false, []);
+  // algorithm ref: https://stackoverflow.com/a/29750138/9528175
+  let result = [];
+  let remaining = end_int - begin_int + 1;
+  let probabilities = ACORN.random(seed, remaining);
+  let progress = 0;
+
+  for(let i=begin_int; i<= end_int && list_length > 0; i++){
+    if(probabilities[i] < (list_length / remaining)){
+      list_length--;
+      result[progress++] = i;
+    }
+    remaining--;
+  }
+
+  if(callback) callback(false, result);
+  else return result;
 }
-/*
+
 // Tests Cases
 let g = new GlobalDeterministicRandomManager({});
+g.generateUniqueIntegerListInRange(Buf.from([1,2,3,4,5]), 5, 30, 5, (error, result)=>{
+  console.log(result);
+});
+/*
 g.generateIntegerListInRange(Buf.from([1,2,3,4,5]), 5, 30, 20, (error, result)=>{
   console.log(result);
 });

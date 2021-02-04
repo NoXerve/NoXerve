@@ -110,7 +110,7 @@ ACORN.prototype.random = function(seed, length) {
 
 	Y2.shift(); // remove the first element, which is seed, to fit the length.
 	for (let i = 0; i < length; i++) {
-		Y2[i] = Y2[i] / this.M;
+		Y2[i] = Y2[i] / this.M; // [flag] What's the precision of this in Js? float? Double?
 	}
 	return Y2;
 }
