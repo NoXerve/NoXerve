@@ -136,12 +136,11 @@ GlobalDeterministicRandomManager.prototype.generateUniqueIntegerListInRange = fu
   let result = [];
   let remaining = end_int - begin_int + 1;
   let probabilities = ACORN.random(seed, remaining);
-  let progress = 0;
 
   for(let i=begin_int; i<= end_int && list_length > 0; i++){
-    if(probabilities[i] < (list_length / remaining)){
+    if(probabilities[i - begin_int] < (list_length / remaining)){
       list_length--;
-      result[progress++] = i;
+      result.push(i);
     }
     remaining--;
   }
@@ -151,11 +150,11 @@ GlobalDeterministicRandomManager.prototype.generateUniqueIntegerListInRange = fu
 }
 
 // Tests Cases
+/*
 let g = new GlobalDeterministicRandomManager({});
-g.generateUniqueIntegerListInRange(Buf.from([1,2,3,4,5]), 5, 30, 5, (error, result)=>{
+g.generateUniqueIntegerListInRange(Buf.from([1,21,2,7,62]), 10, 100, 10, (error, result)=>{
   console.log(result);
 });
-/*
 g.generateIntegerListInRange(Buf.from([1,2,3,4,5]), 5, 30, 20, (error, result)=>{
   console.log(result);
 });
