@@ -62,7 +62,7 @@ GlobalDeterministicRandomManager.prototype.importStaticGlobalRandomSeed = functi
  * @param  {buffer}   initialization_vector_bytes  seed
  * @param  {integer}   begin_int                   result >= begin int
  * @param  {integer}   end_int                     result <= end int
- * @param  {function} callback                     pass the result by callback(result)
+ * @param  {function} callback                     pass the result by callback(error, result)
  * @return {integer}                               result
  */
 GlobalDeterministicRandomManager.prototype.generateIntegerInRange = function(initialization_vector_bytes, begin_int, end_int, callback) {
@@ -90,7 +90,7 @@ GlobalDeterministicRandomManager.prototype.generateIntegerInRange = function(ini
  * @param  {integer}   begin_int                   result >= begin int
  * @param  {integer}   end_int                     result <= end int
  * @param  {unsigned int}   list_length            length of result list
- * @param  {function} callback                     pass the result by callback(result)
+ * @param  {function} callback                     pass the result by callback(error, result)
  * @return {integer}                               result
  */
 GlobalDeterministicRandomManager.prototype.generateIntegerListInRange = function(initialization_vector_bytes, begin_int, end_int, list_length, callback) {
@@ -120,10 +120,11 @@ GlobalDeterministicRandomManager.prototype.generateIntegerListInRange = function
  * @param  {integer}   begin_int                   result >= begin int
  * @param  {integer}   end_int                     result <= end int
  * @param  {unsigned int}   list_length            length of result array
- * @param  {function} callback                     pass the result by callback(result)
+ * @param  {boolean}  shuffle                      return result in shuffled or in order?
+ * @param  {function} callback                     pass the result by callback(error, result)
  * @return {integer}                               result
  */
-GlobalDeterministicRandomManager.prototype.generateUniqueIntegerListInRange = function(initialization_vector_bytes, begin_int, end_int, list_length, callback) {
+GlobalDeterministicRandomManager.prototype.generateUniqueIntegerListInRange = function(initialization_vector_bytes, begin_int, end_int, list_length, shuffle, callback) {
   if (!this._isInputValid(begin_int, end_int, list_length)) {
     callback(new Errors.ERR_NOXERVEAGENT_PROTOCOL_WORKER('Input of "generateUniqueIntegerListInRange" is invalid.'));
     return;
@@ -143,6 +144,10 @@ GlobalDeterministicRandomManager.prototype.generateUniqueIntegerListInRange = fu
       result.push(i);
     }
     remaining--;
+  }
+
+  if(shuffle){
+    // shuffle the result.
   }
 
   if(callback) callback(false, result);
