@@ -15,6 +15,7 @@ const Errors = require('../errors');
 const WorkerSocketManager = require('./worker_object_managers/worker_socket');
 const WorkerScopeManager = require('./worker_object_managers/worker_scope');
 const WorkerGroupManager = require('./worker_object_managers/worker_group');
+const WorkerShoalingManager = require('./worker_object_managers/worker_shoaling');
 const AbsenceToleranceRecordCommissionManager = require('./worker_object_managers/absence_tolerance_record_commission');
 
 /**
@@ -107,14 +108,23 @@ Worker.prototype.start = function(callback) {
                 hash_manager: hash_manager,
                 nsdt_embedded_protocol: nsdt_embedded_protocol
               });
-              this._event_listener_dict['worker-subprotocol-managers-request'](AbsenceToleranceRecordCommissionManager.register_code, (error, worker_subprotocol_object_managers)=> {
+              // Request for worker group. With < 256 register_code.
+              this._event_listener_dict['worker-subprotocol-managers-request'](WorkerShoalingManager.register_code, (error, worker_subprotocol_object_managers)=> {
                 if(error) {callback(error); return;};
-                this._worker_object_managers['absence_tolerance_record_commission'] = new AbsenceToleranceRecordCommissionManager.module({
+                this._worker_object_managers['worker_shoaling'] = new WorkerShoalingManager.module({
                   worker_subprotocol_object_managers: worker_subprotocol_object_managers,
                   hash_manager: hash_manager,
                   nsdt_embedded_protocol: nsdt_embedded_protocol
                 });
-                callback(error);
+                this._event_listener_dict['worker-subprotocol-managers-request'](AbsenceToleranceRecordCommissionManager.register_code, (error, worker_subprotocol_object_managers)=> {
+                  if(error) {callback(error); return;};
+                  this._worker_object_managers['absence_tolerance_record_commission'] = new  AbsenceToleranceRecordCommissionManager.module({
+                    worker_subprotocol_object_managers: worker_subprotocol_object_managers,
+                    hash_manager: hash_manager,
+                    nsdt_embedded_protocol: nsdt_embedded_protocol
+                  });
+                  callback(error);
+                });
               });
             });
           });
@@ -271,6 +281,20 @@ Worker.prototype.createWorkerScope = function(worker_scope_purpose_name, worker_
  */
 Worker.prototype.createWorkerGroup = function(worker_group_purpose_name, worker_peers_worker_id_list, callback) {
   this._worker_object_managers.worker_group.create(worker_group_purpose_name, worker_peers_worker_id_list, callback);
+}
+/**
+ * @callback module:Worker~callback_of_create_worker_shoaling
+ * @param {object} worker_shoaling
+ * @param {error} error
+ */
+/**
+ * @memberof module:Worker
+ * @param  {string}   worker_shoaling_purpose_name - The purpose for this worker shoaling.
+ * @param  {list}   worker_peers_worker_id_list - The worker peers including in this shoaling.
+ * @param  {module:Worker~callback_of_create_worker_group} callback
+ */
+Worker.prototype.createWorkerShoaling = function(worker_shoaling_purpose_name, worker_peers_worker_id_list, callback) {
+  this._worker_object_managers.worker_shoaling.create(worker_shoaling_purpose_name, worker_peers_worker_id_list, callback);
 }
 
 /**

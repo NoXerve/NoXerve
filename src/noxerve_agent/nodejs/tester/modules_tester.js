@@ -477,6 +477,9 @@ Node2.start(() => {
                 });
               });
             });
+            Worker.createWorkerShoaling('test_Shoaling', [my_worker_id], (worker_shoaling_object, error) => {
+              // test starts here
+            });
           });
         });
       });
