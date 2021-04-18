@@ -37,7 +37,11 @@ function WorkerShoalingManager(settings) {
  * @description Create a worker shoaling to communicate to a group of workers just like a worker.
  */
 WorkerShoalingManager.prototype.create = function(worker_shoaling_purpose_name, worker_shoaling_peers_worker_id_list, callback){
-  this._worker_subprotocol_object_managers.worker_group.create(worker_group_purpose_name, worker_peers_worker_id_list, callback);
+  this._worker_subprotocol_object_managers.worker_group.create(worker_shoaling_purpose_name, worker_shoaling_peers_worker_id_list, callback);
+}
+
+WorkerShoalingManager.prototype.onCreate = function(callback){
+  this._worker_subprotocol_object_managers.worker_group.onCreate(callback);
 }
 
 module.exports = {
