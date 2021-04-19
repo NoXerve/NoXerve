@@ -45,6 +45,7 @@ let Tests = [
   'worker_group_channel_braodcast_request',
   'worker_group_channel_synchronize',
   'worker_group_channel_braodcast_synchronize',
+  'worker_shoaling_creation',
   'other_test',
   // 'block'
 ];
@@ -477,8 +478,14 @@ Node2.start(() => {
                 });
               });
             });
-            Worker.createWorkerShoaling('test_Shoaling', [my_worker_id], (worker_shoaling_object, error) => {
-              // test starts here
+
+            // WorkerShoaling tests
+            Worker.createWorkerShoaling('test_Shoaling', [my_worker_id], (error, worker_shoaling_object) => {
+              if(error) log('[Worker_shoaling] test_shoaling error');
+              else{
+                worker_shoaling_object.emitEventListener('test', 123);
+                finish('worker_shoaling_creation');
+              }
             });
           });
         });

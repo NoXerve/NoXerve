@@ -6,7 +6,7 @@
 'use strict';
 
 /**
- * @module WorkerGroupManager
+ * @module WorkerShoalingManager
  */
 
 const Errors = require('../../../errors');
@@ -17,7 +17,7 @@ const Errors = require('../../../errors');
  */
 function WorkerShoalingManager(settings) {
   /**
-   * @memberof module:WorkerGroupManager
+   * @memberof module:WorkerShoalingManager
    * @type {object}
    * @private
    */
@@ -25,7 +25,7 @@ function WorkerShoalingManager(settings) {
 }
 
 /**
- * @callback module:WorkerShoalingManager~callback_of_create
+ * @callback module:WorkerShoalingManager~callback_of_create_worker_shoaling
  * @param {object} worker_shoaling
  * @param {error} error
  */
@@ -33,15 +33,15 @@ function WorkerShoalingManager(settings) {
  * @memberof module:WorkerShoalingManager
  * @param {string} worker_shoaling_purpose_name - The purpose for this worker shoaling.
  * @param {list} worker_peers_worker_id_list - The worker peers including in this shoaling.
- * @param {module:Worker~callback_of_create} callback
+ * @param {module:WorkerShoalingManager~callback_of_create_worker_shoaling} callback
  * @description Create a worker shoaling to communicate to a group of workers just like a worker.
  */
 WorkerShoalingManager.prototype.create = function(worker_shoaling_purpose_name, worker_shoaling_peers_worker_id_list, callback){
-  this._worker_subprotocol_object_managers.worker_group.create(worker_shoaling_purpose_name, worker_shoaling_peers_worker_id_list, callback);
+  this._worker_subprotocol_object_managers.worker_shoaling.create(worker_shoaling_purpose_name, worker_shoaling_peers_worker_id_list, callback);
 }
 
 WorkerShoalingManager.prototype.onCreate = function(callback){
-  this._worker_subprotocol_object_managers.worker_group.onCreate(callback);
+  this._worker_subprotocol_object_managers.worker_shoaling.onCreate(callback);
 }
 
 module.exports = {

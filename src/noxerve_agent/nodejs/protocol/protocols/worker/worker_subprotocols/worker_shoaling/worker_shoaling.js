@@ -9,9 +9,9 @@
   * @module WorkerShoaling
   */
 
- const Errors = require('../../../../../errors');
+const Errors = require('../../../../../errors');
 
- function WorkerShoaling(settings){
+function WorkerShoaling(settings){
   /**
     * @memberof module:WorkerShoaling
     * @type {object}
@@ -20,11 +20,22 @@
   this._settings = settings;
 
   this._event_listener_dict = {
+    'test' : (param) => {console.log("YEAH! THIS IS WORKER SHOALING!!");}
   }
- }
 
- WorkerShoaling.prototype.on = function(event_name, event_listener){
-   this._event_listener_dict[event_name] = event_listener;
- }
+  this.shoaling_peer_id_list = [];
+}
 
- 
+WorkerShoaling.prototype.getPeerWorkerIDList = function(){
+  return this.shoaling_peer_id_list;
+}
+
+WorkerShoaling.prototype.on = function(event_name, event_listener){
+  this._event_listener_dict[event_name] = event_listener;
+}
+
+WorkerShoaling.prototype.emitEventListener = function(event_name, ...params){
+  return this._event_listener_dict[event_name].apply(null, params);
+}
+
+module.exports = WorkerShoaling;

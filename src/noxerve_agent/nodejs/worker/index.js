@@ -291,7 +291,7 @@ Worker.prototype.createWorkerGroup = function(worker_group_purpose_name, worker_
  * @memberof module:Worker
  * @param  {string}   worker_shoaling_purpose_name - The purpose for this worker shoaling.
  * @param  {list}   worker_peers_worker_id_list - The worker peers including in this shoaling.
- * @param  {module:Worker~callback_of_create_worker_group} callback
+ * @param  {module:Worker~callback_of_create_worker_shoaling} callback
  */
 Worker.prototype.createWorkerShoaling = function(worker_shoaling_purpose_name, worker_peers_worker_id_list, callback) {
   this._worker_object_managers.worker_shoaling.create(worker_shoaling_purpose_name, worker_peers_worker_id_list, callback);

@@ -67,7 +67,7 @@ function WorkerScopeProtocol(settings) {
   this._worker_protocol_actions = settings.worker_protocol_actions;
 
   /**
-   * @memberof module:WorkerScope
+   * @memberof module:WorkerScopeProtocol
    * @type {object}
    * @private
    */
