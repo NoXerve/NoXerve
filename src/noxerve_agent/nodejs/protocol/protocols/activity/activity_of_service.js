@@ -2,7 +2,7 @@
  * @file NoXerveAgent activity protocol activity_of_service_handler file. [activity_of_service_handler.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
- * @copyright 2019-2020 nooxy. All Rights Reserved.
+ * @copyright 2019-2021 nooxy. All Rights Reserved.
  */
 
 'use strict';

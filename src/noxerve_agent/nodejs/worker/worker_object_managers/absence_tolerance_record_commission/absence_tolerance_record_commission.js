@@ -2,7 +2,7 @@
  * @file NoXerveAgent worker absence tolerance record commission index file. [absence_tolerance_record_commission.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
- * @copyright 2019-2020 nooxy. All Rights Reserved.
+ * @copyright 2019-2021 nooxy. All Rights Reserved.
  */
 
 'use strict';

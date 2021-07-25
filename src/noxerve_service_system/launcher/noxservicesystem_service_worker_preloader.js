@@ -2,7 +2,7 @@
  * @file NoxServiceSystem service preloader file. [noxservicesystem.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
- * @copyright 2019-2020 nooxy. All Rights Reserved.
+ * @copyright 2019-2021 nooxy. All Rights Reserved.
  */
 
 'use strict';
@@ -19,7 +19,7 @@ console.log('                                       d8\'');
 console.log('                                    888P\'');
 console.log('');
 console.log('NoXerveServiceSystem');
-console.log('© 2020 nooxy org. All right reserved.');
+console.log('© 2020-2021 nooxy org. All right reserved.');
 console.log('');
 
 console.log('NoxServiceSystem service worker process id: ' + process.pid);

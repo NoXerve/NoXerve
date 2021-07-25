@@ -2,7 +2,7 @@
  * @file NoxServiceSystem Service worker affiar manager file. [worker_affair_manager.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
- * @copyright 2019-2020 nooxy. All Rights Reserved.
+ * @copyright 2019-2021 nooxy. All Rights Reserved.
  * @description Check if NoxServiceSystemService initailized.
  */
 

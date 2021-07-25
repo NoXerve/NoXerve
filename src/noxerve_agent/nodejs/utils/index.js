@@ -2,7 +2,7 @@
  * @file NoXerveAgent utils index file. [index.js]
  * @author nooxy <thenooxy@gmail.com>
  * @author noowyee <magneticchen@gmail.com>
- * @copyright 2019-2020 nooxy. All Rights Reserved.
+ * @copyright 2019-2021 nooxy. All Rights Reserved.
  * @description Utils provides handful tools that can be commonly used.
  */
 
