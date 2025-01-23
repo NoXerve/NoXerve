@@ -8,6 +8,6 @@
 # NoXerve
 > nooxy-object id: nooxy.org.codes.noxerve
 
-The ultimate solution for service. (successor of NoService)
+The ultimate solution for service. (successor of [NoService](https://github.com/NOOXY-research/NoService))
 
 We are currently working on prototype branch.
